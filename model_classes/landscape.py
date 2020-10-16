@@ -26,6 +26,10 @@ class BlockGroup(Node):
         self.init_pop = init_pop
         self.population = init_pop
         self.hh_agents = {}
+        # Other potential attributes
+        self.distance_to_cbd = 0
+        self.flood_hazard_risk = 0
+        self.available_units = 0
 
     _properties = {
         'population': 0,  # number of individuals residing in block group
@@ -34,6 +38,7 @@ class BlockGroup(Node):
         'available_units': 0,
         'occupied_units': 0,
         'pop_density': 0,  # number of individuals residing in block group / land area of block group (excludes water)
+        'zoning': 'allowed'  # determines whether development is allowed or not allowed
     }
 
     def setup(self, timestep):

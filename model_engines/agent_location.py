@@ -10,12 +10,18 @@ class AgentLocation(Engine):
         self.hh_size = hh_size
 
     def run(self):
+        # identify block groups in which new residents/development is allowed
+        bg_dev_allowed = []
+        for bg in self.target.nodes:
+            if bg.zoning == 'allowed':
+                bg_dev_allowed.append(bg)
+
         # assign new population to block groups (currently assumes agents move to a random block group)
         new_population = self.target.total_population * self.pop_growth
         no_of_new_agents = (new_population + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
         count = 1
         for a in range(int(no_of_new_agents)):
-            bg = random.choice(self.target.nodes)
+            bg = random.choice(bg_dev_allowed)
             name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
             self.target.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=self.no_hhs_per_agent,
                                                hh_size=self.hh_size, year_of_residence=self.timestep.year))  # add household agent to pynsim network
@@ -28,7 +34,7 @@ class AgentLocation(Engine):
         agent_move_list = random.sample(self.target.get_institution('all_hh_agents').components, no_agents_moving)
         for a in agent_move_list:
             bg_old_location = self.target.get_node(a.location)
-            bg_new_location = random.choice(self.target.nodes)
+            bg_new_location = random.choice(bg_dev_allowed)
             del bg_old_location.hh_agents[a.name]
             bg_new_location.hh_agents[a.name] = a
             a.location = bg_new_location.name

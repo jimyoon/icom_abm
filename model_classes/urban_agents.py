@@ -8,6 +8,9 @@ class HHAgent(Component):
         self.no_hhs_per_agent = no_hhs_per_agent
         self.hh_size = hh_size
         self.year_of_residence = year_of_residence
+        ### Other potential attributes
+        self.income = 0
+        self.average_age = 0
 
     _properties = {
         'location': 0,  # number of individuals residing in block group
