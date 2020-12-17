@@ -4,6 +4,9 @@ class CountyZoningManager(Institution):
     def __init__(self, name, **kwargs):
         super(CountyZoningManager, self).__init__(name, **kwargs)
 
+    def setup(self, timestep):
+        pass
+
     def determine_zoning(self):
         for bg in self.nodes:
             if bg.pop_density > 0.03:
