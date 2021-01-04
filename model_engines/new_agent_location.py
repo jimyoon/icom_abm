@@ -2,14 +2,45 @@ from pynsim import Engine
 from model_classes.urban_agents import HHAgent
 import random
 
-class AgentLocation(Engine):
-    def __init__(self, target, pop_growth, no_hhs_per_agent=100, hh_size=4, perc_move=.10, **kwargs):
-        super(AgentLocation, self).__init__(target, **kwargs)
-        self.pop_growth = pop_growth
-        self.no_hhs_per_agent = no_hhs_per_agent
-        self.hh_size = hh_size
+class NewAgentLocation(Engine):
+    """An engine class to determine calculate new household agent's utility for homes.
+
+    The NewAgentLocation class is a pynsim engine that calculates a new household agent's utility for a sample of available homes.
+    The target of the engine is a list of unlocated new agents in the queue. For each unlocated agent, the engine samples from available
+    homes and calculates a utility function for each of those homes.
+
+    Target:
+        s.network: the simulation network
+
+    Args:
+        None
+
+    Attributes:
+        sample_size (integer): a single value that indicates the sample size for new agent's housing search
+
+    """
+    def __init__(self, target, bg_sample_size=10, **kwargs):
+        super(NewAgentLocation, self).__init__(target, **kwargs)
+        self.bg_sample_size = bg_sample_size
+
 
     def run(self):
+        """ Run the NewAgentLocation Engine. The target of this engine are all new household agents waiting in the location queue.
+            For each agent in the household agent location queue, the engine randomly samples from the available homes
+            list, calculating an agent utility for each home.
+        """
+        # Sample from available units
+        bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)
+
+        for hh in self.target.unassigned_hhs:
+            for bg in bg_sample:
+                hh.calc_utility(bg)
+
+
+    def run_old_version(self):
+        """ Run the NewAgentLocation Engine. The target of this engine are all new household agents waiting in the location queue.
+        This version of the engine is a simple proof-of-concept version to illustrate pynsim functionality.
+        """
         # identify block groups in which new residents/development is allowed
         bg_dev_allowed = []
         for bg in self.target.nodes:

@@ -26,7 +26,7 @@ class ICOMSimulator(Simulator):
             timesteps.append(datetime.datetime.strptime(str(new_year), '%Y'))
         self.set_timesteps(timesteps)
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, growth_mode):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         landscape = ABMLandscape(name=landscape_name)

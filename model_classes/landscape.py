@@ -2,11 +2,35 @@ from pynsim import Network
 from pynsim import Node
 
 class ABMLandscape(Network):
+    """The ABMLandscape class.
+
+    An ABM Landscape class to set the environment on which agents make residential choice decisions. The landscape contains
+    block groups as cells/nodes, as well as attributes that account for unassigned households waiting in the residential
+    location queue and a list of available units
+
+    **Attributes**:
+
+        |  *unassigned_hhs* (list / HHAgent) - list of HHAgent objects that are waiting to be assigned
+        |  *available_units* (list / str) - list of available units labeled by block group name
+
+    """
+    def __init__(self, name, **kwargs):
+        super(ABMLandscape, self).__init__(name, **kwargs)
+        self.name = name
+        self.unassigned_hhs = []  # list of unassigned new hh agents (long list, do not include as property to save memory)
+        self.relocating_hhs = []  # list of existing hh agents that are relocating (long list, do not include as property to save memory)
+        self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
+
     _properties = {
         'total_population': 0,
     }
 
     def setup(self, timestep):
+        # reset various queues and lists
+        self.unassigned_hhs = []
+        self.relocating_hhs = []
+        self.available_units_list = []
+        # calculate total population based on bg status
         self.total_population = 0
         for bg in self.nodes:
             bg.population = 0
@@ -17,25 +41,31 @@ class ABMLandscape(Network):
 class BlockGroup(Node):
     """The BlockGroup node class.
 
-    A block group node is representative of a unit stress/observation location in the groundwater system. For the Jordan
-    model, there is one groundwater node per subdistrict, per usage type (agricultural or urban), per layer. The groundwater
-    head response at each node is calculated via the GWResponseEngine, which consolidates pumping values at all groundwater
-    nodes in the system and calculates system response based upon a response matrix approach. Each node contains a groundwater
-    lift value, which also account for in-well drawdown and a bias correction to match starting head conditions in 2009.
+    A block group node is representative of a United States census block group. The block groups provide the spatial
+    landscape for the ABM. Each block group contains various physical characteristics that can provide amenities/
+    disamenities for urban agents. The block groups also contain building stock, tracking the availability of residences
+
+    **Attributes**:
+
+        |  *hh_agents* (list) - list of HHAgent objects that reside in block group
+        |  *distance_to_cbd* (list) - distance to central business district
+        |  *geometry* (shapely multipolygon object) - shapely multipolygon object (for spatial calculations)
 
     **Properties**:
 
-        |  *pumping* (int) - pumping volume for current time step [m3/s]
-        |  *lift* (int) - lift, i.e. distance from pumping water level to ground surface [m]
-        |  *head* (int) - lift, i.e. distance from pumping water level to ground surface [m]
-        |  *check_dry* (bool) - boolean to check whether aquifer dry (pumping water level < aquifer bottom)
+        |  *population* (int) - population residing in the block group
+        |  *added_population* (int) - new population added during the current timestep
+        |  *flood_hazard_risk* (int) - flood hazard risk score for block group
+        |  *levee_protection* (str) - "no" or "yes"
+        |  *years_since_major_flooding* (int) - years since major flooding
+        |  *occupied_units* (int) - number of occupied units
+        |  *available_units* (int) - number of available units
+        |  *pop_density* (int) - population density
+        |  *zoning* (str) - "allowed" or "restricted"
+        |  *avg_home_price* (int) - average home price ($)
+        |  *avg_hh_income* (int) - average household income of residents ($)
 
-    **Outputs to Other Modules**:
-
-        |  *pumping* (int) - pumping volume for current time step [m3/s]
-        |  *lift* (int) - lift, i.e. distance from pumping water level to ground surface [m]
-        |  *head* (int) - lift, i.e. distance from pumping water level to ground surface [m]
-        |  *check_dry* (bool) - boolean to check whether aquifer dry (pumping water level < aquifer bottom)
+    **Inter-module Outputs/Modifications**:
 
     """
     def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, **kwargs):
@@ -50,7 +80,6 @@ class BlockGroup(Node):
         self.population = init_pop
         self.hh_agents = {}
         self.avg_home_price = 0
-        # Other potential attributes
         self.distance_to_cbd = 0
         self.flood_hazard_risk = 0
         self.available_units = 0
@@ -63,8 +92,9 @@ class BlockGroup(Node):
         'occupied_units': 0,
         'pop_density': 0,  # number of individuals residing in block group / land area of block group (excludes water)
         'zoning': 'allowed',  # determines whether development is allowed or not allowed
-        'levee_protection': 0,
-        'avg_home_price':0,
+        'levee_protection': "no",
+        'avg_home_price': 0,
+        'years_since_major_flooding': None,
     }
 
     def setup(self, timestep):
