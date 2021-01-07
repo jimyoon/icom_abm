@@ -16,7 +16,7 @@ class NewAgentCreation(Engine):
         growth_rate (float): if growth_mode = "perc", defines the annual percentage population growth rate
 
     **Inter-module Outputs/Modifications**:
-        s.network.unassigned_hhs (list): list of HHAgent objects that are in the location queue
+        s.network.unassigned_hhs (dict): dictionary of HHAgent objects in the location queue (keys are household agent names)
         s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
     """
 
@@ -31,7 +31,7 @@ class NewAgentCreation(Engine):
         """ Run the NewAgentCreation Engine.
         """
 
-        # assign new population to block groups (currently assumes agents move to a random block group)
+        # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':
             new_population = self.target.total_population * self.growth_rate
             no_of_new_agents = (new_population + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
@@ -41,7 +41,7 @@ class NewAgentCreation(Engine):
                 self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
                                                    hh_size=self.hh_size, year_of_residence=self.timestep.year))  # add household agent to pynsim network
                 self.target.get_institution('all_hh_agents').add_component(self.target.components[-1])  # add pynsim household agent to all hh agents institution
-                self.target.unassigned_hhs.append(self.target.components[-1])  # add pynsim household agent to unassigned agent list
+                self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
                 count += 1
         elif self.growth_mode == 'exog':
             # need to complete

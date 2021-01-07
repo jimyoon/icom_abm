@@ -1,5 +1,6 @@
 from pynsim import Network
 from pynsim import Node
+import logging
 
 class ABMLandscape(Network):
     """The ABMLandscape class.
@@ -17,8 +18,8 @@ class ABMLandscape(Network):
     def __init__(self, name, **kwargs):
         super(ABMLandscape, self).__init__(name, **kwargs)
         self.name = name
-        self.unassigned_hhs = []  # list of unassigned new hh agents (long list, do not include as property to save memory)
-        self.relocating_hhs = []  # list of existing hh agents that are relocating (long list, do not include as property to save memory)
+        self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
+        self.relocating_hhs = {}  # dictionary of existing hh agents that are relocating keyed on hh name (long dict, do not include as property to save memory)
         self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
 
     _properties = {
@@ -26,9 +27,10 @@ class ABMLandscape(Network):
     }
 
     def setup(self, timestep):
+        logging.info('Starting model year: ' + str(self.current_timestep.year))
         # reset various queues and lists
-        self.unassigned_hhs = []
-        self.relocating_hhs = []
+        self.unassigned_hhs = {}
+        self.relocating_hhs = {}
         self.available_units_list = []
         # calculate total population based on bg status
         self.total_population = 0

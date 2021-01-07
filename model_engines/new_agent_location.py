@@ -32,7 +32,7 @@ class NewAgentLocation(Engine):
         # Sample from available units
         bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)
 
-        for hh in self.target.unassigned_hhs:
+        for hh in self.target.unassigned_hhs.values():
             for bg in bg_sample:
                 hh.calc_utility(bg)
 
