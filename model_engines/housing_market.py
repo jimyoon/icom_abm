@@ -80,3 +80,5 @@ class HousingMarket(Engine):
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add agent to new block group node
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from unassigned hh dict
+
+        pass  # to accommodate debugger

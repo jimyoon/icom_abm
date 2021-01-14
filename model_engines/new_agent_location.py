@@ -29,12 +29,15 @@ class NewAgentLocation(Engine):
             For each agent in the household agent location queue, the engine randomly samples from the available homes
             list, calculating an agent utility for each home.
         """
-        # Sample from available units
-        bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)
+
+
 
         for hh in self.target.unassigned_hhs.values():
+            bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)  # Sample from available units
             for bg in bg_sample:
                 hh.calc_utility(bg)
+
+        pass  # to accommodate debugger
 
 
     def run_old_version(self):

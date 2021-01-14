@@ -36,6 +36,7 @@ class ExistingAgentReloSampler(Engine):
             for hh in agents_moving:
                 self.target.relocating_hhs[hh] = self.target.get_institution('all_hh_agents')._component_map[hh]  # add agent to unassigned hh list (is there a better way in pynsim rather than accessing _components_map)
                 # need to adjust available units in block group that agent is moving from
+        pass  # to accommodate debugger
 
 class ExistingAgentLocation(Engine):
     """An engine class to determine calculate existing (relocating) household agent's utility for homes.
@@ -64,9 +65,10 @@ class ExistingAgentLocation(Engine):
             For each agent in the re-location queue, the engine randomly samples from the available homes
             list, calculating an agent utility for each home.
         """
-        # Sample from available units
-        bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)
 
         for hh in self.target.relocating_hhs.values():
+            bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)  # Sample from available units
             for bg in bg_sample:
                 hh.calc_utility(bg)
+
+        pass  # to accommodate debugger

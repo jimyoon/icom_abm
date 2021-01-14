@@ -30,3 +30,5 @@ class HousingInventory(Engine):
             bg.available_units = (bg.available_residences + self.residences_per_unit // 2) // self.residences_per_unit  # division with rounding to nearest integer
             for unit in range(bg.available_units):
                 self.target.available_units_list.append(bg.name)
+
+        pass  # to accommodate debugger
