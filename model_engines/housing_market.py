@@ -50,7 +50,7 @@ class HousingMarket(Engine):
                     bg_demand[top_candidate_bg] = {}
                     bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
 
-            for bg in bg_demand.keys():  ### FOR MATCHES NEED TO UPDATE LOCATION ATTRIBUTE ON HH AGENT
+            for bg in bg_demand.keys():
                 no_of_hhs = len(bg_demand[bg])
                 if self.target.get_node(bg).available_units >= no_of_hhs:  # if bg has enough available units to accommodate all matching agents, move all agents to location
                     for hh_match in bg_demand[bg].keys():

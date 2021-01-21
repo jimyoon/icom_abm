@@ -8,3 +8,5 @@ class FloodHazard(Engine):
         if self.timestep.year == 2020:
             for bg in self.target.nodes:
                 bg.flood_hazard_risk = 100
+
+        pass  # to accommodate debugger

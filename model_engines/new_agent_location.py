@@ -30,8 +30,6 @@ class NewAgentLocation(Engine):
             list, calculating an agent utility for each home.
         """
 
-
-
         for hh in self.target.unassigned_hhs.values():
             bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)  # Sample from available units
             for bg in bg_sample:
