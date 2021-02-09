@@ -56,7 +56,6 @@ class BlockGroup(Node):
     **Properties**:
 
         |  *population* (int) - population residing in the block group
-        |  *added_population* (int) - new population added during the current timestep
         |  *flood_hazard_risk* (int) - flood hazard risk score for block group
         |  *levee_protection* (str) - "no" or "yes"
         |  *years_since_major_flooding* (int) - years since major flooding
@@ -70,15 +69,20 @@ class BlockGroup(Node):
     **Inter-module Outputs/Modifications**:
 
     """
-    def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, **kwargs):
+    def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, perc_fld_area, **kwargs):
         super(BlockGroup, self).__init__(name, x, y, **kwargs)
+        # fixed attributes
         self.name = name
         self.county = county
         self.tract = tract
         self.blkgrpce = blkgrpce
         self.geometry = geometry
         self.area = area
+        self.land_elevation = 0
         self.init_pop = init_pop
+        self.perc_fld_area = perc_fld_area
+
+        # pynsim properties
         self.population = init_pop
         self.hh_agents = {}
         self.avg_home_price = 0
@@ -86,19 +90,24 @@ class BlockGroup(Node):
         self.flood_hazard_risk = 0
         self.available_units = 0
 
+
     _properties = {
         'population': 0,  # number of individuals residing in block group
-        'added_population': 0,
         'flood_hazard_risk': 0,
         'available_units': 0,
         'occupied_units': 0,
+        'total_units': 0,
         'pop_density': 0,  # number of individuals residing in block group / land area of block group (excludes water)
         'zoning': 'allowed',  # determines whether development is allowed or not allowed
         'levee_protection': "no",
         'avg_home_price': 0,
         'years_since_major_flooding': None,
+        'median_hh_income': 0,
     }
 
     def setup(self, timestep):
+        # calculate various block group level statistics based on hh agent population at beginning of each timestep
+        # (note: population is updated at the landscape level)
+
         self.pop_density = self.population / self.area
 

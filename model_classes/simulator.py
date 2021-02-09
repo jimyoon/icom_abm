@@ -30,7 +30,7 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, growth_mode):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, growth_mode, flood_filename):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         logging.info("Setting up model landscape")
@@ -38,9 +38,12 @@ class ICOMSimulator(Simulator):
 
         bg = gpd.read_file('data_inputs/' + geo_filename)
         pop = pd.read_csv('data_inputs/' + pop_filename)
+        flood = pd.read_csv('data_inputs/' + flood_filename)
 
         # join census/population data to block group data
         bg = pd.merge(bg, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
+        bg = pd.merge(bg, flood[['GISJOIN', 'perc_fld_area']], how='left', on='GISJOIN')
+        bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
@@ -48,12 +51,13 @@ class ICOMSimulator(Simulator):
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
             cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
-                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'], init_pop=row[pop_fieldname]))
+                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'], init_pop=row[pop_fieldname], perc_fld_area=row['perc_fld_area']))
 
         landscape.add_nodes(*cells)
 
         self.add_network(landscape)
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
+
 
     def convert_initial_population_to_agents(self, no_hhs_per_agent=100, hh_size=4):
         logging.info("Converting initial population to agents and adding to the simulation")
@@ -65,8 +69,16 @@ class ICOMSimulator(Simulator):
                 self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,
                                                    hh_size=hh_size, year_of_residence=self.start_year))  # add household agent to pynsim network
                 bg.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
+                bg.occupied_units += 1  # add occupied unit to associated block group node
                 self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution
                 count += 1
         logging.info(str(count) + " initial agents added to the simulation")
+
+    def initialize_available_building_units(self, initial_vacancy=.50):
+        # currently assumed a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
+        logging.info("Converting initial population to building availability")
+        for bg in self.network.nodes:
+            bg.available_units = round(initial_vacancy * bg.occupied_units)
+
 
 

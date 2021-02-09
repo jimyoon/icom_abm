@@ -57,12 +57,18 @@ class HousingMarket(Engine):
                         if self.target.get_institution('all_hh_agents')._component_map[hh_match].year_of_residence == self.timestep.year and \
                                 self.target.get_institution('all_hh_agents')._component_map[hh_match].name[9:16] != 'initial':  # if agent is new to domain
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add pynsim household agent to associated block group node
+                            self.target.get_node(bg).occupied_units += 1  # adjust occupied units
+                            self.target.get_node(bg).available_units -= 1  # adjust available units
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.unassigned_hhs[hh_match]  # delete matched agent from unassigned hh dict
                         else:  # if agent already exists (i.e., agent re-locating within domain)
                             bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh_match].location)
                             del bg_old_location.hh_agents[hh_match]  # remove agent from old location
+                            bg_old_location.occupied_units -= 1  # adjust occupied units
+                            bg_old_location.available_units += 1  # adjust available units
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add agent to new block group node
+                            self.target.get_node(bg).occupied_units += 1  # adjust occupied units
+                            self.target.get_node(bg).available_units -= 1  # adjust available units
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from relocating hh dict
                     bg_demand[bg] = {}  # delete all matched agents from hh/bg matching dict
@@ -72,12 +78,18 @@ class HousingMarket(Engine):
                         if self.target.get_institution('all_hh_agents')._component_map[hh_match].year_of_residence == self.timestep.year and \
                                 self.target.get_institution('all_hh_agents')._component_map[hh_match].name[9:16] != 'initial':  # if agent is new to domain
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add pynsim household agent to associated block group node
+                            self.target.get_node(bg).occupied_units += 1  # adjust occupied units
+                            self.target.get_node(bg).available_units -= 1  # adjust available units
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.unassigned_hhs[hh_match]  # delete matched agent from unassigned hh dict
                         else:  # if agent already exists (i.e., agent re-locating within domain)
                             bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh_match].location)
+                            bg_old_location.occupied_units -= 1  # adjust occupied units
+                            bg_old_location.available_units += 1  # adjust available units
                             del bg_old_location.hh_agents[hh_match]  # remove agent from old location
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add agent to new block group node
+                            self.target.get_node(bg).occupied_units += 1  # adjust occupied units
+                            self.target.get_node(bg).available_units -= 1  # adjust available units
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from unassigned hh dict
 

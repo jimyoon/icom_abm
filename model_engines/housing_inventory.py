@@ -1,4 +1,5 @@
 from pynsim import Engine
+import logging
 
 class HousingInventory(Engine):
     """An engine class that identifies housing inventory for the current timestep.
@@ -23,6 +24,16 @@ class HousingInventory(Engine):
         self.residences_per_unit = residences_per_unit
 
     def run(self):
+        """ Run the HousingInventory Engine.
+        """
+        for bg in self.target.nodes:
+            if bg.available_units == 0:
+                logging.info('no more units available for block group: ' + bg.name)
+            for unit in range(bg.available_units):
+                self.target.available_units_list.append(bg.name)
+        pass
+
+    def run_old(self):
         """ Run the HousingInventory Engine.
         """
         for bg in self.target.nodes:

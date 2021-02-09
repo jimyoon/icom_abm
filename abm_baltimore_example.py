@@ -28,6 +28,8 @@ landscape_name = 'Baltimore'
 geo_filename = 'blck_grp_extract.gpkg'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
+flood_filename = 'bg_perc_100yr_flood.csv'  # reads in FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
@@ -36,7 +38,8 @@ s.set_timestep_information()
 
 # Load geography/landscape information to simulation object
 growth_mode = 'perc'
-s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename, pop_fieldname=pop_fieldname, growth_mode=growth_mode)
+s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
+                pop_fieldname=pop_fieldname, growth_mode=growth_mode, flood_filename=flood_filename)
 
 # Create a county-level institution (agent) that will make zoning decisions
 s.network.add_institution(CountyZoningManager(name='005'))
@@ -50,6 +53,10 @@ s.network.add_institution(AllHHAgents(name='all_hh_agents'))
 # Create initial household agents based on initial population data
 hh_size = 4
 s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size)
+
+# Initialize available units on block groups based on initial population data
+initial_vacancy = .50
+s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 
 # Load new agent creation engine to simulation object
 target = s.network
