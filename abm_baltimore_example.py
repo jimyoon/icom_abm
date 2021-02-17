@@ -1,7 +1,8 @@
 # Import packages
 from model_classes.simulator import ICOMSimulator
 from model_classes.institutional_categories import AllHHAgents
-from model_classes.institutional_agents import CountyZoningManager
+from model_classes.institutional_agents import CountyZoningManager, RealEstate
+from model_engines.real_estate_prices import RealEstatePrices
 from model_engines.agent_creation import NewAgentCreation
 from model_engines.existing_agent_relocation import ExistingAgentReloSampler
 from model_engines.housing_inventory import HousingInventory
@@ -28,7 +29,8 @@ landscape_name = 'Baltimore'
 geo_filename = 'blck_grp_extract.gpkg'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
-flood_filename = 'bg_perc_100yr_flood.csv'  # reads in FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+initial_hedonic_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialilzation)
 
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
@@ -39,13 +41,17 @@ s.set_timestep_information()
 # Load geography/landscape information to simulation object
 growth_mode = 'perc'
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
-                pop_fieldname=pop_fieldname, growth_mode=growth_mode, flood_filename=flood_filename)
+                pop_fieldname=pop_fieldname, growth_mode=growth_mode, flood_filename=flood_filename,
+                hedonic_filename=initial_hedonic_filename)
 
 # Create a county-level institution (agent) that will make zoning decisions
-s.network.add_institution(CountyZoningManager(name='005'))
+s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
 for bg in s.network.nodes:
     if bg.county == '005':
-        s.network.get_institution('005').add_node(bg)
+        s.network.get_institution('zoning_manager_005').add_node(bg)
+
+# Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices
+s.network.add_institution(RealEstate(name='real_estate'))
 
 # Create an institution (categorical) that will contain all household agents
 s.network.add_institution(AllHHAgents(name='all_hh_agents'))
@@ -57,6 +63,11 @@ s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregatio
 # Initialize available units on block groups based on initial population data
 initial_vacancy = .50
 s.initialize_available_building_units(initial_vacancy=initial_vacancy)
+
+# Load real estate pricing engine to simulation object
+target = s.network.get_institution('real_estate')
+estimation_mode = "OLS_hedonic"
+s.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
 
 # Load new agent creation engine to simulation object
 target = s.network
@@ -92,7 +103,7 @@ target = s.network
 s.add_engine(FloodHazard(target))
 
 # Load Zoning engine to simulation object
-target = s.network.get_institution('005')
+target = s.network.get_institution('zoning_manager_005')
 s.add_engine(Zoning(target))
 
 # Run simulation

@@ -26,7 +26,7 @@ class HHAgent(Component):
     **Inter-module Outputs/Modifications**:
     """
 
-    def __init__(self, name, location=None, no_hhs_per_agent=100, hh_size=4, year_of_residence=2018, **kwargs):
+    def __init__(self, name, location=None, no_hhs_per_agent=100, hh_size=4, year_of_residence=2018, income=None, **kwargs):
         super(HHAgent, self).__init__(name, **kwargs)
         self.name = name
         self.location = location
@@ -34,7 +34,7 @@ class HHAgent(Component):
         self.hh_size = hh_size
         self.year_of_residence = year_of_residence
         ### Other potential attributes
-        self.income = 0
+        self.income = income
         self.average_age = 0
 
     _properties = {
@@ -47,7 +47,22 @@ class HHAgent(Component):
         """
         self.hh_utilities = {}  # reset any previously calculated utilities
 
-    def calc_utility(self, bg):
+    def calc_utility_cobb_douglas(self, bg):
+        """Calculates utility of a residence for a household agent. Assumes simple cobb-douglas function with
+        income, distance to CBD, and flood risk as main factors
+
+        **Args**:
+        bg (str): name of BlockGroup object
+
+        **Inter-module Outputs/Modifications**:
+        self.hh_utilities
+        """
+        income = bg.avg_hh_income
+        distance = bg
+        cobb_douglas_utility = (income**a) * (distance**b) * (flood**c)
+        self.hh_utilities[bg] = random.uniform(0, 1)  # temporarily calculate random utility value
+
+    def calc_utility_random(self, bg):
         """Calculates utility of a residence for a household agent.
 
         **Args**:

@@ -21,3 +21,10 @@ class LeveeManager(Institution):
 
     def build_new_levee(self):
         pass
+
+class RealEstate(Institution):
+    def __init__(self, name, **kwargs):
+        super(RealEstate, self).__init__(name, **kwargs)
+
+    def update_OLS_hedonic_analysis(self):
+        pass

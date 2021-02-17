@@ -1,6 +1,9 @@
 from pynsim import Network
 from pynsim import Node
 import logging
+import statistics
+import pandas as pd
+from math import nan
 
 class ABMLandscape(Network):
     """The ABMLandscape class.
@@ -21,9 +24,14 @@ class ABMLandscape(Network):
         self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
         self.relocating_hhs = {}  # dictionary of existing hh agents that are relocating keyed on hh name (long dict, do not include as property to save memory)
         self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
+        self.housing_df = None
+        self.avg_hh_income = 0
+        self.avg_hh_size = 0
 
     _properties = {
         'total_population': 0,
+        'avg_hh_income': 0,
+        'avg_hh_size': 0,
     }
 
     def setup(self, timestep):
@@ -32,13 +40,57 @@ class ABMLandscape(Network):
         self.unassigned_hhs = {}
         self.relocating_hhs = {}
         self.available_units_list = []
-        # calculate total population based on bg status
+
+        # reset population sums
         self.total_population = 0
+
+        # calculate various statistics (landscape level) from hh agents
+        incomes_landscape = []
+        hh_size_landscape = []
+
+        # update master block group pandas dataframe (this will be used for hedonic regression, etc.)
+        rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
         for bg in self.nodes:
+            bg_dict = {}
+            bg_dict['name'] = bg.name
+            bg_dict['no_hh_agents'] = len(bg.hh_agents)
+
+            # calculate various statistics (block level) from hh agents
             bg.population = 0
+            incomes_bg = []
+            hh_size_bg = []
+
+
             for name, a in bg.hh_agents.items():
                 self.total_population += a.no_hhs_per_agent * a.hh_size
                 bg.population += a.no_hhs_per_agent * a.hh_size
+                incomes_bg.append(a.income)
+                incomes_landscape.append(a.income)
+                hh_size_bg.append(a.hh_size)
+                hh_size_landscape.append(a.hh_size)
+
+            bg_dict['population'] = bg.population
+            if not incomes_bg:  # i.e. no households reside in block group
+                bg_dict['average_income'] = nan
+                bg.mean_hh_income = nan  # update attribute on block group
+            else:
+                print(incomes_bg)
+                bg_dict['average_income'] = statistics.mean(incomes_bg)
+                bg.avg_hh_income = statistics.mean(incomes_bg)  # update attribute on block group
+            if not hh_size_bg:
+                bg_dict['avg_hh_size'] = nan
+                bg.avg_hh_size = nan  # update attribute on block group
+            else:
+                bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
+                bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
+
+            rows_list.append(bg_dict)
+
+        self.housing_df = pd.DataFrame(rows_list)
+        self.avg_hh_income = statistics.mean(incomes_landscape)
+        self.avg_hh_size = statistics.mean(hh_size_landscape)
+
+        pass  # added to allow for debugger
 
 class BlockGroup(Node):
     """The BlockGroup node class.
@@ -69,7 +121,8 @@ class BlockGroup(Node):
     **Inter-module Outputs/Modifications**:
 
     """
-    def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, perc_fld_area, **kwargs):
+    def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, perc_fld_area,
+                 pop90, mhi90, hhsize90, coastdist, cbddist, hhtrans93, salesprice93, salespricesf93, **kwargs):
         super(BlockGroup, self).__init__(name, x, y, **kwargs)
         # fixed attributes
         self.name = name
@@ -81,6 +134,14 @@ class BlockGroup(Node):
         self.land_elevation = 0
         self.init_pop = init_pop
         self.perc_fld_area = perc_fld_area
+        self.pop90 = pop90
+        self.mhi90 = mhi90
+        self.hhsize90 = hhsize90
+        self.coastdist = coastdist
+        self.cbddist = cbddist
+        self.hhtrans93 = hhtrans93
+        self.salesprice93 = salesprice93
+        self.salespricesf93 = salespricesf93
 
         # pynsim properties
         self.population = init_pop
@@ -102,7 +163,7 @@ class BlockGroup(Node):
         'levee_protection': "no",
         'avg_home_price': 0,
         'years_since_major_flooding': None,
-        'median_hh_income': 0,
+        'avg_hh_income': 0,
     }
 
     def setup(self, timestep):
