@@ -69,6 +69,6 @@ class ExistingAgentLocation(Engine):
         for hh in self.target.relocating_hhs.values():
             bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)  # Sample from available units
             for bg in bg_sample:
-                hh.calc_utility_random(bg)
+                hh.calc_utility_cobb_douglas(bg)
 
         pass  # to accommodate debugger

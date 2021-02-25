@@ -2,6 +2,7 @@ from pynsim import Network
 from pynsim import Node
 import logging
 import statistics
+import geopandas as gpd
 import pandas as pd
 from math import nan
 
@@ -24,7 +25,6 @@ class ABMLandscape(Network):
         self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
         self.relocating_hhs = {}  # dictionary of existing hh agents that are relocating keyed on hh name (long dict, do not include as property to save memory)
         self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
-        self.housing_df = None
         self.avg_hh_income = 0
         self.avg_hh_size = 0
 
@@ -74,7 +74,6 @@ class ABMLandscape(Network):
                 bg_dict['average_income'] = nan
                 bg.mean_hh_income = nan  # update attribute on block group
             else:
-                print(incomes_bg)
                 bg_dict['average_income'] = statistics.mean(incomes_bg)
                 bg.avg_hh_income = statistics.mean(incomes_bg)  # update attribute on block group
             if not hh_size_bg:
@@ -86,9 +85,16 @@ class ABMLandscape(Network):
 
             rows_list.append(bg_dict)
 
-        self.housing_df = pd.DataFrame(rows_list)
+        housing_current_df = pd.DataFrame(rows_list)
         self.avg_hh_income = statistics.mean(incomes_landscape)
         self.avg_hh_size = statistics.mean(hh_size_landscape)
+
+        # calculate normalized statistics for block groups
+        housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
+
+        # merge with housing_bg_df to retain geometry features
+        cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
+        self.housing_bg_df = pd.merge(self.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
 
         pass  # added to allow for debugger
 
@@ -147,7 +153,6 @@ class BlockGroup(Node):
         self.population = init_pop
         self.hh_agents = {}
         self.avg_home_price = 0
-        self.distance_to_cbd = 0
         self.flood_hazard_risk = 0
         self.available_units = 0
 

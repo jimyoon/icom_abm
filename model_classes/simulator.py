@@ -47,7 +47,13 @@ class ICOMSimulator(Simulator):
         bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
         bg = pd.merge(bg, hedonic, how='left', on='GISJOIN')
 
-        # join hedonic data to block groups
+        # determine relative cbd proximity and relative flood risk for input to hh utility calcs
+        bg['rel_prox_cbd'] = bg['cbddist'].max() + 1 - bg['cbddist']
+        bg['rel_flood_risk'] = bg['perc_fld_area'].max() + 1 - bg['perc_fld_area']
+
+        # calculate normalized values for cbd proximity and flood risk
+        bg['prox_cbd_norm'] = bg['rel_prox_cbd'] / bg['rel_prox_cbd'].max()
+        bg['flood_risk_norm'] = bg['rel_flood_risk'] / bg['rel_flood_risk'].max()
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
@@ -60,6 +66,9 @@ class ICOMSimulator(Simulator):
                                     pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
                                     salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
+
+        # store the bg pandas dataframe on the network object as a reference
+        landscape.housing_bg_df = bg
 
         landscape.add_nodes(*cells)
 

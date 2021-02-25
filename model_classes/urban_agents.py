@@ -57,10 +57,14 @@ class HHAgent(Component):
         **Inter-module Outputs/Modifications**:
         self.hh_utilities
         """
-        income = bg.avg_hh_income
-        distance = bg
+        income = self.network.housing_bg_df[(self.network.housing_bg_df.name == bg)]['average_income_norm'].values[0]
+        distance = self.network.housing_bg_df[(self.network.housing_bg_df.GEOID == bg)]['prox_cbd_norm'].values[0]
+        flood = self.network.housing_bg_df[(self.network.housing_bg_df.GEOID == bg)]['flood_risk_norm'].values[0]
+        a = 0.4  # temporary, need to define higher up
+        b = 0.4
+        c = 0.2
         cobb_douglas_utility = (income**a) * (distance**b) * (flood**c)
-        self.hh_utilities[bg] = random.uniform(0, 1)  # temporarily calculate random utility value
+        self.hh_utilities[bg] = cobb_douglas_utility
 
     def calc_utility_random(self, bg):
         """Calculates utility of a residence for a household agent.
