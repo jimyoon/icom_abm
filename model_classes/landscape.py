@@ -32,6 +32,7 @@ class ABMLandscape(Network):
         'total_population': 0,
         'avg_hh_income': 0,
         'avg_hh_size': 0,
+        'housing_bg_df': None,  # Currently stores bg dataframe, note history record will correspond to bg status at the beginning of the time period/year
     }
 
     def setup(self, timestep):
@@ -59,6 +60,7 @@ class ABMLandscape(Network):
             bg.population = 0
             incomes_bg = []
             hh_size_bg = []
+            bg.no_of_hhs = len(bg.hh_agents)
 
 
             for name, a in bg.hh_agents.items():
@@ -82,6 +84,9 @@ class ABMLandscape(Network):
             else:
                 bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
                 bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
+
+            bg_dict['pop_density'] = bg.population / bg.area
+            bg.pop_density = bg.population / bg.area
 
             rows_list.append(bg_dict)
 
@@ -169,11 +174,13 @@ class BlockGroup(Node):
         'avg_home_price': 0,
         'years_since_major_flooding': None,
         'avg_hh_income': 0,
+        'no_of_hhs': 0,
     }
 
     def setup(self, timestep):
+        # Note: block group population statistics are updated in the landscape's setup method
         # calculate various block group level statistics based on hh agent population at beginning of each timestep
-        # (note: population is updated at the landscape level)
+        # (note: population is updated in the landscape's setup method)
 
         self.pop_density = self.population / self.area
 
