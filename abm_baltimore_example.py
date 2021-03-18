@@ -26,7 +26,7 @@ agent_housing_aggregation = 100  # indicates the level of agent/building aggrega
 
 # Define census geographies files / data
 landscape_name = 'Baltimore'
-geo_filename = 'blck_grp_extract.gpkg'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+geo_filename = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
 flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
