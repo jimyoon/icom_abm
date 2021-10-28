@@ -1,7 +1,7 @@
 from pynsim import Engine
 import logging
 
-class HousingInventory(Engine):
+class HousingInventoryOld(Engine):  # JY: deprecated; housing inventory tracked via dataframe
     """An engine class that identifies housing inventory for the current timestep.
 
     The HousingInventory class is a pynsim engine that scans through the model landscape and identifies available
@@ -19,8 +19,8 @@ class HousingInventory(Engine):
         s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
     """
 
-    def __init__(self, target, residences_per_unit=100, **kwargs):
-        super(HousingInventory, self).__init__(target, **kwargs)
+    def __init__(self, target, residences_per_unit=10, **kwargs):
+        super(HousingInventoryOld, self).__init__(target, **kwargs)
         self.residences_per_unit = residences_per_unit
 
     def run(self):

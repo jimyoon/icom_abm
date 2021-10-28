@@ -5,6 +5,7 @@ import statistics
 import geopandas as gpd
 import pandas as pd
 from math import nan
+import numpy as np
 
 class ABMLandscape(Network):
     """The ABMLandscape class.
@@ -64,7 +65,10 @@ class ABMLandscape(Network):
 
 
             for name, a in bg.hh_agents.items():
-                self.total_population += a.no_hhs_per_agent * a.hh_size
+                if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
+                    self.total_population += a.no_hhs_per_agent * a.hh_size
+                else:  # use mean
+                    self.total_population += a.no_hhs_per_agent * self.housing_bg_df.hhsize1990.mean()
                 bg.population += a.no_hhs_per_agent * a.hh_size
                 incomes_bg.append(a.income)
                 incomes_landscape.append(a.income)
@@ -85,8 +89,12 @@ class ABMLandscape(Network):
                 bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
                 bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
 
+            # pop density calc
             bg_dict['pop_density'] = bg.population / bg.area
             bg.pop_density = bg.population / bg.area
+
+            # available units calc
+            bg_dict['available_units'] = bg.available_units
 
             rows_list.append(bg_dict)
 

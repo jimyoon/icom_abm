@@ -5,6 +5,7 @@ import datetime
 import geopandas as gpd
 import pandas as pd
 import logging
+import numpy as np
 
 class ICOMSimulator(Simulator):
     """An ICOM Simulator class (a child of the pynsim Simulator class)
@@ -35,6 +36,9 @@ class ICOMSimulator(Simulator):
         """
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
+
+        # save the type of population growth mode
+        self.growth_mode = growth_mode
 
         bg = gpd.read_file('data_inputs/' + geo_filename)
         pop = pd.read_csv('data_inputs/' + pop_filename)
@@ -67,6 +71,9 @@ class ICOMSimulator(Simulator):
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
                                     salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
 
+        # calculate housing budget based on 1990-1993 data
+        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
+
         # store the bg pandas dataframe on the network object as a reference
         landscape.housing_bg_df = bg
 
@@ -76,23 +83,27 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
 
 
-    def convert_initial_population_to_agents(self, no_hhs_per_agent=100, hh_size=4):
+    def convert_initial_population_to_agents(self, no_hhs_per_agent=10):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for bg in self.network.nodes:
-            no_of_agents = (bg.init_pop + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
+            if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
+                no_of_hhs = round(bg.init_pop / bg.hhsize90)
+            else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
+                no_of_hhs = round(bg.init_pop / self.network.housing_bg_df.hhsize1990.median())
+            no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
                 self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,
-                                                   hh_size=hh_size, income=bg.mhi90, year_of_residence=self.start_year))  # add household agent to pynsim network
+                                                   hh_size=bg.hhsize90, income=bg.mhi90, year_of_residence=self.start_year))  # add household agent to pynsim network
                 bg.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
                 bg.occupied_units += 1  # add occupied unit to associated block group node
                 self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution
                 count += 1
         logging.info(str(count) + " initial agents added to the simulation")
 
-    def initialize_available_building_units(self, initial_vacancy=.50):
-        # currently assumed a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
+    def initialize_available_building_units(self, initial_vacancy=.20):
+        # currently assume a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
         logging.info("Converting initial population to building availability")
         for bg in self.network.nodes:
             bg.available_units = round(initial_vacancy * bg.occupied_units)

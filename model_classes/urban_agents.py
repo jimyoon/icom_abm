@@ -26,7 +26,8 @@ class HHAgent(Component):
     **Inter-module Outputs/Modifications**:
     """
 
-    def __init__(self, name, location=None, no_hhs_per_agent=100, hh_size=4, year_of_residence=2018, income=None, **kwargs):
+    def __init__(self, name, location=None, no_hhs_per_agent=100, hh_size=4, year_of_residence=2018, income=None,
+                 hh_budget_perc=0.33, **kwargs):
         super(HHAgent, self).__init__(name, **kwargs)
         self.name = name
         self.location = location
@@ -36,6 +37,8 @@ class HHAgent(Component):
         ### Other potential attributes
         self.income = income
         self.average_age = 0
+        self.hh_budget_perc = hh_budget_perc
+        self.house_budget = self.income / self.hh_budget_perc
 
     _properties = {
         'location': None,  # number of individuals residing in block group

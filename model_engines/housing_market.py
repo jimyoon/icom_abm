@@ -26,29 +26,58 @@ class HousingMarket(Engine):
     def run(self):
         """ Run the HousingMarket Engine.
         """
+        logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
+
+
         for market_iter in range(self.bg_sample_size):
+
             logging.info('Housing market iteration: ' + str(market_iter))
+
+            to_delete_unassigned_hhs = []  # list of households to delete from unassigned dicts for market iteration
+            to_delete_relocating_hhs = []  # list of households to delete from unassigned dicts for market iteration
+
             if not self.target.unassigned_hhs and not self.target.relocating_hhs:  # break out of market iteration loop if no more unassigned households
                 break
             bg_demand = {}  # a dictionary that will identify hh's and top candidate bg's
             for hh in self.target.unassigned_hhs.values():
                 sorted_bg_candidates = sorted(((v,k) for k,v in hh.hh_utilities.items()))  # sort bg candidates from lowest to highest
-                top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
-                top_candidate_utility = hh.hh_utilities[top_candidate_bg]
-                if top_candidate_bg in bg_demand.keys():
-                    bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
-                else:
-                    bg_demand[top_candidate_bg] = {}
-                    bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                try:
+                    top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
+                    top_candidate_utility = hh.hh_utilities[top_candidate_bg]
+                    if top_candidate_bg in bg_demand.keys():
+                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                    else:
+                        bg_demand[top_candidate_bg] = {}
+                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                except IndexError:  # if list index is out of range, indicates that no available units are affordable for agent
+                    logging.info(hh.name + ' cannot afford any properties and is assumed to migrate outside of domain')
+                    # del self.target.unassigned_hhs[hh.name]
+                    to_delete_unassigned_hhs.append(hh.name)
+                    self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
             for hh in self.target.relocating_hhs.values():
                 sorted_bg_candidates = sorted(((v,k) for k,v in hh.hh_utilities.items()))  # sort bg candidates from lowest to highest
-                top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
-                top_candidate_utility = hh.hh_utilities[top_candidate_bg]
-                if top_candidate_bg in bg_demand.keys():
-                    bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
-                else:
-                    bg_demand[top_candidate_bg] = {}
-                    bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                try:
+                    top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
+                    top_candidate_utility = hh.hh_utilities[top_candidate_bg]
+                    if top_candidate_bg in bg_demand.keys():
+                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                    else:
+                        bg_demand[top_candidate_bg] = {}
+                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                except IndexError: # if list index is out of range, indicates that no available units are affordable for agent
+                    logging.info(hh.name + ' cannot afford any properties and is assumed to migrate outside of domain')
+                    bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh.name].location)
+                    del bg_old_location.hh_agents[hh.name]  # remove agent from old location
+                    bg_old_location.occupied_units -= 1  # adjust occupied units
+                    bg_old_location.available_units += 1  # adjust available units
+                    # del self.target.relocating_hhs[hh.name]
+                    to_delete_relocating_hhs.append(hh.name)
+                    self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
+
+            for hh in to_delete_unassigned_hhs:
+                del self.target.unassigned_hhs[hh]
+            for hh in to_delete_relocating_hhs:
+                del self.target.relocating_hhs[hh]
 
             for bg in bg_demand.keys():
                 no_of_hhs = len(bg_demand[bg])

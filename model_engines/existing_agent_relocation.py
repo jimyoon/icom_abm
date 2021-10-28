@@ -1,5 +1,6 @@
 from pynsim import Engine
 import random
+import logging
 
 class ExistingAgentReloSampler(Engine):
     """An engine class to identify existing agents to relocate and determine utility for homes.
@@ -28,7 +29,8 @@ class ExistingAgentReloSampler(Engine):
             The engine vacates the agent's existing property (adding the property to the block group's available unit)
             and adds the agent to the unassigned hh agents queue.
         """
-        #
+        logging.info("Running the existing agent sampler engine, year " + str(self.target.current_timestep.year))
+
         for bg in self.target.nodes:
             no_of_agents = len(bg.hh_agents)  # number of representative household agents
             no_of_agents_moving = round(self.perc_move * no_of_agents)  # number of representative household agents that are moving
@@ -66,9 +68,49 @@ class ExistingAgentLocation(Engine):
             list, calculating an agent utility for each home.
         """
 
+        logging.info("Running the existing agent relocation engine, year " + str(self.target.current_timestep.year))
+
+        # for hh in self.target.relocating_hhs.values():
+        #     bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]
+        #     if bg_budget.empty:
+        #         logging.info(hh.name + ' cannot afford any available homes!')
+        #     else:
+        #         bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units').GEOID.to_list()  # Sample from available units
+        #     for bg in bg_sample:
+        #         hh.calc_utility_cobb_douglas(bg)
+
+        def cobb_douglas_utility(row):
+            return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
+
+        first = True
         for hh in self.target.relocating_hhs.values():
-            bg_sample = random.sample(self.target.available_units_list, self.bg_sample_size)  # Sample from available units
-            for bg in bg_sample:
-                hh.calc_utility_cobb_douglas(bg)
+            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]
+            if first:
+                try:
+                    bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
+                except ValueError:
+                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
+                    continue
+                bg_sample['hh'] = hh.name
+                bg_sample['a'] = 0.4
+                bg_sample['b'] = 0.4
+                bg_sample['c'] = 0.2
+            else:
+                try:
+                    bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
+                except ValueError:
+                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
+                    continue
+                bg_append['hh'] = hh.name
+                bg_append['a'] = 0.4
+                bg_append['b'] = 0.4
+                bg_append['c'] = 0.2
+                bg_sample = bg_sample.append(bg_append)
+
+            first = False
+
+        bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+
+        self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample)
 
         pass  # to accommodate debugger
