@@ -31,14 +31,11 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, growth_mode, flood_filename, hedonic_filename):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, hedonic_filename):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
-
-        # save the type of population growth mode
-        self.growth_mode = growth_mode
 
         bg = gpd.read_file('data_inputs/' + geo_filename)
         pop = pd.read_csv('data_inputs/' + pop_filename)

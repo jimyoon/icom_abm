@@ -13,6 +13,11 @@ from model_engines.flood_hazard import FloodHazard
 from model_engines.zoning import Zoning
 import time
 
+# Adjust pandas setting to allow for expanded view of dataframes
+import pandas as pd
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+
 # Record start of model time
 start_time = time.time()
 
@@ -23,11 +28,13 @@ intervention = 'Baseline'
 start_year = 2018
 no_years = 2
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
+hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
+initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.)
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'category'  # indicates which mode of population growth is used for the model run (e.g., percent-based, category, exogenous time series, etc.)
-inc_growth_mode = 'high'  # segment of income class for population growth
-bld_growth_mode = 'perc'  # indicates which mode of growth is used for building stock increase (e.g., percent-based)
+inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
+bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 
@@ -43,45 +50,39 @@ initial_hedonic_filename = 'bg_housing_1993.csv'  # housing characteristic data 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
                   name=simulation_name, scenario=scenario, intervention=intervention, start_year=start_year, no_of_years=no_years)
-s.set_timestep_information()
+s.set_timestep_information()  # sets up timestep information based on model options (start_year, no_years)
 
 # Load geography/landscape information to simulation object
-growth_mode = 'perc'
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
-                pop_fieldname=pop_fieldname, growth_mode=growth_mode, flood_filename=flood_filename,
+                pop_fieldname=pop_fieldname, flood_filename=flood_filename,
                 hedonic_filename=initial_hedonic_filename)
 
-# Create a county-level institution (agent) that will make zoning decisions
-s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
-for bg in s.network.nodes:
-    if bg.county == '005':
-        s.network.get_institution('zoning_manager_005').add_node(bg)
+# # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
+# s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
+# for bg in s.network.nodes:
+#     if bg.county == '005':
+#         s.network.get_institution('zoning_manager_005').add_node(bg)
 
-# Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices
-s.network.add_institution(RealEstate(name='real_estate'))
+# # Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices (DEACTIVATE for sensitivity experiments)
+# s.network.add_institution(RealEstate(name='real_estate'))
 
 # Create an institution (categorical) that will contain all household agents
 s.network.add_institution(AllHHAgents(name='all_hh_agents'))
 
 # Create household agents based on initial population data
-hh_size = 2.7  # currently use average from 1990 data
 s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation)
 
 # Initialize available units on block groups based on initial population data
-initial_vacancy = .20
 s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 
-# Load real estate pricing engine to simulation object
-target = s.network.get_institution('real_estate')
-estimation_mode = "OLS_hedonic"
-s.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
+# # Load real estate pricing engine to simulation object (DEACTIVATED for sensitivity experiments)
+# target = s.network.get_institution('real_estate')
+# estimation_mode = "OLS_hedonic"
+# s.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
 
 # Load new agent creation engine to simulation object
 target = s.network
-growth_mode = 'perc'
-growth_rate = .01
-growth_inc = .05
-s.add_engine(NewAgentCreation(target, growth_mode=growth_mode, growth_rate=growth_rate, growth_inc=growth_inc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size))
+s.add_engine(NewAgentCreation(target, pop_growth_mode=pop_growth_mode, pop_growth_perc=pop_growth_perc, inc_growth_mode=inc_growth_mode, pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size))
 
 # Load existing agent sampler (for re-location) to simulation object
 target = s.network
@@ -106,13 +107,13 @@ target = s.network
 market_mode = 'top_candidate'
 s.add_engine(HousingMarket(target, market_mode=market_mode, bg_sample_size=bg_sample_size))
 
-# Load flood hazard engine to simulation object
-target = s.network
-s.add_engine(FloodHazard(target))
+# # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
+# target = s.network
+# s.add_engine(FloodHazard(target))
 
-# Load Zoning engine to simulation object
-target = s.network.get_institution('zoning_manager_005')
-s.add_engine(Zoning(target))
+# # Load Zoning engine to simulation object (DEACTIVATED for sensitivity run)
+# target = s.network.get_institution('zoning_manager_005')
+# s.add_engine(Zoning(target))
 
 # Run simulation
 s.start()
