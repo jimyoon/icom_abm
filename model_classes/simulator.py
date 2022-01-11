@@ -71,6 +71,10 @@ class ICOMSimulator(Simulator):
         # calculate housing budget based on 1990-1993 data
         bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
 
+        # replace 0 mhi1990 values with non-zero minimum
+        non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
+        bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
+
         # store the bg pandas dataframe on the network object as a reference
         landscape.housing_bg_df = bg
 
