@@ -59,12 +59,11 @@ class NewAgentCreation(Engine):
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
             elif self.inc_growth_mode == 'percentile_based':
-                # ADD CODE HERE
-                hh_income = self.target.housing_bg_df.mhi1990.quantile(q=self.pop_growth_inc_perc) ### UPDATE WITH LIVE INCOMES!
+                # JY ADD CODE HERE
+                hh_income = self.target.housing_bg_df.average_income.quantile(q=self.pop_growth_inc_perc) ### UPDATE WITH LIVE INCOMES!
                 count = 1
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
-                    hh_income = X.rvs(1)[0]  # sample from household income distribution
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
                                                       hh_size=self.hh_size, income=hh_income,
                                                       year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
