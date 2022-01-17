@@ -96,7 +96,8 @@ class ICOMSimulator(Simulator):
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
                 self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,
-                                                   hh_size=bg.hhsize90, income=bg.mhi90, year_of_residence=self.start_year))  # add household agent to pynsim network
+                                                   hh_size=bg.hhsize90, income=bg.mhi90, house_budget_mode='rhea',
+                                                   year_of_residence=self.start_year))  # add household agent to pynsim network
                 bg.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
                 bg.occupied_units += 1  # add occupied unit to associated block group node
                 self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution

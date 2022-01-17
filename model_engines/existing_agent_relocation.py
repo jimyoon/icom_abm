@@ -84,7 +84,7 @@ class ExistingAgentLocation(Engine):
 
         first = True
         for hh in self.target.relocating_hhs.values():
-            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]
+            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)] # JY: need to update sales prices
             if first:
                 try:
                     bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units

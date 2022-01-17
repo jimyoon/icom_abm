@@ -168,6 +168,7 @@ class BlockGroup(Node):
         self.avg_home_price = 0
         self.flood_hazard_risk = 0
         self.available_units = 0
+        self.demand_exceeds_supply = False
 
 
     _properties = {
@@ -183,6 +184,7 @@ class BlockGroup(Node):
         'years_since_major_flooding': None,
         'avg_hh_income': 0,
         'no_of_hhs': 0,
+        'demand_exceeds_supply': False,
     }
 
     def setup(self, timestep):

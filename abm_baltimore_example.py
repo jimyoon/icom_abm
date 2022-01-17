@@ -9,6 +9,7 @@ from model_engines.existing_agent_relocation import ExistingAgentReloSampler
 from model_engines.new_agent_location import NewAgentLocation
 from model_engines.existing_agent_relocation import ExistingAgentLocation
 from model_engines.housing_market import HousingMarket
+from model_engines.building_development import BuildingDevelopment
 from model_engines.flood_hazard import FloodHazard
 from model_engines.zoning import Zoning
 import time
@@ -38,6 +39,7 @@ pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating 
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
+house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 
 # Define census geography files / data
 landscape_name = 'Baltimore'
@@ -106,6 +108,10 @@ s.add_engine(ExistingAgentLocation(target, bg_sample_size=bg_sample_size))
 target = s.network
 market_mode = 'top_candidate'
 s.add_engine(HousingMarket(target, market_mode=market_mode, bg_sample_size=bg_sample_size))
+
+# Load housing market engine to simulation object  # JY to complete
+target = s.network
+s.add_engine(BuildingDevelopment(target))
 
 # # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
 # target = s.network

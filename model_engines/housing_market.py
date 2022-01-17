@@ -104,6 +104,7 @@ class HousingMarket(Engine):
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from relocating hh dict
                     bg_demand[bg] = {}  # delete all matched agents from hh/bg matching dict
                 else:  # else move only those agents with highest utility for bg up to the amount of available units
+                    bg.demand_exceeds_supply == True
                     top_matches = dict(sorted(bg_demand[bg].items(), key=itemgetter(1), reverse=True)[:self.target.get_node(bg).available_units])
                     for hh_match in top_matches.keys():
                         if self.target.get_institution('all_hh_agents')._component_map[hh_match].year_of_residence == self.timestep.year and \

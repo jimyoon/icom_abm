@@ -54,7 +54,8 @@ class NewAgentCreation(Engine):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
                     hh_income = X.rvs(1)[0]  # sample from household income distribution
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
-                                                       hh_size=self.hh_size, income=hh_income, year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
+                                                       hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
+                                                      year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
                     self.target.get_institution('all_hh_agents').add_component(self.target.components[-1])  # add pynsim household agent to all hh agents institution
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
@@ -65,7 +66,7 @@ class NewAgentCreation(Engine):
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
-                                                      hh_size=self.hh_size, income=hh_income,
+                                                      hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
                                                       year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
                     self.target.get_institution('all_hh_agents').add_component(
                         self.target.components[-1])  # add pynsim household agent to all hh agents institution
