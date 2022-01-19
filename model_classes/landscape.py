@@ -50,7 +50,7 @@ class ABMLandscape(Network):
         incomes_landscape = []
         hh_size_landscape = []
 
-        # update master block group pandas dataframe (this will be used for hedonic regression, etc.)
+        # update master block group pandas dataframe (JY Add engine so this takes place at end of timestep rather than at beginning of next timestep)
         rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
         for bg in self.nodes:
             bg_dict = {}
@@ -95,6 +95,9 @@ class ABMLandscape(Network):
 
             # available units calc
             bg_dict['available_units'] = bg.available_units
+
+            # supply exceeds demand
+            bg_dict['demand_exceeds_supply'] = bg.demand_exceeds_supply
 
             rows_list.append(bg_dict)
 
@@ -192,5 +195,7 @@ class BlockGroup(Node):
         # calculate various block group level statistics based on hh agent population at beginning of each timestep
         # (note: population is updated in the landscape's setup method)
 
+        self.demand_exceeds_supply = False
         self.pop_density = self.population / self.area
+
 

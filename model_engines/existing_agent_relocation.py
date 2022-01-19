@@ -57,9 +57,10 @@ class ExistingAgentLocation(Engine):
         sample_size (integer): a single value that indicates the sample size for new agent's housing search
 
     """
-    def __init__(self, target, bg_sample_size=10, **kwargs):
+    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', **kwargs):
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
+        self.house_choice_mode = house_choice_mode
 
 
     def run(self):
@@ -79,8 +80,7 @@ class ExistingAgentLocation(Engine):
         #     for bg in bg_sample:
         #         hh.calc_utility_cobb_douglas(bg)
 
-        def cobb_douglas_utility(row):
-            return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
+
 
         first = True
         for hh in self.target.relocating_hhs.values():
@@ -109,8 +109,18 @@ class ExistingAgentLocation(Engine):
 
             first = False
 
-        bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
 
-        self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample)
+            def cobb_douglas_utility(row):
+                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
+
+            bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+
+        elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
+            bg_sample['utility'] = (189680 * self.target.housing_bg_df['N_MeanSqfeet']) + (129080 * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (122136 * self.target.housing_bg_df['N_MeanNoOfStories']) + (169503 * self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (11198 * self.target.housing_bg_df['N_perc_area_flood']) + 53360
+
+        self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
 
         pass  # to accommodate debugger
