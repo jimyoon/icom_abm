@@ -40,14 +40,16 @@ bld_growth_perc = .01  # indicates the percentage of building stock increase if 
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
+house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
 
-# Define census geography files / data
+# Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
 geo_filename = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
 flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-initial_hedonic_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
+housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
+hedonic_filename = 'simple_anova_hedonic.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
@@ -57,7 +59,7 @@ s.set_timestep_information()  # sets up timestep information based on model opti
 # Load geography/landscape information to simulation object
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                 pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                hedonic_filename=initial_hedonic_filename)
+                housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
 
 # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
 # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
@@ -97,7 +99,7 @@ s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 
 # Load new agent location engine to simulation object
 bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-s.add_engine(NewAgentLocation(target, bg_sample_size))
+s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode))
 
 # Load existing agent re-location engine to simulation object
 target = s.network

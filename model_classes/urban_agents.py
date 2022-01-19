@@ -75,6 +75,17 @@ class HHAgent(Component):
         cobb_douglas_utility = (income**a) * (distance**b) * (flood**c)
         self.hh_utilities[bg] = cobb_douglas_utility
 
+    def calc_utility_anova_simple(self, bg):
+        """Calculates utility of a residence for a household agent. Assumes simple utility function based on ANOVA hedonic
+        regression. See Alfred's analysis (e-mail 9/23/2021 for details).
+
+        **Args**:
+        bg (str): name of BlockGroup object
+
+        **Inter-module Outputs/Modifications**:
+        self.hh_utilities
+        """
+
     def calc_utility_random(self, bg):
         """Calculates utility of a residence for a household agent.
 

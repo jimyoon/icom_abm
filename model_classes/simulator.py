@@ -31,7 +31,7 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, hedonic_filename):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename, house_choice_mode):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         logging.info("Setting up model landscape")
@@ -40,21 +40,33 @@ class ICOMSimulator(Simulator):
         bg = gpd.read_file('data_inputs/' + geo_filename)
         pop = pd.read_csv('data_inputs/' + pop_filename)
         flood = pd.read_csv('data_inputs/' + flood_filename)
+        housing = pd.read_csv('data_inputs/' + housing_filename)
         hedonic = pd.read_csv('data_inputs/' + hedonic_filename)
 
         # join census/population data to block groups
         bg = pd.merge(bg, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
         bg = pd.merge(bg, flood[['GISJOIN', 'perc_fld_area']], how='left', on='GISJOIN')
         bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
-        bg = pd.merge(bg, hedonic, how='left', on='GISJOIN')
+        bg = pd.merge(bg, housing, how='left', on='GISJOIN')
 
-        # determine relative cbd proximity and relative flood risk for input to hh utility calcs
+        # if house choice mode is simple anova, load table with coefficients
+        if house_choice_mode=='simple_anova_utility':
+            bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
+
+        # determine relative cbd proximity and relative flood risk for input to hh utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
         bg['rel_prox_cbd'] = bg['cbddist'].max() + 1 - bg['cbddist']
         bg['rel_flood_risk'] = bg['perc_fld_area'].max() + 1 - bg['perc_fld_area']
 
         # calculate normalized values for cbd proximity and flood risk
         bg['prox_cbd_norm'] = bg['rel_prox_cbd'] / bg['rel_prox_cbd'].max()
         bg['flood_risk_norm'] = bg['rel_flood_risk'] / bg['rel_flood_risk'].max()
+
+        # calculate housing budget based on 1990-1993 data
+        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
+
+        # replace 0 mhi1990 values with non-zero minimum
+        non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
+        bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
@@ -67,13 +79,6 @@ class ICOMSimulator(Simulator):
                                     pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
                                     salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
-
-        # calculate housing budget based on 1990-1993 data
-        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
-
-        # replace 0 mhi1990 values with non-zero minimum
-        non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
-        bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
         # store the bg pandas dataframe on the network object as a reference
         landscape.housing_bg_df = bg

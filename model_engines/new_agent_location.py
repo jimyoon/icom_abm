@@ -20,9 +20,10 @@ class NewAgentLocation(Engine):
         sample_size (integer): a single value that indicates the sample size for new agent's housing search
 
     """
-    def __init__(self, target, bg_sample_size=10, **kwargs):
+    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', **kwargs):
         super(NewAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
+        self.house_choice_mode = house_choice_mode
 
 
     def run(self):
@@ -41,41 +42,47 @@ class NewAgentLocation(Engine):
         #     for bg in bg_sample:
         #         hh.calc_utility_cobb_douglas(bg)
 
-        def cobb_douglas_utility(row):
-            return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
-
         first = True
         for hh in self.target.unassigned_hhs.values():
-            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]
+            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
-                    bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
+                    bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
                     continue
                 bg_sample['hh'] = hh.name
-                bg_sample['a'] = 0.4
+                bg_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 bg_sample['b'] = 0.4
                 bg_sample['c'] = 0.2
             else:
                 try:
-                    bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
+                    bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
                     continue
                 bg_append['hh'] = hh.name
-                bg_append['a'] = 0.4
+                bg_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 bg_append['b'] = 0.4
                 bg_append['c'] = 0.2
                 bg_sample = bg_sample.append(bg_append)
 
             first = False
 
-        bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
 
-        self.target.hh_utilities_df = bg_sample
+            def cobb_douglas_utility(row):
+                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (
+                            row['flood_risk_norm'] ** row['c'])
 
-        pass  # to accommodate debugger
+            bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+
+        elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
+            bg_sample['utility'] = (189680 * self.target.housing_bg_df['N_MeanSqfeet']) + (129080 * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (122136 * self.target.housing_bg_df['N_MeanNoOfStories']) + (169503 * self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (11198 * self.target.housing_bg_df['N_perc_area_flood']) + 53360
+
+        self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
 
 
     def run_old_version(self):
