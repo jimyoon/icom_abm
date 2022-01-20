@@ -10,6 +10,26 @@ import contextily as ctx
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
+##### See which histories are stored on the network
+s.network._properties
+
+#### Get history for total population
+s.network.get_history('total_population')
+
+### Get history for population of a particular block group
+s.network.nodes[50].get_history('population')
+s.network.get_node('240054015052').get_history('population')
+
+### Get history for population of a particular block group
+s.network.nodes[50].get_history('population')
+s.network.get_node('240054015052').get_history('population')
+
+### Get location history for a specific household agents
+s.network.get_institution('all_hh_agents').components[25000].get_history('location')
+
+### Get list of agents that reside in a specific block group
+s.network.get_node('245101204002').hh_agents
+
 ##### Export final housing dataframe to geopackage
 s.network.get_history('housing_bg_df')[-1].to_file(driver='ESRI Shapefile', filename="result_test.shp")
 
@@ -24,11 +44,18 @@ ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
 ##### Plot final population
 s.network.get_history('housing_bg_df')[-1].plot(column = 'population', cmap='OrRd', legend=True)
 
+##### Plot population change
+gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final bg df
+gdf['population_change'] = s.network.get_history('housing_bg_df')[-1]['population'] - s.network.get_history('housing_bg_df')[0]['population']
+# normalize color
+ax = gdf.plot(column = 'population', cmap='OrRd', alpha=0.8, legend=True)
+ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
+
 ##### Plot population change with divergent chloropleth map centered on 0
 gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final bg df
 gdf['population_change'] = s.network.get_history('housing_bg_df')[-1]['population'] - s.network.get_history('housing_bg_df')[0]['population']
 # normalize color
-vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 50
+vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
 norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
 # create a normalized colorbar
 cmap = 'RdBu'

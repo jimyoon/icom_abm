@@ -1,19 +1,19 @@
 # Import packages
 from model_classes.simulator import ICOMSimulator
 from model_classes.institutional_categories import AllHHAgents
-from model_classes.institutional_agents import CountyZoningManager, RealEstate
-from model_engines.real_estate_prices import RealEstatePrices
 from model_engines.agent_creation import NewAgentCreation
 from model_engines.existing_agent_relocation import ExistingAgentReloSampler
-# from model_engines.housing_inventory import HousingInventory
 from model_engines.new_agent_location import NewAgentLocation
 from model_engines.existing_agent_relocation import ExistingAgentLocation
 from model_engines.housing_market import HousingMarket
 from model_engines.building_development import BuildingDevelopment
-from model_engines.flood_hazard import FloodHazard
-from model_engines.zoning import Zoning
 from model_engines.landscape_statistics import LandscapeStatistics
 import time
+# from model_classes.institutional_agents import CountyZoningManager, RealEstate
+# from model_engines.real_estate_prices import RealEstatePrices
+# from model_engines.housing_inventory import HousingInventory
+# from model_engines.flood_hazard import FloodHazard
+# from model_engines.zoning import Zoning
 
 # Adjust pandas setting to allow for expanded view of dataframes
 import pandas as pd
@@ -107,7 +107,7 @@ s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_ch
 # Load existing agent re-location engine to simulation object
 target = s.network
 bg_sample_size = 10  # the number of homes that a re-locating agent samples for residential choice
-s.add_engine(ExistingAgentLocation(target, bg_sample_size=bg_sample_size))
+s.add_engine(ExistingAgentLocation(target, bg_sample_size=bg_sample_size, house_choice_mode=house_choice_mode))
 
 # Load housing market engine to simulation object
 target = s.network

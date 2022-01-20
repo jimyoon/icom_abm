@@ -80,7 +80,7 @@ class NewAgentLocation(Engine):
         elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
             bg_sample['utility'] = (189680 * self.target.housing_bg_df['N_MeanSqfeet']) + (129080 * self.target.housing_bg_df['N_MeanAge']) \
                                                                 + (122136 * self.target.housing_bg_df['N_MeanNoOfStories']) + (169503 * self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (11198 * self.target.housing_bg_df['N_perc_area_flood']) + 53360
+                                                                + (11198 * self.target.housing_bg_df['N_perc_area_flood']) + (1 * self.target.housing_bg_df['residuals'])
 
         self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
 
