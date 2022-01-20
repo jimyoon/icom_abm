@@ -28,7 +28,7 @@ s.network.get_history('housing_bg_df')[-1].plot(column = 'population', cmap='OrR
 gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final bg df
 gdf['population_change'] = s.network.get_history('housing_bg_df')[-1]['population'] - s.network.get_history('housing_bg_df')[0]['population']
 # normalize color
-vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
+vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 50
 norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
 # create a normalized colorbar
 cmap = 'RdBu'

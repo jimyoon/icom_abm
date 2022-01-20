@@ -12,6 +12,7 @@ from model_engines.housing_market import HousingMarket
 from model_engines.building_development import BuildingDevelopment
 from model_engines.flood_hazard import FloodHazard
 from model_engines.zoning import Zoning
+from model_engines.landscape_statistics import LandscapeStatistics
 import time
 
 # Adjust pandas setting to allow for expanded view of dataframes
@@ -41,6 +42,8 @@ perc_move = .10  # indicates the percentage of households that move each time st
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
+stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
+stock_increase_perc = .05  # indicates the percentage increase in price
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
@@ -113,7 +116,7 @@ s.add_engine(HousingMarket(target, market_mode=market_mode, bg_sample_size=bg_sa
 
 # Load housing market engine to simulation object  # JY to complete
 target = s.network
-s.add_engine(BuildingDevelopment(target))
+s.add_engine(BuildingDevelopment(target, stock_increase_mode=stock_increase_mode, stock_increase_perc=stock_increase_perc))
 
 # # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
 # target = s.network
@@ -122,6 +125,10 @@ s.add_engine(BuildingDevelopment(target))
 # # Load Zoning engine to simulation object (DEACTIVATED for sensitivity run)
 # target = s.network.get_institution('zoning_manager_005')
 # s.add_engine(Zoning(target))
+
+# Load landscape statistics engine to simulation object  # JY to complete
+target = s.network
+s.add_engine(LandscapeStatistics(target))
 
 # Run simulation
 s.start()

@@ -43,76 +43,80 @@ class ABMLandscape(Network):
         self.relocating_hhs = {}
         self.available_units_list = []
 
-        # reset population sums
-        self.total_population = 0
+        if self.current_timestep_idx == 0:  # For first timestep, load housing_bg_df based upon initial agent population
+            # reset population sums
+            self.total_population = 0
 
-        # calculate various statistics (landscape level) from hh agents
-        incomes_landscape = []
-        hh_size_landscape = []
+            # calculate various statistics (landscape level) from hh agents
+            incomes_landscape = []
+            hh_size_landscape = []
 
-        # update master block group pandas dataframe (JY Add engine so this takes place at end of timestep rather than at beginning of next timestep)
-        rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
-        for bg in self.nodes:
-            bg_dict = {}
-            bg_dict['name'] = bg.name
-            bg_dict['no_hh_agents'] = len(bg.hh_agents)
+            # update master block group pandas dataframe (JY Add engine so this takes place at end of timestep rather than at beginning of next timestep)
+            rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
+            for bg in self.nodes:
+                bg_dict = {}
+                bg_dict['name'] = bg.name
+                bg_dict['no_hh_agents'] = len(bg.hh_agents)
 
-            # calculate various statistics (block level) from hh agents
-            bg.population = 0
-            incomes_bg = []
-            hh_size_bg = []
-            bg.no_of_hhs = len(bg.hh_agents)
+                # calculate various statistics (block level) from hh agents
+                bg.population = 0
+                incomes_bg = []
+                hh_size_bg = []
+                bg.no_of_hhs = len(bg.hh_agents)
 
 
-            for name, a in bg.hh_agents.items():
-                if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
-                    self.total_population += a.no_hhs_per_agent * a.hh_size
-                else:  # use mean
-                    self.total_population += a.no_hhs_per_agent * self.housing_bg_df.hhsize1990.mean()
-                bg.population += a.no_hhs_per_agent * a.hh_size
-                incomes_bg.append(a.income)
-                incomes_landscape.append(a.income)
-                hh_size_bg.append(a.hh_size)
-                hh_size_landscape.append(a.hh_size)
+                for name, a in bg.hh_agents.items():
+                    if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
+                        self.total_population += a.no_hhs_per_agent * a.hh_size
+                    else:  # use mean
+                        self.total_population += a.no_hhs_per_agent * self.housing_bg_df.hhsize1990.mean()
+                    bg.population += a.no_hhs_per_agent * a.hh_size
+                    incomes_bg.append(a.income)
+                    incomes_landscape.append(a.income)
+                    hh_size_bg.append(a.hh_size)
+                    hh_size_landscape.append(a.hh_size)
 
-            bg_dict['population'] = bg.population
-            if not incomes_bg:  # i.e. no households reside in block group
-                bg_dict['average_income'] = nan
-                bg.mean_hh_income = nan  # update attribute on block group
-            else:
-                bg_dict['average_income'] = statistics.mean(incomes_bg)
-                bg.avg_hh_income = statistics.mean(incomes_bg)  # update attribute on block group
-            if not hh_size_bg:
-                bg_dict['avg_hh_size'] = nan
-                bg.avg_hh_size = nan  # update attribute on block group
-            else:
-                bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
-                bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
+                bg_dict['population'] = bg.population
+                if not incomes_bg:  # i.e. no households reside in block group
+                    bg_dict['average_income'] = nan
+                    bg.mean_hh_income = nan  # update attribute on block group
+                else:
+                    bg_dict['average_income'] = statistics.mean(incomes_bg)
+                    bg.avg_hh_income = statistics.mean(incomes_bg)  # update attribute on block group
+                if not hh_size_bg:
+                    bg_dict['avg_hh_size'] = nan
+                    bg.avg_hh_size = nan  # update attribute on block group
+                else:
+                    bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
+                    bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
 
-            # pop density calc
-            bg_dict['pop_density'] = bg.population / bg.area
-            bg.pop_density = bg.population / bg.area
+                # pop density calc
+                bg_dict['pop_density'] = bg.population / bg.area
+                bg.pop_density = bg.population / bg.area
 
-            # available units calc
-            bg_dict['available_units'] = bg.available_units
+                #  occupied units calc
+                bg_dict['occupied_units'] = bg.occupied_units
 
-            # supply exceeds demand
-            bg_dict['demand_exceeds_supply'] = bg.demand_exceeds_supply
+                # available units calc
+                bg_dict['available_units'] = bg.available_units
 
-            rows_list.append(bg_dict)
+                # supply exceeds demand
+                bg_dict['demand_exceeds_supply'] = bg.demand_exceeds_supply
 
-        housing_current_df = pd.DataFrame(rows_list)
-        self.avg_hh_income = statistics.mean(incomes_landscape)
-        self.avg_hh_size = statistics.mean(hh_size_landscape)
+                rows_list.append(bg_dict)
 
-        # calculate normalized statistics for block groups
-        housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
+            housing_current_df = pd.DataFrame(rows_list)
+            self.avg_hh_income = statistics.mean(incomes_landscape)
+            self.avg_hh_size = statistics.mean(hh_size_landscape)
 
-        # merge with housing_bg_df to retain geometry features
-        cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
-        self.housing_bg_df = pd.merge(self.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
+            # calculate normalized statistics for block groups
+            housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
 
-        pass  # added to allow for debugger
+            # merge with housing_bg_df to retain geometry features
+            cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
+            self.housing_bg_df = pd.merge(self.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
+
+            pass  # added to allow for debugger
 
 class BlockGroup(Node):
     """The BlockGroup node class.
@@ -172,6 +176,8 @@ class BlockGroup(Node):
         self.flood_hazard_risk = 0
         self.available_units = 0
         self.demand_exceeds_supply = False
+        self.new_units_constructed = 0
+        self.occupied_units = 0
 
 
     _properties = {
@@ -188,6 +194,7 @@ class BlockGroup(Node):
         'avg_hh_income': 0,
         'no_of_hhs': 0,
         'demand_exceeds_supply': False,
+        'new_units_constructed': 0,
     }
 
     def setup(self, timestep):
