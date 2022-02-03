@@ -7,6 +7,7 @@ from model_engines.new_agent_location import NewAgentLocation
 from model_engines.existing_agent_relocation import ExistingAgentLocation
 from model_engines.housing_market import HousingMarket
 from model_engines.building_development import BuildingDevelopment
+from model_engines.housing_pricing import HousingPricing
 from model_engines.landscape_statistics import LandscapeStatistics
 import time
 # from model_classes.institutional_agents import CountyZoningManager, RealEstate
@@ -29,7 +30,7 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 2
+no_years = 2  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -44,6 +45,8 @@ house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget
 house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price
+housing_pricing_mode = 'simple_perc'
+price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
@@ -117,6 +120,10 @@ s.add_engine(HousingMarket(target, market_mode=market_mode, bg_sample_size=bg_sa
 # Load housing market engine to simulation object  # JY to complete
 target = s.network
 s.add_engine(BuildingDevelopment(target, stock_increase_mode=stock_increase_mode, stock_increase_perc=stock_increase_perc))
+
+# Load housing market engine to simulation object  # JY to complete
+target = s.network
+s.add_engine(HousingPricing(target, housing_pricing_mode=housing_pricing_mode, price_increase_perc=price_increase_perc))
 
 # # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
 # target = s.network

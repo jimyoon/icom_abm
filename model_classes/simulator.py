@@ -68,6 +68,9 @@ class ICOMSimulator(Simulator):
         non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
         bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
+        # initialize new price for updating
+        bg['new_price'] = bg['salesprice1993']
+
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
         for index, row in bg.iterrows():

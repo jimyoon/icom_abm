@@ -178,6 +178,7 @@ class BlockGroup(Node):
         self.demand_exceeds_supply = False
         self.new_units_constructed = 0
         self.occupied_units = 0
+        self.new_price = salesprice93
 
 
     _properties = {
@@ -189,7 +190,7 @@ class BlockGroup(Node):
         'pop_density': 0,  # number of individuals residing in block group / land area of block group (excludes water)
         'zoning': 'allowed',  # determines whether development is allowed or not allowed
         'levee_protection': "no",
-        'avg_home_price': 0,
+        'new_price': 0,
         'years_since_major_flooding': None,
         'avg_hh_income': 0,
         'no_of_hhs': 0,
