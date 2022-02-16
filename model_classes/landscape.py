@@ -1,3 +1,5 @@
+# Need to revise from block group to block level
+
 from pynsim import Network
 from pynsim import Node
 import logging
