@@ -12,3 +12,9 @@ class HousingPricing(Engine):
             if bg.demand_exceeds_supply == True:
                 bg.new_price = bg.new_price * (1 + self.price_increase_perc)
                 self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_price'] = bg.new_price
+
+            if self.target.current_timestep_idx >= 5: # JY TEMP for testing
+                if not any(bg.get_history('demand_exceeds_supply')):
+                    bg.new_price = bg.new_price * (1 - self.price_increase_perc)
+                    self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_price'] = bg.new_price
+            #bg.new_price = bg.new_price * 2  # !JY TEMP

@@ -72,3 +72,26 @@ vcenter = np.mean([vmin, vmax])
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7))
 s.network.get_history('housing_bg_df')[0].plot(column='population', vmin=vmin, vmax=vmax, cmap='OrRd', ax=ax1, legend=True)
 s.network.get_history('housing_bg_df')[-1].plot(column='population', vmin=vmin, vmax=vmax, cmap='OrRd', ax=ax2, legend=True)
+
+#### Scatterplot two columns of housing dataframe
+df = pd.DataFrame(s.network.housing_bg_df)
+df['population_change'] = df['population'] - df['pop1990']
+df.plot(x='salesprice1993', y='population_change', style='o')
+
+#### Scatterplot two columns of housing dataframe (with another column providing hues)
+import seaborn
+df = pd.DataFrame(s.network.housing_bg_df)
+df['population_change'] = df['population'] - df['pop1990']
+seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=1.61)
+
+#### Scatterplot two columns of housing dataframe (with another column providing hues)
+import seaborn
+df = pd.DataFrame(s.network.housing_bg_df)
+df['population_change'] = df['population'] - df['pop1990']
+seaborn.relplot(data=df, x='perc_fld_area', y='population_change', hue='average_income', aspect=1.61)
+
+#### Scatterplot two columns of housing dataframe (with another column providing hues)
+import seaborn
+df = pd.DataFrame(s.network.housing_bg_df)
+df['price_change'] = df['new_price'] - df['salesprice1993']
+seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=1.61)

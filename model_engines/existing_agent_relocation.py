@@ -57,10 +57,11 @@ class ExistingAgentLocation(Engine):
         sample_size (integer): a single value that indicates the sample size for new agent's housing search
 
     """
-    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', **kwargs):
+    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', simple_anova_coefficients=[], **kwargs):
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
         self.house_choice_mode = house_choice_mode
+        self.simple_anova_coefficients = simple_anova_coefficients
 
 
     def run(self):
@@ -117,9 +118,9 @@ class ExistingAgentLocation(Engine):
             bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
 
         elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (189680 * self.target.housing_bg_df['N_MeanSqfeet']) + (129080 * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (122136 * self.target.housing_bg_df['N_MeanNoOfStories']) + (169503 * self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (11198 * self.target.housing_bg_df['N_perc_area_flood']) + (1 * self.target.housing_bg_df['residuals'])
+            bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['perc_fld_area']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
 
         self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
 
