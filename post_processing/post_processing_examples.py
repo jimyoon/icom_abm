@@ -87,11 +87,38 @@ seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average
 #### Scatterplot two columns of housing dataframe (with another column providing hues)
 import seaborn
 df = pd.DataFrame(s.network.housing_bg_df)
-df['population_change'] = df['population'] - df['pop1990']
-seaborn.relplot(data=df, x='perc_fld_area', y='population_change', hue='average_income', aspect=1.61)
+df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
+seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=1.61)
 
 #### Scatterplot two columns of housing dataframe (with another column providing hues)
 import seaborn
 df = pd.DataFrame(s.network.housing_bg_df)
 df['price_change'] = df['new_price'] - df['salesprice1993']
 seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=1.61)
+
+#### Plot metric in flood zone threshold over time
+import seaborn as sns
+column_names = ["Model Year", "Population Percentage Change in Flood Zone", "Flood Coefficient"]
+years = []
+pop_perc_change = []
+fld_coeff = -1000000
+fld_coeff_list = []
+for t in range(s.network.current_timestep_idx):
+    df = s.network.get_history('housing_bg_df')[t]
+    df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
+    pop_perc_change_fld = (df_fld.new_price.sum() - df_fld.salesprice1993.sum()) / df_fld.salesprice1993.sum()
+    years.append(t+1)
+    pop_perc_change.append(pop_perc_change_fld)
+    fld_coeff_list.append(fld_coeff)
+dict = {'Model Year': years,
+        'Pop Perc Change Flood Zone': pop_perc_change,
+        'Flood Coefficient': fld_coeff_list
+        }
+df = pd.DataFrame(dict)
+df_append = pd.read_csv('temp_flood.csv', index_col=False)  # saved from a separate simulation and loaded in as csv
+df = pd.concat([df,df_append],join='inner')
+sns.lineplot(x='Model Year',
+             y='Pop Perc Change Flood Zone',
+             hue='Flood Coefficient',
+             data=df)
+

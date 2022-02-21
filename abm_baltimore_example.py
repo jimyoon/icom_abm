@@ -43,7 +43,7 @@ perc_move = .10  # indicates the percentage of households that move each time st
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
-simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [189680, 129080, 122136, 169503, 0]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 print(simple_anova_coefficients)  # JY Temp
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price
@@ -57,7 +57,7 @@ pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUM
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
 flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
 housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
-hedonic_filename = 'simple_anova_hedonic.csv'  # simple ANOVA hedonic regression conducted by Alfred
+hedonic_filename = 'simple_anova_hedonic_v2.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
