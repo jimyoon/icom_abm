@@ -99,8 +99,6 @@ class ICOMSimulator(Simulator):
             if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
                 no_of_hhs = round(bg.init_pop / bg.hhsize90)
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
-                logging.info('brg name is ' + str(bg.name))
-                logging.info("init_pop is" + str(bg.init_pop))
                 no_of_hhs = round(bg.init_pop / self.network.housing_bg_df.hhsize1990.median())
             no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
             for a in range(no_of_agents):
