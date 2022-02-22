@@ -40,8 +40,9 @@ class NewAgentCreation(Engine):
         # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':
             new_population = self.target.total_population * self.growth_rate
+            logging.info("total_population is " + str(self.target.total_population))
             no_of_new_agents = (new_population + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
-
+            logging.info("nn_of_new_agents is " + str(no_of_new_agents))
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
                 lower, upper = 5000, 300000  # truncate distribution to avoid unrealistic incomes
