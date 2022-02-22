@@ -49,6 +49,7 @@ class NewAgentLocation(Engine):
             bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
+                    # JY restart here
                     bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
@@ -81,10 +82,15 @@ class NewAgentLocation(Engine):
 
             bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
 
-        elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
+        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
             bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
                                                                 + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['perc_fld_area']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+
+        elif self.house_choice_mode == 'simple_avoidance_utility':  # JY consider moving to method on household agents
+            bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (1 * self.target.housing_bg_df['residuals'])
 
         self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
 

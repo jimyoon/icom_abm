@@ -23,7 +23,8 @@ class NewAgentCreation(Engine):
         s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
     """
 
-    def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, no_hhs_per_agent=10, hh_size=2.7, **kwargs):
+    def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, no_hhs_per_agent=10, hh_size=2.7,
+                 simple_avoidance_perc=simple_avoidance_perc, **kwargs):
         super(NewAgentCreation, self).__init__(target, **kwargs)
         self.growth_mode = growth_mode
         self.growth_rate = growth_rate
@@ -31,6 +32,7 @@ class NewAgentCreation(Engine):
         self.hh_size = hh_size
         self.inc_growth_mode = inc_growth_mode
         self.pop_growth_inc_perc = pop_growth_inc_perc
+        self.simple_avoidance_perc = simple_avoidance_perc
 
     def run(self):
         """ Run the NewAgentCreation Engine.
@@ -55,7 +57,7 @@ class NewAgentCreation(Engine):
                     hh_income = X.rvs(1)[0]  # sample from household income distribution
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
                                                        hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
-                                                      year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
+                                                      year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
                     self.target.get_institution('all_hh_agents').add_component(self.target.components[-1])  # add pynsim household agent to all hh agents institution
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
@@ -67,7 +69,7 @@ class NewAgentCreation(Engine):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
                                                       hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
-                                                      year_of_residence=self.timestep.year))  # add household agent to pynsim network; currently uses landscape avg hh income & size
+                                                      year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
                     self.target.get_institution('all_hh_agents').add_component(
                         self.target.components[-1])  # add pynsim household agent to all hh agents institution
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
