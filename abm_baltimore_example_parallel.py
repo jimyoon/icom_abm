@@ -34,7 +34,7 @@ def run_model(flood_risk_coeff):
     scenario = 'Baseline'
     intervention = 'Baseline'
     start_year = 2018
-    no_years = 2  # no of years (model will run for n+1 years)
+    no_years = 19  # no of years (model will run for n+1 years)
     agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
     hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
     initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -151,29 +151,24 @@ def run_model(flood_risk_coeff):
     sim_time = end_time-start_time
     print("Simulation took (seconds):  %s" % sim_time)
 
-    column_names = ["Model Year", "Population Percentage Change in Flood Zone", "Flood Coefficient"]
-    years = []
-    pop_perc_change = []
-    fld_coeff = flood_risk_coeff
-    fld_coeff_list = []
+    first = True
     for t in range(s.network.current_timestep_idx):
         df = s.network.get_history('housing_bg_df')[t]
-        df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
-        pop_perc_change_fld = (df_fld.new_price.sum() - df_fld.salesprice1993.sum()) / df_fld.salesprice1993.sum()
-        years.append(t + 1)
-        pop_perc_change.append(pop_perc_change_fld)
-        fld_coeff_list.append(fld_coeff)
-    dict = {'Model Year': years,
-            'Pop Perc Change Flood Zone': pop_perc_change,
-            'Flood Coefficient': fld_coeff_list
-            }
-    df = pd.DataFrame(dict)
-    df.to_csv('results_' + str(flood_risk_coeff) + '.csv')
+        df = df[['GEOID', 'GISJOIN', 'new_price', 'population', 'occupied_units', 'available_units',
+                 'demand_exceeds_supply',
+                 'perc_fld_area', 'mhi1990', 'salesprice1993', 'pop1990', 'average_income']]
+        df['model_year'] = t + 1
+        if first:
+            df_combined = df
+            first = False
+        else:
+            df_combined = pd.concat([df_combined, df])
+    df_combined.to_csv('results_' + str(flood_risk_coeff) + '.csv')
 
 
 def run_in_parallel():
-    ranges = [0, -10000, -100000, - 1000000]
-    pool = Pool(processes=4)
+    ranges = [0, -1000, -10000, -100000, - 1000000]
+    pool = Pool(processes=5)
     pool.map(run_model, ranges)
 
 

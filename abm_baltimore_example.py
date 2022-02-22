@@ -43,7 +43,7 @@ perc_move = .10  # indicates the percentage of households that move each time st
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
-simple_anova_coefficients = [189680, 129080, 122136, 169503, 0]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 print(simple_anova_coefficients)  # JY Temp
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price

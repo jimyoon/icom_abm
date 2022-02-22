@@ -101,6 +101,7 @@ import seaborn as sns
 column_names = ["Model Year", "Population Percentage Change in Flood Zone", "Flood Coefficient"]
 years = []
 pop_perc_change = []
+price_perc_change = []
 fld_coeff = -1000000
 fld_coeff_list = []
 for t in range(s.network.current_timestep_idx):
@@ -121,4 +122,32 @@ sns.lineplot(x='Model Year',
              y='Pop Perc Change Flood Zone',
              hue='Flood Coefficient',
              data=df)
+
+#### Combine relevant housing dataframes (from each model run year) into a single dataframe and export to csv
+first = True
+for t in range(s.network.current_timestep_idx):
+    df = s.network.get_history('housing_bg_df')[t]
+    df = df[['GEOID','GISJOIN','new_price','population','occupied_units','available_units','demand_exceeds_supply',
+           'perc_fld_area','mhi1990','salesprice1993','pop1990', 'average_income']]
+    df['model_year'] = t+1
+    if first:
+        df_combined = df
+        first = False
+    else:
+        df_combined = pd.concat([df_combined,df])
+
+#### Read in output dataframe csv files, combine into single dataframe, and plot some results
+runs_list = [0, -1000, -10000, -100000, - 1000000]
+first = True
+for run_name in runs_list:
+    df = pd.read_csv('results_' + str(run_name) + '.csv')
+    df['run_name'] = run_name
+    if first:
+        df_combined = df
+        first = False
+    else:
+        df_combined = pd.concat([df_combined, df])
+df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+import seaborn as sns
+sns.lineplot(x="model_year", y="average_income", hue="perc_fld_area", data=df_combined)
 
