@@ -61,15 +61,15 @@ class ICOMSimulator(Simulator):
         bg['prox_cbd_norm'] = bg['rel_prox_cbd'] / bg['rel_prox_cbd'].max()
         bg['flood_risk_norm'] = bg['rel_flood_risk'] / bg['rel_flood_risk'].max()
 
-        # calculate housing budget based on 1990-1993 data
-        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
+        # calculate housing budget based on 1990-1994 data
+        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1994']
 
         # replace 0 mhi1990 values with non-zero minimum
         non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
         bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
         # initialize new price for updating
-        bg['new_price'] = bg['salesprice1993']
+        bg['new_price'] = bg['salesprice1994']
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
@@ -77,11 +77,11 @@ class ICOMSimulator(Simulator):
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
             cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
-                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'],
+                                    blkgrpce=row['BLOCKCE'], area=row['ALAND'], geometry=row['geometry'],
                                     init_pop=row[pop_fieldname], perc_fld_area=row['perc_fld_area'],
                                     pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
-                                    coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
-                                    salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
+                                    coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1994'],
+                                    salesprice93=row['salesprice1994'], salespricesf93=row['salespricesf1994']))
 
         # store the bg pandas dataframe on the network object as a reference
         landscape.housing_bg_df = bg
@@ -99,6 +99,8 @@ class ICOMSimulator(Simulator):
             if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
                 no_of_hhs = round(bg.init_pop / bg.hhsize90)
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
+                logging.info('brg name is ' + str(bg.name))
+                logging.info("init_pop is" + str(bg.init_pop))
                 no_of_hhs = round(bg.init_pop / self.network.housing_bg_df.hhsize1990.median())
             no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
             for a in range(no_of_agents):
