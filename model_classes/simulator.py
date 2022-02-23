@@ -85,13 +85,27 @@ class ICOMSimulator(Simulator):
                 bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
                 bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
 
+        for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
+            if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
+                location = row['geometry']
+                bg_subset = bg[(bg.GEOID != row['GEOID']) & (np.isfinite(bg.salesprice1993)) & (np.isfinite(bg.N_MeanSqfeet))]
+                polygon_index = bg_subset.distance(location).sort_values().index[0]
+                bg.at[index, 'salesprice1993'] = bg_subset.loc[[polygon_index]]['salesprice1993']
+                bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[[polygon_index]]['N_MeanSqfeet']
+                bg.at[index, 'N_MeanAge'] = bg_subset.loc[[polygon_index]]['N_MeanAge']
+                bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[[polygon_index]]['N_MeanNoOfStories']
+                bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[[polygon_index]]['N_MeanFullBathNumber']
+                bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[[polygon_index]]['N_perc_area_flood']
+                bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
+                bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
+
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
         for index, row in bg.iterrows():
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
             cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
-                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'],
+                                    blkgrpce=row['BLOCKCE'], area=row['ALAND'], geometry=row['geometry'],
                                     init_pop=row[pop_fieldname], perc_fld_area=row['perc_fld_area'],
                                     pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
