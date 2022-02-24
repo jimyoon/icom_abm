@@ -88,6 +88,9 @@ class ExistingAgentLocation(Engine):
             bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)] # JY: need to update sales prices
             if first:
                 try:
+                    if self.house_choice_mode == 'simple_avoidance_utility':
+                        if hh.avoidance == True:
+                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
@@ -98,6 +101,9 @@ class ExistingAgentLocation(Engine):
                 bg_sample['c'] = 0.2
             else:
                 try:
+                    if self.house_choice_mode == 'simple_avoidance_utility':
+                        if hh.avoidance == True:
+                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')[['GEOID','average_income_norm','prox_cbd_norm','flood_risk_norm']]  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
@@ -117,10 +123,15 @@ class ExistingAgentLocation(Engine):
 
             bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
 
-        elif self.house_choice_mode == 'simple_anova_utility':  # JY consider moving to method on household agents
+        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
             bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
                                                                 + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['perc_fld_area']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+
+        elif self.house_choice_mode == 'simple_avoidance_utility':  # JY consider moving to method on household agents
+            bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (1 * self.target.housing_bg_df['residuals'])
 
         self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
 

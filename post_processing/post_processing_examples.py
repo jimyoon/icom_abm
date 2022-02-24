@@ -106,7 +106,7 @@ fld_coeff = -1000000
 fld_coeff_list = []
 for t in range(s.network.current_timestep_idx):
     df = s.network.get_history('housing_bg_df')[t]
-    df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
+    df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.1))]
     pop_perc_change_fld = (df_fld.new_price.sum() - df_fld.salesprice1993.sum()) / df_fld.salesprice1993.sum()
     years.append(t+1)
     pop_perc_change.append(pop_perc_change_fld)
@@ -137,10 +137,10 @@ for t in range(s.network.current_timestep_idx):
         df_combined = pd.concat([df_combined,df])
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
-runs_list = [0, -1000, -10000, -100000, - 1000000]
+runs_list = [0, -500, -1000, -5000, -10000, -50000, -100000, -500000, -1000000, -5000000]
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('results_' + str(run_name) + '.csv')
+    df = pd.read_csv('results_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -148,6 +148,52 @@ for run_name in runs_list:
     else:
         df_combined = pd.concat([df_combined, df])
 df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+df_fld.loc[df_fld.price_perc_change=='#DIV/0!', 'price_perc_change'] = 0
+df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
 import seaborn as sns
-sns.lineplot(x="model_year", y="average_income", hue="perc_fld_area", data=df_combined)
+palette = sns.color_palette("mako_r", 10)
+sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_fld, ci = None)
+
+#
+runs_list = [0,0.25, 0.50, 0.75, 1.0]
+first = True
+for run_name in runs_list:
+    df = pd.read_csv('results_utility_' + str(run_name) + '.csv')
+    df['run_name'] = run_name
+    if first:
+        df_combined = df
+        first = False
+    else:
+        df_combined = pd.concat([df_combined, df])
+df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 0
+df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+import seaborn as sns
+palette = sns.color_palette("rocket", 5)
+sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_fld, ci=None)
+
+# Add the text--for each line, find the end, annotate it with a label, and
+# adjust the chart axes so that everything fits on.
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+fig, ax = plt.subplots()
+# repeat sns.lineplot command here again
+for line, name in zip(ax.lines, runs_list[::-1]):
+    y = line.get_ydata()[-1]
+    x = line.get_xdata()[-1]
+    if not np.isfinite(y):
+        y=next(reversed(line.get_ydata()[~line.get_ydata().mask]),float("nan"))
+    if not np.isfinite(y) or not np.isfinite(x):
+        continue
+    text = ax.annotate(name,
+               xy=(x, y),
+               xytext=(0, 0),
+               color=line.get_color(),
+               xycoords=(ax.get_xaxis_transform(),
+                 ax.get_yaxis_transform()),
+               textcoords="offset points")
+    text_width = (text.get_window_extent(
+    fig.canvas.get_renderer()).transformed(ax.transData.inverted()).width)
+    if np.isfinite(text_width):
+        ax.set_xlim(ax.get_xlim()[0], text.xy[0] + text_width * 1.05)
 

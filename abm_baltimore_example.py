@@ -42,7 +42,7 @@ bld_growth_perc = .01  # indicates the percentage of building stock increase if 
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-house_choice_mode = 'simple_flood_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility)
+house_choice_mode = 'simple_avoidance_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility)
 simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
 print(simple_anova_coefficients)  # JY Temp
@@ -68,8 +68,7 @@ s.set_timestep_information()  # sets up timestep information based on model opti
 # Load geography/landscape information to simulation object
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                 pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode,
-                )
+                housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
 
 # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
 # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))

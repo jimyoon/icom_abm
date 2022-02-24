@@ -170,7 +170,7 @@ class BlockGroup(Node):
         self.salespricesf93 = salespricesf93
 
         # pynsim properties
-        self.population = init_pop
+        self.population = pop90 # JY init_pop and pop90 are duplicate, figure out which to use
         self.hh_agents = {}
         self.avg_home_price = 0
         self.flood_hazard_risk = 0

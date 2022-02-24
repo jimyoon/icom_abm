@@ -24,7 +24,7 @@ class NewAgentCreation(Engine):
     """
 
     def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, no_hhs_per_agent=10, hh_size=2.7,
-                 simple_avoidance_perc=simple_avoidance_perc, **kwargs):
+                 simple_avoidance_perc=.10, **kwargs):
         super(NewAgentCreation, self).__init__(target, **kwargs)
         self.growth_mode = growth_mode
         self.growth_rate = growth_rate

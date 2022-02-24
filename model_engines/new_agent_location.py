@@ -50,6 +50,9 @@ class NewAgentLocation(Engine):
             if first:
                 try:
                     # JY restart here
+                    if self.house_choice_mode == 'simple_avoidance_utility':
+                        if hh.avoidance == True:
+                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
@@ -61,6 +64,9 @@ class NewAgentLocation(Engine):
                 bg_sample['c'] = 0.2
             else:
                 try:
+                    if self.house_choice_mode == 'simple_avoidance_utility':
+                        if hh.avoidance == True:
+                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
