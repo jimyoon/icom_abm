@@ -31,7 +31,7 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename, house_choice_mode):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         logging.info("Setting up model landscape")
@@ -49,12 +49,8 @@ class ICOMSimulator(Simulator):
         bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
         bg = pd.merge(bg, housing, how='left', on='GISJOIN')
 
-        # if house choice mode is simple anova, load table with coefficients
-        if house_choice_mode=='simple_flood_utility':
-            bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
-
-        if house_choice_mode == 'simple_avoidance_utility':
-            bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
+        # load table with hedonic regression information for utility function
+        bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
 
         # determine relative cbd proximity and relative flood risk for input to hh utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
         bg['rel_prox_cbd'] = bg['cbddist'].max() + 1 - bg['cbddist']

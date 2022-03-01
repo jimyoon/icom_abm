@@ -57,6 +57,8 @@ class HousingMarket(Engine):
                     to_delete_unassigned_hhs.append(hh.name)
                     self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
             for hh in self.target.relocating_hhs.values():
+                hh_utilities_subset = self.target.hh_utilities_df[(self.target.hh_utilities_df.hh == hh.name)]
+                hh_utilities_dict = dict(zip(hh_utilities_subset.GEOID, hh_utilities_subset.utility))
                 sorted_bg_candidates = sorted(((v,k) for k,v in hh_utilities_dict.items()))  # sort bg candidates from lowest to highest
                 try:
                     top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
@@ -68,11 +70,6 @@ class HousingMarket(Engine):
                         bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
                 except IndexError: # if list index is out of range, indicates that no available units are affordable for agent
                     logging.info(hh.name + ' cannot afford any properties and is assumed to migrate outside of domain')
-                    bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh.name].location)
-                    del bg_old_location.hh_agents[hh.name]  # remove agent from old location
-                    bg_old_location.occupied_units -= 1  # adjust occupied units
-                    bg_old_location.available_units += 1  # adjust available units
-                    # del self.target.relocating_hhs[hh.name]
                     to_delete_relocating_hhs.append(hh.name)
                     self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
 
@@ -93,17 +90,13 @@ class HousingMarket(Engine):
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.unassigned_hhs[hh_match]  # delete matched agent from unassigned hh dict
                         else:  # if agent already exists (i.e., agent re-locating within domain)
-                            bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh_match].location)
-                            del bg_old_location.hh_agents[hh_match]  # remove agent from old location
-                            bg_old_location.occupied_units -= 1  # adjust occupied units
-                            bg_old_location.available_units += 1  # adjust available units
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add agent to new block group node
                             self.target.get_node(bg).occupied_units += 1  # adjust occupied units
                             self.target.get_node(bg).available_units -= 1  # adjust available units
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from relocating hh dict
                     bg_demand[bg] = {}  # delete all matched agents from hh/bg matching dict
-                else:  # else move only those agents with highest utility for bg up to the amount of available units
+                else:  # else move only those agents with highest utility for bg up to the amount of available units / JY revise this to highest budgets!
                     self.target.get_node(bg).demand_exceeds_supply = True  # JY to implement
                     top_matches = dict(sorted(bg_demand[bg].items(), key=itemgetter(1), reverse=True)[:self.target.get_node(bg).available_units])
                     for hh_match in top_matches.keys():
@@ -115,10 +108,6 @@ class HousingMarket(Engine):
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.unassigned_hhs[hh_match]  # delete matched agent from unassigned hh dict
                         else:  # if agent already exists (i.e., agent re-locating within domain)
-                            bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh_match].location)
-                            bg_old_location.occupied_units -= 1  # adjust occupied units
-                            bg_old_location.available_units += 1  # adjust available units
-                            del bg_old_location.hh_agents[hh_match]  # remove agent from old location
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add agent to new block group node
                             self.target.get_node(bg).occupied_units += 1  # adjust occupied units
                             self.target.get_node(bg).available_units -= 1  # adjust available units

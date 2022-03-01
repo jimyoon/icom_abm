@@ -30,7 +30,7 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 10  # no of years (model will run for n+1 years)
+no_years = 19  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -42,9 +42,10 @@ bld_growth_perc = .01  # indicates the percentage of building stock increase if 
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-house_choice_mode = 'simple_avoidance_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility)
+house_choice_mode = 'simple_flood_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
 simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
+budget_reduction_perc = .10  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price
@@ -68,7 +69,7 @@ s.set_timestep_information()  # sets up timestep information based on model opti
 # Load geography/landscape information to simulation object
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                 pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
+                housing_filename=housing_filename, hedonic_filename=hedonic_filename)
 
 # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
 # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
@@ -109,7 +110,7 @@ s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 
 # Load new agent location engine to simulation object
 bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients))
+s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
 
 # Load existing agent re-location engine to simulation object
 target = s.network

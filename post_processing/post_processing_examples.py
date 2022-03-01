@@ -106,8 +106,8 @@ fld_coeff = -1000000
 fld_coeff_list = []
 for t in range(s.network.current_timestep_idx):
     df = s.network.get_history('housing_bg_df')[t]
-    df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.1))]
-    pop_perc_change_fld = (df_fld.new_price.sum() - df_fld.salesprice1993.sum()) / df_fld.salesprice1993.sum()
+    df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
+    pop_perc_change_fld = (df_fld.average_income.sum() - df_fld.mhi1990.sum()) / df_fld.mhi1990.sum()
     years.append(t+1)
     pop_perc_change.append(pop_perc_change_fld)
     fld_coeff_list.append(fld_coeff)
@@ -197,3 +197,17 @@ for line, name in zip(ax.lines, runs_list[::-1]):
     if np.isfinite(text_width):
         ax.set_xlim(ax.get_xlim()[0], text.xy[0] + text_width * 1.05)
 
+
+#### Read in output dataframe csv files, combine into single dataframe, and plot some results
+runs_list = [0, -500, -1000, -5000, -10000, -50000, -100000, -500000, -1000000, -5000000]
+
+df = pd.read_csv('results_utility_-500000.csv')
+df_combined = df
+df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+df_fld.loc[df_fld.price_perc_change=='#DIV/0!', 'price_perc_change'] = 0
+df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+import seaborn as sns
+sns.lineplot(x="model_year", y="population", hue="GEOID", data=df_combined, ci = None)
+sns.lineplot(x="model_year", y="population", data=df_combined.groupby(['GEOID','model_year']).sum().reset_index(), ci = None)
+sns.pointplot(data = df.groupby(['Name', 'Year']).mean().reset_index(),
+              x='Year', y='Pts', hue='Name')

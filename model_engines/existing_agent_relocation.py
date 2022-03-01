@@ -37,6 +37,10 @@ class ExistingAgentReloSampler(Engine):
             agents_moving = random.sample(list(bg.hh_agents), no_of_agents_moving)  # randomly sample agents that will move
             for hh in agents_moving:
                 self.target.relocating_hhs[hh] = self.target.get_institution('all_hh_agents')._component_map[hh]  # add agent to unassigned hh list (is there a better way in pynsim rather than accessing _components_map)
+                bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh].location)
+                del bg_old_location.hh_agents[hh]  # remove agent from old location
+                bg_old_location.occupied_units -= 1  # adjust occupied units
+                bg_old_location.available_units += 1  # adjust available units
                 # need to adjust available units in block group that agent is moving from
         pass  # to accommodate debugger
 
@@ -57,11 +61,12 @@ class ExistingAgentLocation(Engine):
         sample_size (integer): a single value that indicates the sample size for new agent's housing search
 
     """
-    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', simple_anova_coefficients=[], **kwargs):
+    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', simple_anova_coefficients=[], budget_reduction_perc=.10, **kwargs):
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
         self.house_choice_mode = house_choice_mode
         self.simple_anova_coefficients = simple_anova_coefficients
+        self.budget_reduction_perc = budget_reduction_perc
 
 
     def run(self):
@@ -85,7 +90,9 @@ class ExistingAgentLocation(Engine):
 
         first = True
         for hh in self.target.relocating_hhs.values():
-            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.salesprice1993 <= hh.house_budget)] # JY: need to update sales prices
+            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.new_price <= hh.house_budget)] # JY: need to update sales prices
+            if self.house_choice_mode == 'budget_reduction':
+                bg_budget *= (1.0 - self.budget_reduction_perc)
             if first:
                 try:
                     if self.house_choice_mode == 'simple_avoidance_utility':
@@ -128,7 +135,7 @@ class ExistingAgentLocation(Engine):
                                                                 + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['perc_fld_area']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
 
-        elif self.house_choice_mode == 'simple_avoidance_utility':  # JY consider moving to method on household agents
+        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
             bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
                                                                 + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (1 * self.target.housing_bg_df['residuals'])
