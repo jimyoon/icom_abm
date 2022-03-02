@@ -18,23 +18,18 @@ s.network.get_history('total_population')
 
 ### Get history for population of a particular block group
 s.network.nodes[50].get_history('population')
-s.network.get_node('240054015052').get_history('population')
-
-### Get history for population of a particular block group
-s.network.nodes[50].get_history('population')
-s.network.get_node('240054015052').get_history('population')
+s.network.get_node('240054015052001').get_history('population')
 
 ### Get location history for a specific household agents
 s.network.get_institution('all_hh_agents').components[25000].get_history('location')
 
 ### Get list of agents that reside in a specific block group
-s.network.get_node('245101204002').hh_agents
+s.network.get_node('245101204002001').hh_agents
 
 ##### Export final housing dataframe to geopackage
 s.network.get_history('housing_bg_df')[-1].to_file(driver='ESRI Shapefile', filename="result_test.shp")
 
 ##### Plot initial population
-s.network.get_history('housing_bg_df')[0].plot(column = 'population', cmap='OrRd', legend=True)
 
 ##### Plot initial population (with basemap)
 df = s.network.get_history('housing_bg_df')[0]

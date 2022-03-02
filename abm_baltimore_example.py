@@ -43,7 +43,7 @@ perc_move = .10  # indicates the percentage of households that move each time st
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
-simple_anova_coefficients = [189680, 129080, 122136, 169503, 0]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [567236, 126031, 79212, 235471, 28654]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 print(simple_anova_coefficients)  # JY Temp
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price
@@ -52,7 +52,7 @@ price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'baltimore_blck2.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+geo_filename = 'baltimore_blck.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
 flood_filename = 'blck_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
