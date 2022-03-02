@@ -31,7 +31,7 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename, house_choice_mode):
+    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename):
         """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
         """
         logging.info("Setting up model landscape")
@@ -49,9 +49,8 @@ class ICOMSimulator(Simulator):
         bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
         bg = pd.merge(bg, housing, how='left', on='GISJOIN')
 
-        # if house choice mode is simple anova, load table with coefficients
-        if house_choice_mode=='simple_anova_utility':
-            bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
+        # load table with hedonic regression information for utility function
+        bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
 
         # determine relative cbd proximity and relative flood risk for input to hh utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
         bg['rel_prox_cbd'] = bg['cbddist'].max() + 1 - bg['cbddist']
@@ -106,7 +105,7 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
 
 
-    def convert_initial_population_to_agents(self, no_hhs_per_agent=10):
+    def convert_initial_population_to_agents(self, no_hhs_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for bg in self.network.nodes:
@@ -119,7 +118,7 @@ class ICOMSimulator(Simulator):
                 name = 'hh_agent_initial_' + str(count)
                 self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,
                                                    hh_size=bg.hhsize90, income=bg.mhi90, house_budget_mode='rhea',
-                                                   year_of_residence=self.start_year))  # add household agent to pynsim network
+                                                   year_of_residence=self.start_year, simple_avoidance_perc=simple_avoidance_perc))  # add household agent to pynsim network
                 bg.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
                 bg.occupied_units += 1  # add occupied unit to associated block group node
                 self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution

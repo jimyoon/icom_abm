@@ -28,7 +28,7 @@ class HHAgent(Component):
     """
 
     def __init__(self, name, location=None, no_hhs_per_agent=100, hh_size=4, year_of_residence=2018, income=None,
-                 hh_budget_perc=0.33, house_budget_mode='rhea', **kwargs):
+                 hh_budget_perc=0.33, house_budget_mode='rhea', simple_avoidance_perc=.10, **kwargs):
         super(HHAgent, self).__init__(name, **kwargs)
         self.name = name
         self.location = location
@@ -39,6 +39,12 @@ class HHAgent(Component):
         self.income = income
         self.average_age = 0
         self.hh_budget_perc = hh_budget_perc
+
+        random_avoidance = random.uniform(0, 1)   # indicates whether agent avoids flood zone (used in "simple avoidance utility" model)
+        if random_avoidance <= simple_avoidance_perc:
+            self.avoidance = True
+        else:
+            self.avoidance = False
 
         # calculate housing budget
         if house_budget_mode == 'rhea':

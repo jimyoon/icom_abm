@@ -23,7 +23,7 @@ pd.set_option('display.max_rows', None)
 
 from multiprocessing import Pool
 
-def run_model(flood_risk_coeff):
+def run_model(model_setup):  # model_setup is a list of two value [house_choice_mode, flood_risk_coeff])
 
     # Record start of model time
     start_time = time.time()
@@ -34,7 +34,7 @@ def run_model(flood_risk_coeff):
     scenario = 'Baseline'
     intervention = 'Baseline'
     start_year = 2018
-    no_years = 2  # no of years (model will run for n+1 years)
+    no_years = 19  # no of years (model will run for n+1 years)
     agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
     hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
     initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -46,8 +46,10 @@ def run_model(flood_risk_coeff):
     perc_move = .10  # indicates the percentage of households that move each time step
     perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
     house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-    house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
-    simple_anova_coefficients = [189680, 129080, 122136, 169503, flood_risk_coeff]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+    house_choice_mode = model_setup[0]  # indicates the mode of household location choice model (cobb_douglas_utility, simple_avoidance_utility, simple_flood_utility, budget_reduction)
+    print(house_choice_mode)
+    simple_anova_coefficients = [189680, 129080, 122136, 169503, model_setup[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+    simple_avoidance_perc = model_setup[1]
     print(simple_anova_coefficients)  # JY Temp
     stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
     stock_increase_perc = .05  # indicates the percentage increase in price
@@ -71,7 +73,7 @@ def run_model(flood_risk_coeff):
     # Load geography/landscape information to simulation object
     s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                     pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                    housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
+                    housing_filename=housing_filename, hedonic_filename=hedonic_filename)
 
     # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
     # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
@@ -86,7 +88,7 @@ def run_model(flood_risk_coeff):
     s.network.add_institution(AllHHAgents(name='all_hh_agents'))
 
     # Create household agents based on initial population data
-    s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation)
+    s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation, simple_avoidance_perc=simple_avoidance_perc)
 
     # Initialize available units on block groups based on initial population data
     s.initialize_available_building_units(initial_vacancy=initial_vacancy)
@@ -98,11 +100,11 @@ def run_model(flood_risk_coeff):
 
     # Load new agent creation engine to simulation object
     target = s.network
-    s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode, pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size))
+    s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode, pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                                  simple_avoidance_perc=simple_avoidance_perc))
 
     # Load existing agent sampler (for re-location) to simulation object
     target = s.network
-    perc_move = .10  # percentage of population that is assumed to move
     s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 
     # Load housing inventory engine  # JY: deprecated; housing inventory tracked via housing bg df
@@ -111,7 +113,7 @@ def run_model(flood_risk_coeff):
 
     # Load new agent location engine to simulation object
     bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-    s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients))
+    s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
 
     # Load existing agent re-location engine to simulation object
     target = s.network
@@ -151,29 +153,26 @@ def run_model(flood_risk_coeff):
     sim_time = end_time-start_time
     print("Simulation took (seconds):  %s" % sim_time)
 
-    column_names = ["Model Year", "Population Percentage Change in Flood Zone", "Flood Coefficient"]
-    years = []
-    pop_perc_change = []
-    fld_coeff = flood_risk_coeff
-    fld_coeff_list = []
+    first = True
     for t in range(s.network.current_timestep_idx):
         df = s.network.get_history('housing_bg_df')[t]
-        df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
-        pop_perc_change_fld = (df_fld.new_price.sum() - df_fld.salesprice1993.sum()) / df_fld.salesprice1993.sum()
-        years.append(t + 1)
-        pop_perc_change.append(pop_perc_change_fld)
-        fld_coeff_list.append(fld_coeff)
-    dict = {'Model Year': years,
-            'Pop Perc Change Flood Zone': pop_perc_change,
-            'Flood Coefficient': fld_coeff_list
-            }
-    df = pd.DataFrame(dict)
-    df.to_csv('results_' + str(flood_risk_coeff) + '.csv')
+        df = df[['GEOID', 'GISJOIN', 'new_price', 'population', 'occupied_units', 'available_units',
+                 'demand_exceeds_supply',
+                 'perc_fld_area', 'mhi1990', 'salesprice1993', 'pop1990', 'average_income']]
+        df['model_year'] = t + 1
+        df['pop_perc_change'] = df['population'] / df['pop1990']
+        df['price_perc_change'] = df['new_price'] / df['salesprice1993']
+        if first:
+            df_combined = df
+            first = False
+        else:
+            df_combined = pd.concat([df_combined, df])
+    df_combined.to_csv('results_utility_' + str(flood_risk_coeff) + '.csv')
 
 
 def run_in_parallel():
-    ranges = [0, -10000, -100000, - 1000000]
-    pool = Pool(processes=4)
+    ranges = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', 1.0]]
+    pool = Pool(processes=5)
     pool.map(run_model, ranges)
 
 
