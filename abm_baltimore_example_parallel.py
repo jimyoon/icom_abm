@@ -23,7 +23,7 @@ pd.set_option('display.max_rows', None)
 
 from multiprocessing import Pool
 
-def run_model(flood_risk_coeff):
+def run_model(model_setup):  # model_setup is a list of two value [house_choice_mode, flood_risk_coeff])
 
     # Record start of model time
     start_time = time.time()
@@ -46,9 +46,10 @@ def run_model(flood_risk_coeff):
     perc_move = .10  # indicates the percentage of households that move each time step
     perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
     house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-    house_choice_mode = 'simple_avoidance_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
-    simple_anova_coefficients = [189680, 129080, 122136, 169503, flood_risk_coeff]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
-    simple_avoidance_perc = flood_risk_coeff
+    house_choice_mode = model_setup[0]  # indicates the mode of household location choice model (cobb_douglas_utility, simple_avoidance_utility, simple_flood_utility, budget_reduction)
+    print(house_choice_mode)
+    simple_anova_coefficients = [189680, 129080, 122136, 169503, model_setup[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+    simple_avoidance_perc = model_setup[1]
     print(simple_anova_coefficients)  # JY Temp
     stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
     stock_increase_perc = .05  # indicates the percentage increase in price
@@ -72,7 +73,7 @@ def run_model(flood_risk_coeff):
     # Load geography/landscape information to simulation object
     s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                     pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                    housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
+                    housing_filename=housing_filename, hedonic_filename=hedonic_filename)
 
     # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
     # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
@@ -112,7 +113,7 @@ def run_model(flood_risk_coeff):
 
     # Load new agent location engine to simulation object
     bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-    s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients))
+    s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
 
     # Load existing agent re-location engine to simulation object
     target = s.network
@@ -170,7 +171,7 @@ def run_model(flood_risk_coeff):
 
 
 def run_in_parallel():
-    ranges = [0,.25, .50, .75, 1.0]
+    ranges = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', 1.0]]
     pool = Pool(processes=5)
     pool.map(run_model, ranges)
 
