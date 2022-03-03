@@ -137,28 +137,36 @@ for t in range(s.network.current_timestep_idx):
         df_combined = pd.concat([df_combined,df])
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
-runs_list = [0, -500, -1000, -5000, -10000, -50000, -100000, -500000, -1000000, -5000000]
+runs_list = [0, -1000, -10000, -100000, -1000000] # [0, 0.25, 0.5, 0.75, 1.0]
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('results_utility_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/results_utility_simple_flood_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
         first = False
     else:
         df_combined = pd.concat([df_combined, df])
-df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
-df_fld.loc[df_fld.price_perc_change=='#DIV/0!', 'price_perc_change'] = 0
-df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+df_combined['flood_zone'] = "Not in Flood Zone"
+df_combined.loc[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+# df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+# df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
+# df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+df_combined.loc[df_combined.average_income=='#DIV/0!', 'average_income'] = 1
+df_combined.pop_perc_change = df_combined.average_income.astype(float)
 import seaborn as sns
-palette = sns.color_palette("mako_r", 10)
-sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_fld, ci = None)
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+ax.set_ylim(28000, 50000)
+palette = sns.color_palette("mako_r", 5) # mako_r
+sns.lineplot(x="model_year", y="average_income", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
+plt.show()
 
 #
-runs_list = [0,0.25, 0.50, 0.75, 1.0]
+runs_list = [0, 0.25, 0.5, 0.75, 1.0]
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('results_utility_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -166,11 +174,12 @@ for run_name in runs_list:
     else:
         df_combined = pd.concat([df_combined, df])
 df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
-df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 0
+df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
+df_fld['pop_perc_change'] = df_fld['pop_perc_change'].fillna(1)
 df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
 import seaborn as sns
 palette = sns.color_palette("rocket", 5)
-sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_fld, ci=None)
+sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", palette=palette, data=df_fld, ci=None)
 
 # Add the text--for each line, find the end, annotate it with a label, and
 # adjust the chart axes so that everything fits on.
@@ -196,7 +205,6 @@ for line, name in zip(ax.lines, runs_list[::-1]):
     fig.canvas.get_renderer()).transformed(ax.transData.inverted()).width)
     if np.isfinite(text_width):
         ax.set_xlim(ax.get_xlim()[0], text.xy[0] + text_width * 1.05)
-
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
 runs_list = [0, -500, -1000, -5000, -10000, -50000, -100000, -500000, -1000000, -5000000]

@@ -47,10 +47,10 @@ class HousingMarket(Engine):
                     top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
                     top_candidate_utility = hh_utilities_dict[top_candidate_bg]
                     if top_candidate_bg in bg_demand.keys():
-                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                        bg_demand[top_candidate_bg][hh.name] = hh.income # JY replace top_candidate_utility with hh.income (every agent has same utility fx, assume agents with highest income outcompete)
                     else:
                         bg_demand[top_candidate_bg] = {}
-                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                        bg_demand[top_candidate_bg][hh.name] = hh.income
                 except IndexError:  # if list index is out of range, indicates that no available units are affordable for agent
                     logging.info(hh.name + ' cannot afford any properties and is assumed to migrate outside of domain')
                     # del self.target.unassigned_hhs[hh.name]
@@ -64,10 +64,10 @@ class HousingMarket(Engine):
                     top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
                     top_candidate_utility = hh_utilities_dict[top_candidate_bg]
                     if top_candidate_bg in bg_demand.keys():
-                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                        bg_demand[top_candidate_bg][hh.name] = hh.income
                     else:
                         bg_demand[top_candidate_bg] = {}
-                        bg_demand[top_candidate_bg][hh.name] = top_candidate_utility
+                        bg_demand[top_candidate_bg][hh.name] = hh.income
                 except IndexError: # if list index is out of range, indicates that no available units are affordable for agent
                     logging.info(hh.name + ' cannot afford any properties and is assumed to migrate outside of domain')
                     to_delete_relocating_hhs.append(hh.name)

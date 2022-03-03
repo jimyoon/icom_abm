@@ -90,9 +90,13 @@ class ExistingAgentLocation(Engine):
 
         first = True
         for hh in self.target.relocating_hhs.values():
-            bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.new_price <= hh.house_budget)] # JY: need to update sales prices
             if self.house_choice_mode == 'budget_reduction':
-                bg_budget *= (1.0 - self.budget_reduction_perc)
+                bg_all = self.target.housing_bg_df
+                bg_all['house_budget'] = hh.house_budget
+                bg_all.loc[(bg_all.perc_fld_area >= bg_all.perc_fld_area.quantile(.9)), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
+                bg_budget = bg_all[(bg_all.new_price <= bg_all.house_budget)]
+            else:
+                bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
                     if self.house_choice_mode == 'simple_avoidance_utility':
