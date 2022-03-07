@@ -52,7 +52,7 @@ price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'baltimore_blck.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+geo_filename = 'baltimore_blck2.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
 flood_filename = 'blck_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
@@ -67,7 +67,7 @@ s.set_timestep_information()  # sets up timestep information based on model opti
 # Load geography/landscape information to simulation object
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                 pop_fieldname=pop_fieldname, flood_filename=flood_filename,
-                housing_filename=housing_filename, hedonic_filename=hedonic_filename, house_choice_mode=house_choice_mode)
+                housing_filename=housing_filename, hedonic_filename=hedonic_filename)
 
 # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
 # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
