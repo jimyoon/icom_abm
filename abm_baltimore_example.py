@@ -42,8 +42,10 @@ bld_growth_perc = .01  # indicates the percentage of building stock increase if 
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-house_choice_mode = 'simple_anova_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_anova_utility)
+house_choice_mode = 'budget_reduction'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
 simple_anova_coefficients = [567236, 126031, 79212, 235471, 28654]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
+budget_reduction_perc = .10  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
 stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
 stock_increase_perc = .05  # indicates the percentage increase in price
@@ -82,7 +84,7 @@ s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_fi
 s.network.add_institution(AllHHAgents(name='all_hh_agents'))
 
 # Create household agents based on initial population data
-s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation)
+s.convert_initial_population_to_agents(no_hhs_per_agent=agent_housing_aggregation, simple_avoidance_perc=simple_avoidance_perc)
 
 # Initialize available units on block groups based on initial population data
 s.initialize_available_building_units(initial_vacancy=initial_vacancy)
@@ -94,7 +96,9 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 
 # Load new agent creation engine to simulation object
 target = s.network
-s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode, pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size))
+s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
+                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                              simple_avoidance_perc=simple_avoidance_perc))
 
 # Load existing agent sampler (for re-location) to simulation object
 target = s.network
@@ -107,7 +111,7 @@ s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 
 # Load new agent location engine to simulation object
 bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients))
+s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
 
 # Load existing agent re-location engine to simulation object
 target = s.network
