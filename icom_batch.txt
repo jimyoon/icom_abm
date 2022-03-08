@@ -1,13 +1,14 @@
 #!/bin/csh
-#SBATCH --nodes=3
-#SBATCH --ntasks-per-node=4
-#SBATCH --time=60
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=720
 #SBATCH --job-name icom_cdm_test
 #SBATCH --account ICOM
-#SBATCH --array=1-5
+#SBATCH --array=1-10
+#SBATCH --error=error.txt.%j
 
 module unload python
 module load python/anaconda3.6
 
-python abm_baltimore_example.py $SLURM_ARRAY_TASK_ID
+python abm_baltimore_example_PIC_slurm.py $SLURM_ARRAY_TASK_ID
 

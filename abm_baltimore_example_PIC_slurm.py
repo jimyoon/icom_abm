@@ -24,8 +24,10 @@ pd.set_option('display.max_rows', None)
 
 # Model run # / Slurm
 model_run_id = sys.argv[1]  # This is the $SLURM_ARRAY_TASK_ID, will be used to pull model options from following list
-model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', 1.0]]
-model_run = model_run_list[model_run_id-1]
+model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', 1.0],
+                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -1000000],
+                  ['budget_reduction', 0],['budget_reduction', .01], ['budget_reduction', .05], ['budget_reduction', .10], ['budget_reduction', .20]]
+model_run = model_run_list[int(model_run_id)-1]
 
 
 # Record start of model time
@@ -37,7 +39,7 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 1  # no of years (model will run for n+1 years)
+no_years = 19  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -157,6 +159,7 @@ end_time = time.time()
 sim_time = end_time-start_time
 print("Simulation took (seconds):  %s" % sim_time)
 
+first = True
 for t in range(s.network.current_timestep_idx):
     df = s.network.get_history('housing_bg_df')[t]
     df = df[['GEOID', 'GISJOIN', 'new_price', 'population', 'occupied_units', 'available_units',
@@ -165,4 +168,9 @@ for t in range(s.network.current_timestep_idx):
     df['model_year'] = t + 1
     df['pop_perc_change'] = df['population'] / df['pop1990']
     df['price_perc_change'] = df['new_price'] / df['salesprice1993']
-df.to_csv('results_utility_' + str(model_run[0]) + '_' + str(model_run[1]) + '.csv')
+    if first:
+        df_combined = df
+        first = False
+    else:
+        df_combined = pd.concat([df_combined, df])
+df_combined.to_csv('results_utility_' + str(model_run[0]) + '_' + str(model_run[1]) + '.csv')
