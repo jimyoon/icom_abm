@@ -4,8 +4,9 @@
 #SBATCH --time=720
 #SBATCH --job-name icom_cdm_test
 #SBATCH --account ICOM
-#SBATCH --array=1-10
-#SBATCH --error=error.txt.%j
+#SBATCH --array=1-15
+#SBATCH --error=error%a.txt
+#SBATCH --output=output%a.txt
 
 module unload python
 module load python/anaconda3.6
