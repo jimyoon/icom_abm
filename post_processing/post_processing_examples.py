@@ -137,10 +137,10 @@ for t in range(s.network.current_timestep_idx):
         df_combined = pd.concat([df_combined,df])
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
-runs_list = [0, -1000, -10000, -100000, -1000000] # [0, 0.25, 0.5, 0.75, 1.0]
+runs_list = [0, 0.25, 0.5, 0.75, 1.0] # [0, 0.01, 0.05, 0.1, 0.2] # [0, -1000, -10000, -100000, -1000000]
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/results_utility_simple_flood_utility_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20220303/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -148,18 +148,18 @@ for run_name in runs_list:
     else:
         df_combined = pd.concat([df_combined, df])
 df_combined['flood_zone'] = "Not in Flood Zone"
-df_combined.loc[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
 # df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 # df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 # df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
-df_combined.loc[df_combined.average_income=='#DIV/0!', 'average_income'] = 1
-df_combined.pop_perc_change = df_combined.average_income.astype(float)
+df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
+df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
 import seaborn as sns
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
-ax.set_ylim(28000, 50000)
+ax.set_ylim(0.5, 1.7)
 palette = sns.color_palette("mako_r", 5) # mako_r
-sns.lineplot(x="model_year", y="average_income", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
+sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
 plt.show()
 
 #
