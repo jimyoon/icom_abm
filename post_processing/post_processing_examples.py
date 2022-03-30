@@ -137,10 +137,13 @@ for t in range(s.network.current_timestep_idx):
         df_combined = pd.concat([df_combined,df])
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
-runs_list = [0, 0.25, 0.5, 0.75, 1.0] # [0, 0.01, 0.05, 0.1, 0.2] # [0, -1000, -10000, -100000, -1000000]
+import pandas as pd
+import numpy as np
+
+runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] # [0, -1000, -10000, -100000, -500000, -1000000, -10000000] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220303/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20220310/results_utility_budget_reduction_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -152,14 +155,17 @@ df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(
 # df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 # df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 # df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
-df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
-df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
+df_combined.loc[df_combined.price_perc_change=='#DIV/0!', 'price_perc_change'] = 1
+df_combined.price_perc_change = df_combined.price_perc_change.astype(float)
 import seaborn as sns
+sns.set_style("darkgrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
-ax.set_ylim(0.5, 1.7)
-palette = sns.color_palette("mako_r", 5) # mako_r
-sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
+ax.set_ylim(25000, 50000)
+# palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
+palette = sns.color_palette("PuBu", 9) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+# palette.reverse()
+sns.lineplot(x="model_year", y="average_income", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
 plt.show()
 
 #
@@ -219,3 +225,45 @@ sns.lineplot(x="model_year", y="population", hue="GEOID", data=df_combined, ci =
 sns.lineplot(x="model_year", y="population", data=df_combined.groupby(['GEOID','model_year']).sum().reset_index(), ci = None)
 sns.pointplot(data = df.groupby(['Name', 'Year']).mean().reset_index(),
               x='Year', y='Pts', hue='Name')
+
+
+#### Determine Gini Coefficient for household income and home prices
+def gini(array):
+    """Calculate the Gini coefficient of a numpy array."""
+    # based on bottom eq: http://www.statsdirect.com/help/content/image/stat0206_wmf.gif
+    # from: http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+    array = array.flatten() #all values are treated equally, arrays must be 1d
+    if np.amin(array) < 0:
+        array -= np.amin(array) #values cannot be negative
+    array += 0.0000001 #values cannot be 0
+    array = np.sort(array) #values must be sorted
+    index = np.arange(1,array.shape[0]+1) #index per array element
+    n = array.shape[0]#number of array elements
+    return ((np.sum((2 * index - n  - 1) * array)) / (n * np.sum(array))) #Gini coefficient
+
+df_test = df_combined[df_combined['average_income'].notna()]
+
+#### Read in output dataframe csv files, combine into single dataframe, and plot some results
+import pandas as pd
+import numpy as np
+
+runs_list = [0, -1000, -10000, -100000, -500000, -1000000, -10000000] # [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0]
+df_gini = pd.DataFrame(columns=['run_name','year','gini_value'])
+for run_name in runs_list:
+    df = pd.read_csv('./constance_runs/20220310/results_utility_simple_flood_utility_' + str(run_name) + '.csv')
+    for year in df.model_year.unique():
+        df_year = df[(df.model_year == year)]
+        df_subset = df_year[df_year['new_price'].notna()]
+        gini_array = df_subset['new_price'].to_numpy()
+        gini_value = gini(gini_array)
+        df_gini.loc[len(df_gini.index)] = [run_name, year, gini_value]
+
+import seaborn as sns
+sns.set_style("darkgrid")
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+# palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
+palette = sns.color_palette("PuBu", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+# palette.reverse()
+sns.lineplot(x="year", y="gini_value", hue="run_name", palette=palette, data=df_gini, estimator=np.median, ci = None)
+plt.show()
