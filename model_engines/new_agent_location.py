@@ -47,19 +47,22 @@ class NewAgentLocation(Engine):
         first = True
         to_delete_unassigned_hhs = []
         for hh in self.target.unassigned_hhs.values():
-            if self.house_choice_mode == 'budget_reduction':
-                bg_all = self.target.housing_bg_df
+            bg_all = self.target.housing_bg_df
+            # JY restart here
+            if self.house_choice_mode == 'simple_avoidance_utility':
+                if hh.avoidance == True:
+                    bg_budget = bg_all[(bg_all.perc_fld_area <= bg_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
+                else:
+                    bg_budget = bg_all
+                bg_budget = bg_budget[(bg_budget.new_price <= hh.house_budget)]
+            elif self.house_choice_mode == 'budget_reduction':
                 bg_all['house_budget'] = hh.house_budget
                 bg_all.loc[(bg_all.perc_fld_area >= bg_all.perc_fld_area.quantile(.9)), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
                 bg_budget = bg_all[(bg_all.new_price <= bg_all.house_budget)]
             else:
-                bg_budget = self.target.housing_bg_df[(self.target.housing_bg_df.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
+                bg_budget = bg_all[(bg_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
-                    # JY restart here
-                    if self.house_choice_mode == 'simple_avoidance_utility':
-                        if hh.avoidance == True:
-                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
@@ -71,9 +74,6 @@ class NewAgentLocation(Engine):
                 bg_sample['c'] = 0.2
             else:
                 try:
-                    if self.house_choice_mode == 'simple_avoidance_utility':
-                        if hh.avoidance == True:
-                            bg_budget = bg_budget[(bg_budget.perc_fld_area <= bg_budget.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
                     logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
