@@ -42,8 +42,8 @@ bld_growth_perc = .01  # indicates the percentage of building stock increase if 
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-house_choice_mode = 'budget_reduction'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [567236, 126031, 79212, 235471, -56061]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+house_choice_mode = 'simple_flood_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
+simple_anova_coefficients = [189680, 129080, 122136, 169503, -31335]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = .90  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
@@ -54,7 +54,7 @@ price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'baltimore_blck2.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+geo_filename = 'baltimore_blck.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
 pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
 flood_filename = 'blck_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")

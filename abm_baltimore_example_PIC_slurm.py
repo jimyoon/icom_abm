@@ -63,12 +63,12 @@ price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
-pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
-pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
-flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
-hedonic_filename = 'simple_anova_hedonic_v2.csv'  # simple ANOVA hedonic regression conducted by Alfred
+geo_filename = 'baltimore_blck.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
+pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
+flood_filename = 'blck_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+housing_filename = 'blck_housing_1994.csv'  # housing characteristic data and other information from early 90s (for initialization)
+hedonic_filename = 'simple_anova_hedonic_blck.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,

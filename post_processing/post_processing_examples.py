@@ -102,7 +102,7 @@ fld_coeff_list = []
 for t in range(s.network.current_timestep_idx):
     df = s.network.get_history('housing_bg_df')[t]
     df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
-    pop_perc_change_fld = (df_fld.average_income.sum() - df_fld.mhi1990.sum()) / df_fld.mhi1990.sum()
+    pop_perc_change_fld = (df_fld.population.sum() - df_fld.pop1990.sum()) / df_fld.pop1990.sum()
     years.append(t+1)
     pop_perc_change.append(pop_perc_change_fld)
     fld_coeff_list.append(fld_coeff)
@@ -113,6 +113,7 @@ dict = {'Model Year': years,
 df = pd.DataFrame(dict)
 df_append = pd.read_csv('temp_flood.csv', index_col=False)  # saved from a separate simulation and loaded in as csv
 df = pd.concat([df,df_append],join='inner')
+df.reset_index(inplace=True)
 sns.lineplot(x='Model Year',
              y='Pop Perc Change Flood Zone',
              hue='Flood Coefficient',
@@ -138,7 +139,7 @@ import numpy as np
 runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] # [0, -1000, -10000, -100000, -500000, -1000000, -10000000] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220310/results_utility_budget_reduction_' + str(run_name) + '.csv')
+    df = pd.read_csv('C:/Users/wanh535/PycharmProjects/icom_abm/Results/Simulation 2/results_utility_budget_reduction_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -146,10 +147,20 @@ for run_name in runs_list:
     else:
         df_combined = pd.concat([df_combined, df])
 df_combined['flood_zone'] = "Not in Flood Zone"
-df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+#df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+
+flooded_BG = pd.read_csv("C:/Users/wanh535/PycharmProjects/icom_abm/Results/Simulation 2/flooded_BG.csv")
+df_combined["BG_id"] = df_combined['GEOID'].astype(str).str[:12]
+
+for index, row in df_combined.iterrows():
+    if row['BG_id'] in flooded_BG:
+        df_combined.loc[index, "flood_zone"] = "In Flood Zone"
+
+
 # df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 # df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
-# df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+# df_fld.pop_perc_change
+# = df_fld.pop_perc_change.astype(float)
 df_combined.loc[df_combined.price_perc_change=='#DIV/0!', 'price_perc_change'] = 1
 df_combined.price_perc_change = df_combined.price_perc_change.astype(float)
 import seaborn as sns
