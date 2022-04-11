@@ -43,7 +43,6 @@ class NewAgentCreation(Engine):
         if self.growth_mode == 'perc':
             new_population = self.target.total_population * self.growth_rate
             no_of_new_agents = (new_population + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
-            print("no_of_new_agent is: "+ no_of_new_agents)
 
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
