@@ -36,7 +36,8 @@ class HousingMarket(Engine):
             to_delete_unassigned_hhs = []  # list of households to delete from unassigned dicts for market iteration
             to_delete_relocating_hhs = []  # list of households to delete from unassigned dicts for market iteration
 
-            if not self.target.unassigned_hhs and not self.target.relocating_hhs:  # break out of market iteration loop if no more unassigned households
+            if not self.target.unassigned_hhs and not self.targe
+                t.relocating_hhs:  # break out of market iteration loop if no more unassigned households
                 break
             bg_demand = {}  # a dictionary that will identify hh's and top candidate bg's
             for hh in self.target.unassigned_hhs.values():
@@ -87,6 +88,7 @@ class HousingMarket(Engine):
                             self.target.get_node(bg).hh_agents[hh_match] = self.target.get_institution('all_hh_agents')._component_map[hh_match]  # add pynsim household agent to associated block group node
                             self.target.get_node(bg).occupied_units += 1  # adjust occupied units
                             self.target.get_node(bg).available_units -= 1  # adjust available units
+
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.unassigned_hhs[hh_match]  # delete matched agent from unassigned hh dict
                         else:  # if agent already exists (i.e., agent re-locating within domain)
