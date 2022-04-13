@@ -1,0 +1,5 @@
+1. "simple_anova_hedonic_blck_fromBGMean" calculates the mean of the housing characteristics at block group level, which is serving
+ as the housing characteristics data for each block.
+2. "blck_housing_1993_InheritedFromBG" use the BG level sales price data in 1993 as the housing sales price data at block level. Its
+population/hhsize/mhi1990 are calculated at the block level under 2010 boundary. Therefore, some blocks receiving 0 population, and 
+several hhsize1990 is infinite due to data error. These blocks are removed.
