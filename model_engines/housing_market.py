@@ -36,8 +36,7 @@ class HousingMarket(Engine):
             to_delete_unassigned_hhs = []  # list of households to delete from unassigned dicts for market iteration
             to_delete_relocating_hhs = []  # list of households to delete from unassigned dicts for market iteration
 
-            if not self.target.unassigned_hhs and not self.targe
-                t.relocating_hhs:  # break out of market iteration loop if no more unassigned households
+            if not self.target.unassigned_hhs and not self.target.relocating_hhs:  # break out of market iteration loop if no more unassigned households
                 break
             bg_demand = {}  # a dictionary that will identify hh's and top candidate bg's
             for hh in self.target.unassigned_hhs.values():
