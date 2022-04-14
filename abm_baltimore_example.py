@@ -36,8 +36,9 @@ hh_size = 2.7  # define household size (currently assumes all households have th
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
-pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
+inc_growth_mode = 'normal_distribution' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
+inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
@@ -97,7 +98,7 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 # Load new agent creation engine to simulation object
 target = s.network
 s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
-                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                              pop_growth_inc_perc=pop_growth_inc_perc, inc_growth_perc=inc_growth_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
                               simple_avoidance_perc=simple_avoidance_perc))
 
 # Load existing agent sampler (for re-location) to simulation object

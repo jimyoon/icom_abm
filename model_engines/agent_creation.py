@@ -23,7 +23,7 @@ class NewAgentCreation(Engine):
         s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
     """
 
-    def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, no_hhs_per_agent=10, hh_size=2.7,
+    def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, inc_growth_perc=.05, no_hhs_per_agent=10, hh_size=2.7,
                  simple_avoidance_perc=.10, **kwargs):
         super(NewAgentCreation, self).__init__(target, **kwargs)
         self.growth_mode = growth_mode
@@ -32,6 +32,7 @@ class NewAgentCreation(Engine):
         self.hh_size = hh_size
         self.inc_growth_mode = inc_growth_mode
         self.pop_growth_inc_perc = pop_growth_inc_perc
+        self.inc_growth_perc = inc_growth_perc
         self.simple_avoidance_perc = simple_avoidance_perc
 
     def run(self):
@@ -47,7 +48,7 @@ class NewAgentCreation(Engine):
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
                 lower, upper = 5000, 300000  # truncate distribution to avoid unrealistic incomes
-                mu, sigma = self.target.housing_bg_df.average_income.mean() * (1 + self.growth_inc), self.target.housing_bg_df.average_income.std()
+                mu, sigma = self.target.housing_bg_df.average_income.mean() * (1 + self.inc_growth_perc), self.target.housing_bg_df.average_income.std()
                 X = stats.truncnorm(
                     (lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
 
