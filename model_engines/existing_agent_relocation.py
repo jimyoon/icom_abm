@@ -138,13 +138,13 @@ class ExistingAgentLocation(Engine):
             bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
 
         elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['perc_fld_area']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
+                                                                + (self.simple_anova_coefficients[5] * self.target.housing_bg_df['N_perc_area_flood']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
 
         elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[3]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
+            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
+                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (1 * self.target.housing_bg_df['residuals'])
 
         self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
