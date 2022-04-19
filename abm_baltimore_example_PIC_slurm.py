@@ -45,14 +45,15 @@ hh_size = 2.7  # define household size (currently assumes all households have th
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
-pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
+inc_growth_mode = 'normal_distribution' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
+inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = model_run[0]  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [189680, 129080, 122136, 169503, model_run[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, model_run[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = model_run[1]  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = model_run[1]  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
@@ -68,7 +69,7 @@ pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUM
 pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
 flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
 housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
-hedonic_filename = 'simple_anova_hedonic_v2.csv'  # simple ANOVA hedonic regression conducted by Alfred
+hedonic_filename = 'simple_anova_hedonic_without_flood_bg0418.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
@@ -106,7 +107,7 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 # Load new agent creation engine to simulation object
 target = s.network
 s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
-                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                              pop_growth_inc_perc=pop_growth_inc_perc, inc_growth_perc=inc_growth_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
                               simple_avoidance_perc=simple_avoidance_perc))
 
 # Load existing agent sampler (for re-location) to simulation object
