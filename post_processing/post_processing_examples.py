@@ -140,10 +140,10 @@ for t in range(s.network.current_timestep_idx):
 import pandas as pd
 import numpy as np
 
-runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] # [0, -1000, -10000, -100000, -500000, -1000000, -10000000] #
+runs_list = [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] # [0, -1000, -10000, -100000, -500000, -1000000, -10000000] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220310/results_utility_budget_reduction_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20220419/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -155,16 +155,16 @@ df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(
 # df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 # df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 # df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
-df_combined.loc[df_combined.price_perc_change=='#DIV/0!', 'price_perc_change'] = 1
-df_combined.price_perc_change = df_combined.price_perc_change.astype(float)
+df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'price_perc_change'] = 1
+df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
 import seaborn as sns
 sns.set_style("darkgrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
 ax.set_ylim(25000, 50000)
 # palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
-palette = sns.color_palette("PuBu", 9) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
-# palette.reverse()
+palette = sns.color_palette("PuBu", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+palette.reverse()
 sns.lineplot(x="model_year", y="average_income", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
 plt.show()
 

@@ -25,7 +25,7 @@ pd.set_option('display.max_rows', None)
 # Model run # / Slurm
 model_run_id = sys.argv[1]  # This is the $SLURM_ARRAY_TASK_ID, will be used to pull model options from following list
 model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', .85], ['simple_avoidance_utility', .95], ['simple_avoidance_utility', 1.0],
-                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000],
+                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000], ['simple_flood_utility', -100000000],
                   ['budget_reduction', 0],['budget_reduction', .01], ['budget_reduction', .05], ['budget_reduction', .10], ['budget_reduction', .20], ['budget_reduction', .30], ['budget_reduction', .40], ['budget_reduction', .50], ['budget_reduction', .90]]
 model_run = model_run_list[int(model_run_id)-1]
 
@@ -45,7 +45,7 @@ hh_size = 2.7  # define household size (currently assumes all households have th
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'normal_distribution' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
 pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
 inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
