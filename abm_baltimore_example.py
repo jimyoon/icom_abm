@@ -30,13 +30,13 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 1  # no of years (model will run for n+1 years)
+no_years = 5  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'normal_distribution' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+inc_growth_mode = 'random_agent_replication' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', 'random_agent_replication', etc.)
 pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
 inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply

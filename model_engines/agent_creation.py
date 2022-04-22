@@ -2,6 +2,7 @@ from pynsim import Engine
 from model_classes.urban_agents import HHAgent
 import scipy.stats as stats
 import logging
+import random
 
 class NewAgentCreation(Engine):
     """An engine class that creates new agent's based upon population growth or exogenous scenario assumptions.
@@ -71,6 +72,20 @@ class NewAgentCreation(Engine):
                     self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
                                                       hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
                                                       year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
+                    self.target.get_institution('all_hh_agents').add_component(
+                        self.target.components[-1])  # add pynsim household agent to all hh agents institution
+                    self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
+                        -1]  # add pynsim household agent to unassigned agent dictionary
+                    count += 1
+            elif self.inc_growth_mode == 'random_agent_replication':
+                count = 1
+                for a in range(int(no_of_new_agents)):
+                    name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
+                    random_agent = random.choice(self.target.get_institution('all_hh_agents').components)
+                    random_income = random_agent.income
+                    self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
+                                                          hh_size=self.hh_size, income=random_income, house_budget_mode='rhea',
+                                                          year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
                     self.target.get_institution('all_hh_agents').add_component(
                         self.target.components[-1])  # add pynsim household agent to all hh agents institution
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
