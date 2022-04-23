@@ -158,7 +158,7 @@ class BlockGroup(Node):
         self.geometry = geometry
         self.area = area
         self.land_elevation = 0
-        self.init_pop = init_pop
+        self.init_pop = init_pop # JY init pop is deprecated!
         self.perc_fld_area = perc_fld_area
         self.pop90 = pop90
         self.mhi90 = mhi90

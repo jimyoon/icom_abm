@@ -67,9 +67,6 @@ class ICOMSimulator(Simulator):
         non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
         bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
-        # initialize new price for updating
-        bg['new_price'] = bg['salesprice1993']
-
         for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
             if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
                 location = row['geometry']
@@ -83,6 +80,9 @@ class ICOMSimulator(Simulator):
                 bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[[polygon_index]]['N_perc_area_flood']
                 bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
                 bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
+
+        # initialize new price for updating
+        bg['new_price'] = bg['salesprice1993']
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
@@ -109,10 +109,13 @@ class ICOMSimulator(Simulator):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for bg in self.network.nodes:
+            if bg.name == '240054924021' or bg.name == '245102603031': # JY TEMP debug
+                print('HAHA')
+                pass
             if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
-                no_of_hhs = round(bg.init_pop / bg.hhsize90)
+                no_of_hhs = round(bg.pop90 / bg.hhsize90)
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
-                no_of_hhs = round(bg.init_pop / self.network.housing_bg_df.hhsize1990.median())
+                no_of_hhs = round(bg.pop90 / self.network.housing_bg_df.hhsize1990.median())
             no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
@@ -129,6 +132,9 @@ class ICOMSimulator(Simulator):
         # currently assume a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
         logging.info("Converting initial population to building availability")
         for bg in self.network.nodes:
+            if bg.name == '240054924021' or bg.name== '245102603031': # JY TEMP debug
+                print('HAHA')
+                pass
             bg.available_units = round(initial_vacancy * bg.occupied_units)
 
 

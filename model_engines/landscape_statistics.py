@@ -19,6 +19,9 @@ class LandscapeStatistics(Engine):
         # update master block group pandas dataframe
         rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
         for bg in self.target.nodes:
+            if bg.name == '240054924021' or bg.name== '245102603031': # JY TEMP debug
+                print('HAHA')
+                pass
             bg_dict = {}
             bg_dict['name'] = bg.name
             bg_dict['no_hh_agents'] = len(bg.hh_agents)

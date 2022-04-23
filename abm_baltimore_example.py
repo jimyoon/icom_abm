@@ -30,7 +30,7 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 5  # no of years (model will run for n+1 years)
+no_years = 1  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -44,7 +44,7 @@ perc_move = .10  # indicates the percentage of households that move each time st
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'simple_flood_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, -1000000]  # coefficients for simple anova experiment [intercept, sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, -500000]  # coefficients for simple anova experiment [intercept, sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = .90  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
