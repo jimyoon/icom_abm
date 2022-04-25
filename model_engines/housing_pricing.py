@@ -9,6 +9,9 @@ class HousingPricing(Engine):
     def run(self):
 
         for bg in self.target.nodes:
+            if bg.name == '240054924021' or bg.name == '245102603031':  # JY TEMP debug
+                print('HAHA')
+                pass
             if bg.demand_exceeds_supply == True:
                 bg.new_price = bg.new_price * (1 + self.price_increase_perc)
                 self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_price'] = bg.new_price

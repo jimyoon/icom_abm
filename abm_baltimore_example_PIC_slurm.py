@@ -25,7 +25,7 @@ pd.set_option('display.max_rows', None)
 # Model run # / Slurm
 model_run_id = sys.argv[1]  # This is the $SLURM_ARRAY_TASK_ID, will be used to pull model options from following list
 model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', .85], ['simple_avoidance_utility', .95], ['simple_avoidance_utility', 1.0],
-                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000],
+                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000], ['simple_flood_utility', -100000000],
                   ['budget_reduction', 0],['budget_reduction', .01], ['budget_reduction', .05], ['budget_reduction', .10], ['budget_reduction', .20], ['budget_reduction', .30], ['budget_reduction', .40], ['budget_reduction', .50], ['budget_reduction', .90]]
 model_run = model_run_list[int(model_run_id)-1]
 
@@ -45,14 +45,15 @@ hh_size = 2.7  # define household size (currently assumes all households have th
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
-pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
+inc_growth_mode = 'random_agent_replication' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
+inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = model_run[0]  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [-131517, 294955, 130174, 128330, 154573, model_run[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, model_run[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = model_run[1]  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = model_run[1]  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
@@ -106,7 +107,7 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 # Load new agent creation engine to simulation object
 target = s.network
 s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
-                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                              pop_growth_inc_perc=pop_growth_inc_perc, inc_growth_perc=inc_growth_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
                               simple_avoidance_perc=simple_avoidance_perc))
 
 # Load existing agent sampler (for re-location) to simulation object

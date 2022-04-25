@@ -25,25 +25,25 @@ pd.set_option('display.max_rows', None)
 start_time = time.time()
 
 # Define simulation options/setup (eventually can use excel, xml, or some other interface file).
-# All adjustable model options should be included here.
+# All adjustable model options should be included here. Eventually store all options below on a new dictionary loaded into the network (e.g., s.network.options)
 simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 10  # no of years (model will run for n+1 years)
+no_years = 19  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'percentile_based' # defines tf
+inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
 pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-house_choice_mode = 'simple_flood_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [-131517, 294955, 130174, 128330, 154573, -10000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+house_choice_mode = 'budget_reduction'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
+simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = .90  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
@@ -54,12 +54,12 @@ price_increase_perc = .05
 
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'baltimore_blck3.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
-pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
-pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
-flood_filename = 'blck_perc_100yr_flood_inheritedFBG.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-housing_filename = 'blck_housing_1993_InheritedFromBG.csv'  # housing characteristic data and other information from early 90s (for initialization)
-hedonic_filename = 'simple_anova_hedonic_blck_fromBGMean.csv'  # simple ANOVA hedonic regression conducted by Alfred
+geo_filename = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
+pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
+flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
+hedonic_filename = 'simple_anova_hedonic_v2.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
@@ -102,7 +102,6 @@ s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=p
 
 # Load existing agent sampler (for re-location) to simulation object
 target = s.network
-perc_move = .10  # percentage of population that is assumed to move
 s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 
 # Load housing inventory engine  # JY: deprecated; housing inventory tracked via housing bg df

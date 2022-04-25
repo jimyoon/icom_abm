@@ -8,6 +8,9 @@ class BuildingDevelopment(Engine):
 
     def run(self):
         for bg in self.target.nodes:
+            if bg.name == '240054924021' or bg.name== '245102603031': # JY TEMP debug
+                print('HAHA')
+                pass
             if bg.demand_exceeds_supply == True:
                 bg.new_units_constructed = round(bg.occupied_units * self.stock_increase_perc)
                 bg.available_units += bg.new_units_constructed

@@ -4,7 +4,7 @@
 #SBATCH --time=720
 #SBATCH --job-name icom_cdm_test
 #SBATCH --account ICOM
-#SBATCH --array=1-23
+#SBATCH --array=1-24
 #SBATCH --error=error%a.txt
 #SBATCH --output=output%a.txt
 

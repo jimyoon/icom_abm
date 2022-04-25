@@ -18,10 +18,12 @@ flood.to_csv('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_a
 
 ##### This script calculates the percentage of building area that is inundated by at least 6-inches in the RIFT 100-yr flood
 
-# Load in varoius shapefiles
-flood = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\rift_flood_6in_epsg4326.shp')
-build = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\GIS\\ICoM\\ms_buildings_maryland\\ms_buildings_balt_sjoin.shp')
-bg = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\blck_grp_extract_epsg4326.shp')
+# Load in various shapefiles
+# flood = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\rift_flood_6in_epsg4326.shp')
+flood = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\rift_flood_6in_epsg4326_20220404_v2.shp')
+build = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\ms_buildings_balt_sjoin.shp')
+# bg = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\blck_grp_extract_epsg4326.shp')
+bg = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\GIS\\ICoM\\shapefiles\\admin\\baltimore_blck_epsg4326.shp')
 
 # Convert to a Cartesian system
 flood = flood.to_crs({'init': 'epsg:6487'})
@@ -68,4 +70,4 @@ bg_build_area_flood['area_flood'] = bg_build_area_flood['area']
 bg_percent_flood = pd.merge(bg_build_area_all, bg_build_area_flood[['GISJOIN','area_flood']], how='left', on='GISJOIN')
 bg_percent_flood = bg_percent_flood.fillna(0)
 bg_percent_flood['perc_area_flood'] = bg_percent_flood['area_flood'] / bg_percent_flood['area']
-bg_percent_flood.to_csv('perc_build_area_flood_corr.csv')
+bg_percent_flood.to_csv('perc_build_area_flood_corr_20220404_blocklevel.csv')
