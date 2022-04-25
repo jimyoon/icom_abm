@@ -1,0 +1,32 @@
+Call:
+lm(formula = MedianSalesPriceAmount ~ N_MeanSqfeet + N_MeanAge + 
+    N_MeanNoOfStories + N_MeanFullBathNumber + N_perc_area_flood, 
+    data = price)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-226947  -27017   -4914   22195  208911 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(>|t|)    
+(Intercept)           -131517      18856  -6.975 5.57e-12 ***
+N_MeanSqfeet           294955      22547  13.082  < 2e-16 ***
+N_MeanAge              130174      12434  10.469  < 2e-16 ***
+N_MeanNoOfStories      128330      12855   9.983  < 2e-16 ***
+N_MeanFullBathNumber   154573      20109   7.687 3.60e-14 ***
+N_perc_area_flood       10984      18585   0.591    0.555    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 51620 on 1001 degrees of freedom
+Multiple R-squared:  0.7248,	Adjusted R-squared:  0.7234 
+F-statistic: 527.2 on 5 and 1001 DF,  p-value: < 2.2e-16
+
+
+                       Df       Sum Sq      Mean Sq     F value        Pr(>F) PercentExplained
+N_MeanSqfeet            1 5.601424e+12 5.601424e+12 2102.084503 3.635282e-248     57.798731749
+N_MeanAge               1 1.061118e+12 1.061118e+12  398.212931  7.513217e-75     10.949227940
+N_MeanNoOfStories       1 2.022297e+11 2.022297e+11   75.892133  1.222179e-17      2.086723444
+N_MeanFullBathNumber    1 1.581909e+11 1.581909e+11   59.365375  3.142803e-14      1.632305175
+N_perc_area_flood       1 9.306704e+08 9.306704e+08    0.349259  5.546663e-01      0.009603196
+Residuals            1001 2.667364e+12 2.664700e+09          NA            NA     27.523408497
