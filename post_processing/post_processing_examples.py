@@ -140,10 +140,47 @@ for t in range(s.network.current_timestep_idx):
 import pandas as pd
 import numpy as np
 
-runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9]  # [0, -1000, -10000, -100000, -500000, -1000000, -10000000, -100000000] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] #
+runs_list = [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0]  # [0, -1000, -10000, -100000, -500000, -1000000, -10000000, -100000000] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220422/results_utility_budget_reduction_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20220423/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
+    df['run_name'] = run_name
+    if first:
+        df_combined = df
+        first = False
+    else:
+        df_combined = pd.concat([df_combined, df])
+df_combined['flood_zone'] = "Not in Flood Zone"
+df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+# df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
+# df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
+# df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
+df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
+df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
+df_combined['pop_perc_change_corr'] = ((df_combined['population'] - df_combined['pop1990']) / df_combined['pop1990']) * 100
+df_combined.loc[df_combined.pop_perc_change_corr=='#DIV/0!', 'pop_perc_change_corr'] = 100
+import seaborn as sns
+sns.set_style("darkgrid")
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+# ax.set_ylim(0.9, 1.7)
+# palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
+palette = sns.color_palette("PuBu", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+palette.reverse()
+# aggregation_functions = {'pop_perc_change': 'median'}
+# df_combined_agg = df_combined.groupby(['model_year','run_name','flood_zone'], as_index=False).aggregate(aggregation_functions)
+sns.lineplot(x="model_year", y="pop_perc_change_corr", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.median, ci = None)
+# sns.scatterplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined_agg, estimator=np.median, ci = None)
+plt.show()
+
+#### Read in output dataframe csv files, combine into single dataframe, and plot some results (different color palettes for inside/outside flood zone
+import pandas as pd
+import numpy as np
+
+runs_list = [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0]  # [0, -1000, -10000, -100000, -500000, -1000000, -10000000, -100000000] # [0, 0.25, 0.5, 0.75, 0.85, 0.95, 1.0] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.9] #
+first = True
+for run_name in runs_list:
+    df = pd.read_csv('./constance_runs/20220423/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -158,16 +195,21 @@ df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(
 df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
 import seaborn as sns
-sns.set_style("darkgrid")
+# sns.set_style("darkgrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
 # ax.set_ylim(0.9, 1.7)
 # palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
-palette = sns.color_palette("PuBu", 9) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+palette = sns.color_palette("Oranges_d", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
 palette.reverse()
 # aggregation_functions = {'pop_perc_change': 'median'}
 # df_combined_agg = df_combined.groupby(['model_year','run_name','flood_zone'], as_index=False).aggregate(aggregation_functions)
-sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.mean, ci = None)
+sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_combined[(df_combined['flood_zone']=="Not in Flood Zone")], estimator=np.mean, ci = None)
+palette = sns.color_palette("Blues_d", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #
+palette.reverse()
+# aggregation_functions = {'pop_perc_change': 'median'}
+# df_combined_agg = df_combined.groupby(['model_year','run_name','flood_zone'], as_index=False).aggregate(aggregation_functions)
+sns.lineplot(x="model_year", y="average_income", hue="run_name", palette=palette, data=df_combined[(df_combined['flood_zone']=="In Flood Zone")], estimator=np.mean, ci = None)
 # sns.scatterplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined_agg, estimator=np.median, ci = None)
 plt.show()
 
@@ -189,6 +231,7 @@ df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
 import seaborn as sns
 palette = sns.color_palette("rocket", 5)
 sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", palette=palette, data=df_fld, ci=None)
+
 
 # Add the text--for each line, find the end, annotate it with a label, and
 # adjust the chart axes so that everything fits on.
@@ -214,6 +257,14 @@ for line, name in zip(ax.lines, runs_list[::-1]):
     fig.canvas.get_renderer()).transformed(ax.transData.inverted()).width)
     if np.isfinite(text_width):
         ax.set_xlim(ax.get_xlim()[0], text.xy[0] + text_width * 1.05)
+
+
+#### (starting from df_combined previous code chunk)
+df_combined_GIS = df_combined[(df_combined.model_year == 39)]
+df_combined_run_0 = df_combined_GIS[(df_combined_GIS.run_name==0.0)]
+df_combined_GIS = pd.merge(df_combined_GIS, df_combined_run_0[['GISJOIN','population']], how='left', on='GISJOIN')
+df_combined_GIS['population_diff'] = df_combined_GIS['population_y'] - df_combined_GIS['population_x']
+df_combined_GIS.to_csv('QGIS_CHANCE_test2.csv')
 
 #### Read in output dataframe csv files, combine into single dataframe, and plot some results
 runs_list = [0, -500, -1000, -5000, -10000, -50000, -100000, -500000, -1000000, -5000000]
@@ -270,3 +321,44 @@ palette = sns.color_palette("PuBu", 7) # sns.color_palette("OrRd", 7) # sns.colo
 # palette.reverse()
 sns.lineplot(x="year", y="gini_value", hue="run_name", palette=palette, data=df_gini, estimator=np.median, ci = None)
 plt.show()
+
+##### Processing for household alluvial fan visual
+# Get housing dataframe
+df = s.network.get_history('housing_bg_df')[-1]
+# Add 90th perc. flook risk calc
+df['flood_zone'] = "Not in Flood Zone"
+df.loc[(df.perc_fld_area > df.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+hh_df = pd.DataFrame(columns=['name','type','income','house_status'])
+for hh in s.network.get_institution('all_hh_agents').components:
+    start_loc = hh.get_history('location')[0]
+    end_loc = hh.get_history('location')[-1]
+    start_loc_fld = df[(df.GEOID==start_loc)]['flood_zone']
+    end_loc_fld = df[(df.GEOID == end_loc)]['flood_zone']
+    if hh.name[9:16] == 'initial':
+        type = 'initial'
+    else:
+        type = 'new'
+    if type == 'initial':
+        if hh.location == 'outmigrated':
+            status = 'outmigrated'
+        elif start_loc_fld.values[0] == end_loc_fld.values[0]:
+            status = 'stayed w/in zone'
+        elif end_loc_fld.values[0] == 'Not in Flood Zone':
+            status = 'moved into the non-flood zone'
+        elif end_loc_fld.values[0] == 'In Flood Zone':
+            status = 'moved into the flood zone'
+    elif type == 'new':
+        if hh.location == 'outmigrated':
+            status = 'outmigrated'
+        elif end_loc_fld.values[0] == 'Not in Flood Zone':
+            status = 'moved into the non-flood zone'
+        elif end_loc_fld.values[0] == 'In Flood Zone':
+            status = 'moved into the flood zone'
+    hh_df = hh_df.append({'name': hh.name, 'type': type, 'income': hh.income, 'house_status': status}, ignore_index=True)
+
+hh_df['income_category'] = "1. Low"
+hh_df.loc[(hh_df.income > hh_df.income.quantile(.25)) & (hh_df.income < hh_df.income.quantile(.50)), 'income_category'] = "2. Medium-Low"
+hh_df.loc[(hh_df.income >= hh_df.income.quantile(.50)) & (hh_df.income < hh_df.income.quantile(.75)), 'income_category'] = "3. Medium-High"
+hh_df.loc[(hh_df.income >= hh_df.income.quantile(.75)), 'income_category'] = "4. High"
+
+hh_df.to_csv('hh_alluvial_test_v4.csv')

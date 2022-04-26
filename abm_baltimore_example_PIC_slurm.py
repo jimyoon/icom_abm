@@ -39,7 +39,7 @@ simulation_name = 'ABM_Baltimore_example'
 scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
-no_years = 19  # no of years (model will run for n+1 years)
+no_years = 39  # no of years (model will run for n+1 years)
 agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
@@ -175,3 +175,44 @@ for t in range(s.network.current_timestep_idx):
     else:
         df_combined = pd.concat([df_combined, df])
 df_combined.to_csv('results_utility_' + str(model_run[0]) + '_' + str(model_run[1]) + '.csv')
+
+##### Processing for household alluvial fan visual
+# Get housing dataframe
+df = s.network.get_history('housing_bg_df')[-1]
+# Add 90th perc. flood risk calc
+df['flood_zone'] = "Not in Flood Zone"
+df.loc[(df.perc_fld_area > df.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+hh_df = pd.DataFrame(columns=['name','type','income','house_status'])
+for hh in s.network.get_institution('all_hh_agents').components:
+    start_loc = hh.get_history('location')[0]
+    end_loc = hh.get_history('location')[-1]
+    start_loc_fld = df[(df.GEOID==start_loc)]['flood_zone']
+    end_loc_fld = df[(df.GEOID == end_loc)]['flood_zone']
+    if hh.name[9:16] == 'initial':
+        type = 'initial'
+    else:
+        type = 'new'
+    if type == 'initial':
+        if hh.location == 'outmigrated':
+            status = 'outmigrated'
+        elif start_loc_fld.values[0] == end_loc_fld.values[0]:
+            status = 'stayed w/in zone'
+        elif end_loc_fld.values[0] == 'Not in Flood Zone':
+            status = 'moved into the non-flood zone'
+        elif end_loc_fld.values[0] == 'In Flood Zone':
+            status = 'moved into the flood zone'
+    elif type == 'new':
+        if hh.location == 'outmigrated':
+            status = 'outmigrated'
+        elif end_loc_fld.values[0] == 'Not in Flood Zone':
+            status = 'moved into the non-flood zone'
+        elif end_loc_fld.values[0] == 'In Flood Zone':
+            status = 'moved into the flood zone'
+    hh_df = hh_df.append({'name': hh.name, 'type': type, 'income': hh.income, 'house_status': status}, ignore_index=True)
+
+hh_df['income_category'] = "1. Low"
+hh_df.loc[(hh_df.income > hh_df.income.quantile(.25)) & (hh_df.income < hh_df.income.quantile(.50)), 'income_category'] = "2. Medium-Low"
+hh_df.loc[(hh_df.income >= hh_df.income.quantile(.50)) & (hh_df.income < hh_df.income.quantile(.75)), 'income_category'] = "3. Medium-High"
+hh_df.loc[(hh_df.income >= hh_df.income.quantile(.75)), 'income_category'] = "4. High"
+
+hh_df.to_csv('hh_results_utility_' + str(model_run[0]) + '_' + str(model_run[1]) + '.csv')
