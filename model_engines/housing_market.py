@@ -114,4 +114,9 @@ class HousingMarket(Engine):
                             self.target.get_institution('all_hh_agents')._component_map[hh_match].location = bg  # change location attribute on household agent
                             del self.target.relocating_hhs[hh_match]  # delete matched agent from unassigned hh dict
 
+        # for any households remaining in queue, assume they migrate
+        for hh in self.target.unassigned_hhs.values():
+            self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
+        for hh in self.target.relocating_hhs.values():
+            self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
         pass  # to accommodate debugger
