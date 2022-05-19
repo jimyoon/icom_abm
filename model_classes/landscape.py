@@ -110,13 +110,48 @@ class ABMLandscape(Network):
             self.avg_hh_size = statistics.mean(hh_size_landscape)
 
             # calculate normalized statistics for block groups
-            housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
+            housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df[
+                'average_income'].max()
 
             # merge with housing_bg_df to retain geometry features
-            cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
-            self.housing_bg_df = pd.merge(self.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
+            previous_housing_bg = pd.DataFrame(self.housing_bg_df, columns = self.column_index)
+            cols_to_use = previous_housing_bg.columns.difference(housing_current_df.columns)
+            updated_housing_bg_df = pd.merge(previous_housing_bg[cols_to_use], housing_current_df, how='left',
+                                          left_on='GEOID', right_on='name')
+            column_index = dict(zip(updated_housing_bg_df.columns, list(range(0, len(updated_housing_bg_df.columns)))))
+            updated_housing_bg_df = updated_housing_bg_df.to_numpy()
+            self.housing_bg_df = updated_housing_bg_df
+            self.column_index = column_index
 
             pass  # added to allow for debugger
+
+            # housing_current_df = pd.DataFrame(rows_list)
+            # self.avg_hh_income = statistics.mean(incomes_landscape)
+            # self.avg_hh_size = statistics.mean(hh_size_landscape)
+            #
+            # # calculate normalized statistics for block groups
+            # housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
+            #
+            # # Convert data frame to numpy array
+            # columns = dict(zip(housing_current_df.columns, list(range(0, len(housing_current_df.columns)))))
+            # housing_current_df = housing_current_df.to_numpy()
+            #
+            # # merge with housing_bg_df to retain geometry features
+            # cols_to_use = set(self.column_index) - set(columns)
+            # if set(self.column_index.keys) == cols_to_use:
+            #     pass
+            # else:
+            #
+            #     cols = {}
+            #     for item in cols_to_use:
+            #         cols[item] = self.column_index[item]
+            #
+            #     # cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
+            #     self.housing_bg_df = pd.merge(self.housing_bg_df[cols], housing_current_df, how='left', left_on='GEOID',
+            #                                   right_on='name')
+            #
+            #     pass  # added to allow for debugger
+
 
 class BlockGroup(Node):
     """The BlockGroup node class.

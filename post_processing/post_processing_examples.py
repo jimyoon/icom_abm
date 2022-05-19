@@ -270,3 +270,22 @@ palette = sns.color_palette("PuBu", 7) # sns.color_palette("OrRd", 7) # sns.colo
 # palette.reverse()
 sns.lineplot(x="year", y="gini_value", hue="run_name", palette=palette, data=df_gini, estimator=np.median, ci = None)
 plt.show()
+
+
+
+##Checking for mismatched bgs
+geoid_names = s.network.get_history('housing_bg_df')[0].GEOID
+mismatch_names = []
+matched_names = []
+for name in geoid_names:
+    list1 = s.network.get_node(name).get_history('occupied_units')
+    list2 = []
+    for i in range(20):
+        TF = s.network.get_history('housing_bg_df')[i].loc[s.network.get_history('housing_bg_df')[i].name == name].occupied_units.tolist()[0]
+        list2.append(TF)
+    if list1 != list2:
+        print("Mismatch: " + name)
+        mismatch_names.append(name)
+    else:
+        matched_names.append(name)
+

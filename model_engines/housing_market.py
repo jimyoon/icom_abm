@@ -40,8 +40,9 @@ class HousingMarket(Engine):
                 break
             bg_demand = {}  # a dictionary that will identify hh's and top candidate bg's
             for hh in self.target.unassigned_hhs.values():
-                hh_utilities_subset = self.target.hh_utilities_df[(self.target.hh_utilities_df.hh == hh.name)]
-                hh_utilities_dict = dict(zip(hh_utilities_subset.GEOID, hh_utilities_subset.utility))
+                hh_utility_index = self.target.hh_column_index
+                hh_utilities_subset = self.target.hh_utilities_df[self.target.hh_utilities_df[:, hh_utility_index['hh']] == hh.name, :]
+                hh_utilities_dict = dict(zip(hh_utilities_subset[:, hh_utility_index['GEOID']], hh_utilities_subset[:, hh_utility_index['utility']]))
                 sorted_bg_candidates = sorted(((v,k) for k,v in hh_utilities_dict.items()))  # sort bg candidates from lowest to highest
                 try:
                     top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
@@ -57,9 +58,10 @@ class HousingMarket(Engine):
                     to_delete_unassigned_hhs.append(hh.name)
                     self.target.get_institution('all_hh_agents')._component_map[hh.name].location = 'outmigrated'
             for hh in self.target.relocating_hhs.values():
-                hh_utilities_subset = self.target.hh_utilities_df[(self.target.hh_utilities_df.hh == hh.name)]
-                hh_utilities_dict = dict(zip(hh_utilities_subset.GEOID, hh_utilities_subset.utility))
-                sorted_bg_candidates = sorted(((v,k) for k,v in hh_utilities_dict.items()))  # sort bg candidates from lowest to highest
+                hh_utility_index = self.target.hh_column_index
+                hh_utilities_subset = self.target.hh_utilities_df[self.target.hh_utilities_df[:, hh_utility_index['hh']] == hh.name, :]
+                hh_utilities_dict = dict(zip(hh_utilities_subset[:, hh_utility_index['GEOID']],hh_utilities_subset[:, hh_utility_index['utility']]))
+                sorted_bg_candidates = sorted(((v, k) for k, v in hh_utilities_dict.items()))  # sort bg candidates from lowest to highest
                 try:
                     top_candidate_bg = sorted_bg_candidates[-1-market_iter][1]  # get the bg name for the top candidate (excluding previous top candidates from previous iterations)
                     top_candidate_utility = hh_utilities_dict[top_candidate_bg]

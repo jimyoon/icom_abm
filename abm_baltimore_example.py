@@ -10,6 +10,8 @@ from model_engines.building_development import BuildingDevelopment
 from model_engines.housing_pricing import HousingPricing
 from model_engines.landscape_statistics import LandscapeStatistics
 import time
+# import pickle
+# import os
 # from model_classes.institutional_agents import CountyZoningManager, RealEstate
 # from model_engines.real_estate_prices import RealEstatePrices
 # from model_engines.housing_inventory import HousingInventory
@@ -36,14 +38,15 @@ hh_size = 2.7  # define household size (currently assumes all households have th
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
 pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
-inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
-pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
+inc_growth_mode = 'random_agent_replication' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
+pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
+inc_growth_perc = .05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
 perc_move = .10  # indicates the percentage of households that move each time step
 perc_move_mode = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
 house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
 house_choice_mode = 'budget_reduction'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-simple_anova_coefficients = [189680, 129080, 122136, 169503, -1000000]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, 0]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
 simple_avoidance_perc = .10  # defines the percentage of agents that avoid the flood plain
 budget_reduction_perc = .90  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
 print(simple_anova_coefficients)  # JY Temp
@@ -52,14 +55,15 @@ stock_increase_perc = .05  # indicates the percentage increase in price
 housing_pricing_mode = 'simple_perc'
 price_increase_perc = .05
 
+
 # Define census geography files / data (all external files that define the domain/city should be defined here)
 landscape_name = 'Baltimore'
-geo_filename = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
-pop_filename = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
-pop_fieldname = 'AJWME001'  # from IPUMS/NHGIS metadata
-flood_filename = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-housing_filename = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
-hedonic_filename = 'simple_anova_hedonic_v2.csv'  # simple ANOVA hedonic regression conducted by Alfred
+geo_filename = 'baltimore_blck3.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
+pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
+pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
+flood_filename = 'blck_perc_100yr_flood_inheritedFBG.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
+housing_filename = 'blck_housing_1993_InheritedFromBG_v2.csv'  # housing characteristic data and other information from early 90s (for initialization)
+hedonic_filename = 'simple_anova_hedonic_blck_fromBGMean.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
 s = ICOMSimulator(network=None, record_time=False, progress=False, max_iterations=1,
@@ -70,6 +74,17 @@ s.set_timestep_information()  # sets up timestep information based on model opti
 s.set_landscape(landscape_name=landscape_name, geo_filename=geo_filename, pop_filename=pop_filename,
                 pop_fieldname=pop_fieldname, flood_filename=flood_filename,
                 housing_filename=housing_filename, hedonic_filename=hedonic_filename)
+
+# Pickling the pynsim simulation object for future use. (After pre-processing data before simulation, the landscape \
+# processing does not require much time. Thefore, pickling is not necessary.
+# os.chdir('C:/Users/wanh535/PycharmProjects/icom_abm')
+# dbfile = open('s_pickle', 'ab')
+# pickle.dump(s, dbfile)
+# dbfile.close()
+# #Read in pickle file
+# dbfile = open('s_pickle', 'rb')
+# s = pickle.load(dbfile)
+# dbfile.close()
 
 # # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
 # s.network.add_institution(CountyZoningManager(name='zoning_manager_005'))
@@ -97,7 +112,7 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 # Load new agent creation engine to simulation object
 target = s.network
 s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
-                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+                              pop_growth_inc_perc=pop_growth_inc_perc, inc_growth_perc=inc_growth_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
                               simple_avoidance_perc=simple_avoidance_perc))
 
 # Load existing agent sampler (for re-location) to simulation object
@@ -144,6 +159,7 @@ s.add_engine(LandscapeStatistics(target))
 
 # Run simulation
 s.start()
+
 
 # Record end time
 end_time = time.time()
