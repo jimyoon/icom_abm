@@ -87,5 +87,5 @@ class LandscapeStatistics(Engine):
                                          left_on='GEOID', right_on='name')
         column_index = dict(zip(updated_housing_bg_df.columns, list(range(0, len(updated_housing_bg_df.columns)))))
         updated_housing_bg_df = updated_housing_bg_df.to_numpy()
-        self.housing_bg_df = updated_housing_bg_df
-        self.column_index = column_index
+        self.target.housing_bg_df = updated_housing_bg_df
+        self.targt.column_index = column_index
