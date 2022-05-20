@@ -4,23 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="775fa482-6bbb-4b08-8395-dfd56705a25e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/data_inputs/simple_anova_hedonic_summary_without_flood0418.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_inputs/simple_anova_hedonic_without_flood_bg0418.csv" afterDir="false" />
+    <list default="true" id="208890f4-450a-4ec7-9ad6-7493d7cc5b08" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/icom_abm.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Merge_at_4_25_2022_10_48_AM_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Merge_at_4_25_2022_10_48_AM__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/abm_baltimore_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/abm_baltimore_example.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/abm_baltimore_example_PIC_slurm.py" beforeDir="false" afterPath="$PROJECT_DIR$/abm_baltimore_example_PIC_slurm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/icom_batch.txt" beforeDir="false" afterPath="$PROJECT_DIR$/icom_batch.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_classes/landscape.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_classes/landscape.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/model_classes/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_classes/simulator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/agent_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/agent_creation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/building_development.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/building_development.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/existing_agent_relocation.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/existing_agent_relocation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/housing_pricing.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/housing_pricing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/landscape_statistics.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/landscape_statistics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model_engines/new_agent_location.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_engines/new_agent_location.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/post_processing/post_processing_examples.py" beforeDir="false" afterPath="$PROJECT_DIR$/post_processing/post_processing_examples.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pre_processing/flood_risk_calcs.py" beforeDir="false" afterPath="$PROJECT_DIR$/pre_processing/flood_risk_calcs.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +27,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="28IObjAEzirlr5UEMO8KBDNJmeE" />
+  <component name="ProjectId" id="29RKRMykhesEhXDUcTZy2rAi2CF" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -45,16 +39,12 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="775fa482-6bbb-4b08-8395-dfd56705a25e" name="Changes" comment="" />
-      <created>1650900707702</created>
+      <changelist id="208890f4-450a-4ec7-9ad6-7493d7cc5b08" name="Changes" comment="" />
+      <created>1653070449766</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1650900707702</updated>
+      <updated>1653070449766</updated>
     </task>
     <servers />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="Merge remote-tracking branch 'origin/main' into block_alfred2&#10;&#10;# Conflicts:&#10;#&#9;abm_baltimore_example.py&#10;#&#9;abm_baltimore_example_PIC_slurm.py&#10;#&#9;model_engines/existing_agent_relocation.py&#10;#&#9;model_engines/new_agent_location.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="Merge remote-tracking branch 'origin/main' into block_alfred2&#10;&#10;# Conflicts:&#10;#&#9;abm_baltimore_example.py&#10;#&#9;abm_baltimore_example_PIC_slurm.py&#10;#&#9;model_engines/existing_agent_relocation.py&#10;#&#9;model_engines/new_agent_location.py" />
   </component>
 </project>

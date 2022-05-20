@@ -22,7 +22,7 @@ s.network.get_node('240054015052').get_history('population')
 
 ### Get history for population of a particular block group
 s.network.nodes[50].get_history('population')
-s.network.get_node('240054015052').get_history('population')
+s.network.get_node('240054026022008').get_history('population')
 
 ### Get location history for a specific household agents
 s.network.get_institution('all_hh_agents').components[25000].get_history('location')

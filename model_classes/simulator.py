@@ -67,19 +67,19 @@ class ICOMSimulator(Simulator):
         non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
         bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
-        for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
-            if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
-                location = row['geometry']
-                bg_subset = bg[(bg.GEOID != row['GEOID']) & (np.isfinite(bg.salesprice1993)) & (np.isfinite(bg.N_MeanSqfeet))]
-                polygon_index = bg_subset.distance(location).sort_values().index[0]
-                bg.at[index, 'salesprice1993'] = bg_subset.loc[[polygon_index]]['salesprice1993']
-                bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[[polygon_index]]['N_MeanSqfeet']
-                bg.at[index, 'N_MeanAge'] = bg_subset.loc[[polygon_index]]['N_MeanAge']
-                bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[[polygon_index]]['N_MeanNoOfStories']
-                bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[[polygon_index]]['N_MeanFullBathNumber']
-                bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[[polygon_index]]['N_perc_area_flood']
-                bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
-                bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
+        # for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
+        #     if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
+        #         location = row['geometry']
+        #         bg_subset = bg[(bg.GEOID != row['GEOID']) & (np.isfinite(bg.salesprice1993)) & (np.isfinite(bg.N_MeanSqfeet))]
+        #         polygon_index = bg_subset.distance(location).sort_values().index[0]
+        #         bg.at[index, 'salesprice1993'] = bg_subset.loc[[polygon_index]]['salesprice1993']
+        #         bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[[polygon_index]]['N_MeanSqfeet']
+        #         bg.at[index, 'N_MeanAge'] = bg_subset.loc[[polygon_index]]['N_MeanAge']
+        #         bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[[polygon_index]]['N_MeanNoOfStories']
+        #         bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[[polygon_index]]['N_MeanFullBathNumber']
+        #         bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[[polygon_index]]['N_perc_area_flood']
+        #         bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
+        #         bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
 
         # initialize new price for updating
         bg['new_price'] = bg['salesprice1993']
