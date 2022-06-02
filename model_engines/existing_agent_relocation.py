@@ -1,6 +1,7 @@
 from pynsim import Engine
 import random
 import logging
+import pandas as pd
 
 class ExistingAgentReloSampler(Engine):
     """An engine class to identify existing agents to relocate and determine utility for homes.
@@ -88,7 +89,6 @@ class ExistingAgentLocation(Engine):
 
 
 
-        first = True
         for hh in self.target.relocating_hhs.values():
             bg_all = self.target.housing_bg_df
             # JY restart here
@@ -104,49 +104,16 @@ class ExistingAgentLocation(Engine):
                 bg_budget = bg_all[(bg_all.new_price <= bg_all.house_budget)]
             else:
                 bg_budget = bg_all[(bg_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
-            if first:
-                try:
-                    bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
-                except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
-                    hh.location = 'outmigrated'
-                    continue
-                bg_sample['hh'] = hh.name
-                bg_sample['a'] = 0.4
-                bg_sample['b'] = 0.4
-                bg_sample['c'] = 0.2
-            else:
-                try:
-                    bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
-                except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
-                    hh.location = 'outmigrated'
-                    continue
-                bg_append['hh'] = hh.name
-                bg_append['a'] = 0.4
-                bg_append['b'] = 0.4
-                bg_append['c'] = 0.2
-                bg_sample = bg_sample.append(bg_append)
 
-            first = False
-
-        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
-
-            def cobb_douglas_utility(row):
-                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
-
-            bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
-
-        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (self.simple_anova_coefficients[5] * self.target.housing_bg_df['N_perc_area_flood']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
-
-        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (1 * self.target.housing_bg_df['residuals'])
-
-        self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
-
+            try:
+                bg_sample = bg_budget.sample(n=10, replace=True,
+                                             weights='available_units')  # Sample from available units (JY revisit this weighting)
+                bg_sample = bg_sample[['GEOID', 'utility']]
+                dictionary = bg_sample.set_index('GEOID')['utility'].to_dict()
+                name = str(hh.income) + hh.name
+                self.target.hh_utilities_dict[name] = dictionary
+            except ValueError:
+                logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
+                hh.location = 'outmigrated'
+                continue
         pass  # to accommodate debugger

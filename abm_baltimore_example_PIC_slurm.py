@@ -40,7 +40,7 @@ scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
 no_years = 19  # no of years (model will run for n+1 years)
-agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
+agent_housing_aggregation = 1  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
@@ -68,7 +68,7 @@ geo_filename = 'baltimore_blck3.shp'  # accommodates census geographies in IPUMS
 pop_filename = 'balt_blck_population_2020.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
 pop_fieldname = 'pop2020'  # from IPUMS/NHGIS metadata
 flood_filename = 'blck_perc_100yr_flood_inheritedFBG.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-housing_filename = 'blck_housing_1993_InheritedFromBG.csv'  # housing characteristic data and other information from early 90s (for initialization)
+housing_filename = 'blck_housing_1993_InheritedFromBG_v2.csv'  # housing characteristic data and other information from early 90s (for initialization)
 hedonic_filename = 'simple_anova_hedonic_blck_fromBGMean.csv'  # simple ANOVA hedonic regression conducted by Alfred
 
 # Create pynsim simulation object and set timesteps, landscape on simulation
