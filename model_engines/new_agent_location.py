@@ -45,6 +45,8 @@ class NewAgentLocation(Engine):
         #         logging.info(hh.name + ' cannot afford any available homes!')
         #     for bg in bg_sample:
         #         hh.calc_utility_cobb_douglas(bg)
+
+        #Calculate utility values for all the block groups:
         if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
 
             def cobb_douglas_utility(row):
@@ -86,7 +88,7 @@ class NewAgentLocation(Engine):
                                              weights='available_units')  # Sample from available units (JY revisit this weighting)
                 bg_sample = bg_sample[['GEOID', 'utility']]
                 dictionary = bg_sample.set_index('GEOID')['utility'].to_dict()
-                name = str(hh.income) + hh.name
+                name = str(hh.income) + hh.name #Paste income as pre-fix for HH name, making sorting by income easier.
                 self.target.hh_utilities_dict[name] = dictionary
 
             except ValueError:

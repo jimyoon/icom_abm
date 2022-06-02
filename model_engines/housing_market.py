@@ -29,9 +29,13 @@ class HousingMarket(Engine):
         """
         logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
 
-        HH = sorted(self.target.hh_utilities_dict, reverse = True)
+        HH = self.target.hh_utilities_dict.keys()
+        income = [float(i.split("hh", 1)[0]) for i in HH]
+        diction = dict(zip(HH, income))
+        HH2 = sorted(diction.items(), key = lambda x: x[1], reverse = True)#Sort HH agents from richest to the poorest
+        HH3 = [i[0] for i in HH2]
 
-        for hh in HH:
+        for hh in HH3:
             hh_utilities_subset = self.target.hh_utilities_dict[hh]
             hh_name = 'hh' + hh.split("hh", 1)[1] #Drop the pre-fix income, and get only the hh name
             sorted_bg_candidates = sorted(((v, k) for k, v in hh_utilities_subset.items()))
