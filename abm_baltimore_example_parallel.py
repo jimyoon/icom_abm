@@ -48,7 +48,7 @@ def run_model(model_setup):  # model_setup is a list of two value [house_choice_
     house_budget_mode = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
     house_choice_mode = model_setup[0]  # indicates the mode of household location choice model (cobb_douglas_utility, simple_avoidance_utility, simple_flood_utility, budget_reduction)
     print(house_choice_mode)
-    simple_anova_coefficients = [583934, 123147, 73716, 229800, model_setup[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
+    simple_anova_coefficients = [-121428, 294707, 130553, 128990, 154887, model_run[1]]  # coefficients for simple anova experiment [sqfeet, age, stories, baths, flood]
     simple_avoidance_perc = model_setup[1]
     print(simple_anova_coefficients)  # JY Temp
     stock_increase_mode = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
