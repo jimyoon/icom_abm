@@ -109,9 +109,6 @@ class ICOMSimulator(Simulator):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for bg in self.network.nodes:
-            if bg.name == '240054924021' or bg.name == '245102603031': # JY TEMP debug
-                print('HAHA')
-                pass
             if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
                 no_of_hhs = round(bg.pop90 / bg.hhsize90)
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
@@ -132,9 +129,6 @@ class ICOMSimulator(Simulator):
         # currently assume a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
         logging.info("Converting initial population to building availability")
         for bg in self.network.nodes:
-            if bg.name == '240054924021' or bg.name== '245102603031': # JY TEMP debug
-                print('HAHA')
-                pass
             bg.available_units = round(initial_vacancy * bg.occupied_units)
 
 

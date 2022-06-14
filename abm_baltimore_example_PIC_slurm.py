@@ -24,9 +24,10 @@ pd.set_option('display.max_rows', None)
 
 # Model run # / Slurm
 model_run_id = sys.argv[1]  # This is the $SLURM_ARRAY_TASK_ID, will be used to pull model options from following list
-model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', .85], ['simple_avoidance_utility', .95], ['simple_avoidance_utility', 1.0],
-                  ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000], ['simple_flood_utility', -100000000],
-                  ['budget_reduction', 0],['budget_reduction', .01], ['budget_reduction', .05], ['budget_reduction', .10], ['budget_reduction', .20], ['budget_reduction', .30], ['budget_reduction', .40], ['budget_reduction', .50], ['budget_reduction', .90]]
+# model_run_list = [['simple_avoidance_utility', 0],['simple_avoidance_utility', .25], ['simple_avoidance_utility', .50], ['simple_avoidance_utility', .75], ['simple_avoidance_utility', .85], ['simple_avoidance_utility', .95], ['simple_avoidance_utility', 1.0],
+#                   ['simple_flood_utility', 0],['simple_flood_utility', -1000], ['simple_flood_utility', -10000], ['simple_flood_utility', -100000], ['simple_flood_utility', -500000], ['simple_flood_utility', -1000000], ['simple_flood_utility', -10000000], ['simple_flood_utility', -100000000],
+#                   ['budget_reduction', 0],['budget_reduction', .01], ['budget_reduction', .05], ['budget_reduction', .10], ['budget_reduction', .20], ['budget_reduction', .30], ['budget_reduction', .40], ['budget_reduction', .50], ['budget_reduction', .90]]
+model_run_list = [['simple_avoidance_utility', .10]]
 model_run = model_run_list[int(model_run_id)-1]
 
 
