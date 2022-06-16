@@ -44,7 +44,7 @@ class NewAgentCreation(Engine):
         # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':
             new_population = self.target.total_population * self.growth_rate
-            no_of_new_agents = (new_population + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
+            no_of_new_agents = (new_population/self.hh_size + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
 
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
@@ -77,6 +77,7 @@ class NewAgentCreation(Engine):
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
                         -1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
+
             elif self.inc_growth_mode == 'random_agent_replication':
                 count = 1
                 for a in range(int(no_of_new_agents)):
@@ -91,6 +92,8 @@ class NewAgentCreation(Engine):
                     self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
                         -1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
+
+
         elif self.growth_mode == 'exog':
             # ADD CODE HERE
             pass

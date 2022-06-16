@@ -64,3 +64,4 @@ class HousingMarket(Engine):
                 except IndexError:  # if list index is out of range, indicates that no available units are affordable for agent
                     logging.info(hh_name + ' cannot afford any properties and is assumed to migrate outside of domain')
                     self.target.get_institution('all_hh_agents')._component_map[hh_name].location = 'outmigrated'
+

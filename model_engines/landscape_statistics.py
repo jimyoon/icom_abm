@@ -32,7 +32,6 @@ class LandscapeStatistics(Engine):
             hh_size_bg = []
             bg.no_of_hhs = len(bg.hh_agents)
 
-
             for name, a in bg.hh_agents.items():
                 if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
                     self.target.total_population += a.no_hhs_per_agent * a.hh_size
