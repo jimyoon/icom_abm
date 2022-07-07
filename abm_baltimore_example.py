@@ -1,9 +1,10 @@
 # Import packages
 from model_classes.simulator import ICOMSimulator
 from model_classes.institutional_categories import AllHHAgents
-from model_engines.agent_creation import NewAgentCreation
+#from model_engines.agent_creation import NewAgentCreation
+from model_engines.agent_out_migration import agent_out_migration
 from model_engines.existing_agent_relocation import ExistingAgentReloSampler
-from model_engines.new_agent_location import NewAgentLocation
+#from model_engines.new_agent_location import NewAgentLocation
 from model_engines.existing_agent_relocation import ExistingAgentLocation
 from model_engines.housing_market import HousingMarket
 from model_engines.building_development import BuildingDevelopment
@@ -35,7 +36,7 @@ agent_housing_aggregation = 10  # indicates the level of agent/building aggregat
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
-pop_growth_perc = .01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
+pop_growth_perc = -0.1  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
 inc_growth_mode = 'percentile_based' # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', etc.)
 pop_growth_inc_perc = .90  # defines the income percentile for the in-migrating population
 bld_growth_perc = .01  # indicates the percentage of building stock increase if demand exceeds supply
@@ -95,10 +96,14 @@ s.initialize_available_building_units(initial_vacancy=initial_vacancy)
 # s.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
 
 # Load new agent creation engine to simulation object
+# target = s.network
+# s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
+#                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
+#                              simple_avoidance_perc=simple_avoidance_perc))
+
+#Load agent out migration to simulation object
 target = s.network
-s.add_engine(NewAgentCreation(target, growth_mode=pop_growth_mode, growth_rate=pop_growth_perc, inc_growth_mode=inc_growth_mode,
-                              pop_growth_inc_perc=pop_growth_inc_perc, no_hhs_per_agent=agent_housing_aggregation, hh_size=hh_size,
-                              simple_avoidance_perc=simple_avoidance_perc))
+s.add_engine(agent_out_migration(target, perc_migrate = pop_growth_perc))
 
 # Load existing agent sampler (for re-location) to simulation object
 target = s.network
@@ -109,8 +114,9 @@ s.add_engine(ExistingAgentReloSampler(target, perc_move=perc_move))
 # s.add_engine(HousingInventory(target, residences_per_unit=agent_housing_aggregation))
 
 # Load new agent location engine to simulation object
-bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
-s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
+#bg_sample_size = 10  # the number of homes that a new agent samples for residential choice
+#s.add_engine(NewAgentLocation(target, bg_sample_size, house_choice_mode=house_choice_mode, simple_anova_coefficients=simple_anova_coefficients, budget_reduction_perc=budget_reduction_perc))
+
 
 # Load existing agent re-location engine to simulation object
 target = s.network

@@ -86,8 +86,39 @@ class ExistingAgentLocation(Engine):
         #         bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units').GEOID.to_list()  # Sample from available units
         #     for bg in bg_sample:
         #         hh.calc_utility_cobb_douglas(bg)
+        # Calculate utility values for all the block groups:
 
+        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
 
+            def cobb_douglas_utility(row):
+                return (row['average_income_norm'] ** 0.4) * (row['prox_cbd_norm'] ** 0.4) * (
+                        row['flood_risk_norm'] ** 0.2)
+
+            self.target.housing_bg_df['utility'] = self.target.housing_bg_df.apply(cobb_douglas_utility, axis=1)
+
+        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
+            self.target.housing_bg_df['utility'] = (self.simple_anova_coefficients[0]) + (
+                        self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (
+                                                               self.simple_anova_coefficients[2] *
+                                                               self.target.housing_bg_df['N_MeanAge']) \
+                                                   + (self.simple_anova_coefficients[3] * self.target.housing_bg_df[
+                'N_MeanNoOfStories']) + (self.simple_anova_coefficients[4] * self.target.housing_bg_df[
+                'N_MeanFullBathNumber']) \
+                                                   + (self.simple_anova_coefficients[5] * self.target.housing_bg_df[
+                'N_perc_area_flood']) + (1 * self.target.housing_bg_df[
+                'residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+
+        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
+            self.target.housing_bg_df['utility'] = (self.simple_anova_coefficients[0]) + (
+                        self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (
+                                                               self.simple_anova_coefficients[2] *
+                                                               self.target.housing_bg_df['N_MeanAge']) \
+                                                   + (self.simple_anova_coefficients[3] * self.target.housing_bg_df[
+                'N_MeanNoOfStories']) + (self.simple_anova_coefficients[4] * self.target.housing_bg_df[
+                'N_MeanFullBathNumber']) \
+                                                   + (1 * self.target.housing_bg_df['residuals'])
+
+        self.target.hh_utilities_dict = {}  # Create empty hh_utilities_dict
 
         for hh in self.target.relocating_hhs.values():
             bg_all = self.target.housing_bg_df
