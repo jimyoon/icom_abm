@@ -105,7 +105,7 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
 
 
-    def convert_initial_population_to_agents(self, no_hhs_per_agent=10, simple_avoidance_perc=.10):
+    def convert_initial_population_to_agents(self, no_hhs_per_agent, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for bg in self.network.nodes:
@@ -117,6 +117,8 @@ class ICOMSimulator(Simulator):
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
                 no_of_hhs = round(bg.pop90 / self.network.housing_bg_df.hhsize1990.median())
             no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
+            print("number of hhs_per agent is: " + str(no_hhs_per_agent))
+
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
                 self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,

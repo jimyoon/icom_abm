@@ -1,4 +1,5 @@
 from pynsim import Engine
+import pandas as pd
 import random
 import logging
 
@@ -126,7 +127,7 @@ class ExistingAgentLocation(Engine):
                 bg_append['a'] = 0.4
                 bg_append['b'] = 0.4
                 bg_append['c'] = 0.2
-                bg_sample = bg_sample.append(bg_append)
+                bg_sample = pd.concat([bg_sample, bg_append])
 
             first = False
 

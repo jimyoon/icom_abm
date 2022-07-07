@@ -2,6 +2,7 @@ from pynsim import Engine
 from model_classes.urban_agents import HHAgent
 import random
 import logging
+import pandas as pd
 
 class NewAgentLocation(Engine):
     """An engine class to determine calculate new household agent's utility for homes.
@@ -83,7 +84,7 @@ class NewAgentLocation(Engine):
                 bg_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 bg_append['b'] = 0.4
                 bg_append['c'] = 0.2
-                bg_sample = bg_sample.append(bg_append)
+                bg_sample = pd.concat([bg_sample, bg_append])
 
             first = False
 

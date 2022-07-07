@@ -31,7 +31,7 @@ scenario = 'Baseline'
 intervention = 'Baseline'
 start_year = 2018
 no_years = 5  # no of years (model will run for n+1 years)
-agent_housing_aggregation = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
+agent_housing_aggregation = 15  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
 hh_size = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
 initial_vacancy = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
 pop_growth_mode = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
