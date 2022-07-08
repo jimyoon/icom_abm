@@ -90,7 +90,7 @@ class ICOMSimulator(Simulator):
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
             cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
-                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'],
+                                    blkgrpce=row['BLOCKCE'], area=row['ALAND'], geometry=row['geometry'],
                                     init_pop=row[pop_fieldname], perc_fld_area=row['perc_fld_area'],
                                     pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
