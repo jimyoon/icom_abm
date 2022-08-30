@@ -147,6 +147,9 @@ class ExistingAgentLocation(Engine):
                                                                 + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4]* self.target.housing_bg_df['N_MeanFullBathNumber'])\
                                                                 + (1 * self.target.housing_bg_df['residuals'])
 
-        self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
+        try:
+            self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
+        except AttributeError: # Added to accommodate turning off new agent engines
+            self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
 
         pass  # to accommodate debugger

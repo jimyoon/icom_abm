@@ -1,7 +1,7 @@
 #!/bin/csh
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=720
+#SBATCH --time=2880
 #SBATCH --job-name icom_cdm_test
 #SBATCH --account ICOM
 #SBATCH --array=1-24
