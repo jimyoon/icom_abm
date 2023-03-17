@@ -94,13 +94,15 @@ class ExistingAgentLocation(Engine):
             # JY restart here
             if self.house_choice_mode == 'simple_avoidance_utility':
                 if hh.avoidance == True:
-                    bg_budget = bg_all[(bg_all.perc_fld_area <= bg_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
+                    # bg_budget = bg_all[(bg_all.perc_fld_area <= bg_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
+                    bg_budget = bg_all[(bg_all.perc_fld_area <= .10)]
                 else:
                     bg_budget = bg_all
                 bg_budget = bg_budget[(bg_budget.new_price <= hh.house_budget)]
             elif self.house_choice_mode == 'budget_reduction':
                 bg_all['house_budget'] = hh.house_budget
-                bg_all.loc[(bg_all.perc_fld_area >= bg_all.perc_fld_area.quantile(.9)), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
+                # bg_all.loc[(bg_all.perc_fld_area >= bg_all.perc_fld_area.quantile(.9)), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
+                bg_all.loc[(bg_all.perc_fld_area >= .10), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
                 bg_budget = bg_all[(bg_all.new_price <= bg_all.house_budget)]
             else:
                 bg_budget = bg_all[(bg_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices

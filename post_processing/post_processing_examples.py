@@ -145,10 +145,10 @@ new_rc_params = {'text.usetex': False,
 }
 mpl.rcParams.update(new_rc_params)
 
-runs_list = [0, 0.10, 0.25, 0.5, 0.75, 0.85, 0.95]# [0, -1000, -10000, -100000, -1000000, -10000000, -100000000] # [0, 0.10, 0.25, 0.5, 0.75, 0.85, 0.95] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.5, 0.9] #
+runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.5, 0.9] # [0, -1000, -10000, -100000, -1000000, -10000000, -100000000] # [0, 0.10, 0.25, 0.5, 0.75, 0.85, 0.95] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.5, 0.9] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220620/results_utility_simple_avoidance_utility_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20220620/results_utility_budget_reduction_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -197,22 +197,37 @@ for year in df_combined.model_year.unique():
             inc_pop_sum = df_combined[(df_combined.model_year==year) & (df_combined.flood_zone==flood_zone) & (df_combined.run_name==run)].income_pop.sum()
             df_combined.loc[(df_combined.model_year==year) & (df_combined.flood_zone==flood_zone) & (df_combined.run_name==run), 'wavg_income'] = inc_pop_sum / pop_sum
 
+# Run this segment when calculating home price outcome
+df_combined['price_pop'] = df_combined['new_price'] * df_combined['population']
+df_combined['wavg_price'] = 0
+for year in df_combined.model_year.unique():
+    for flood_zone in df_combined.flood_zone.unique():
+        for run in df_combined.run_name.unique():
+            pop_sum = df_combined[(df_combined.model_year==year) & (df_combined.flood_zone==flood_zone) & (df_combined.run_name==run)].population.sum()
+            price_pop_sum = df_combined[(df_combined.model_year==year) & (df_combined.flood_zone==flood_zone) & (df_combined.run_name==run)].price_pop.sum()
+            df_combined.loc[(df_combined.model_year==year) & (df_combined.flood_zone==flood_zone) & (df_combined.run_name==run), 'wavg_price'] = price_pop_sum / pop_sum
+
 import seaborn as sns
 sns.set(font_scale = 1.2)
 sns.set_style("whitegrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
+ax.set_ylim(0,95000)
+# ax.set_ylim(-60,350)
 # ax.set_ylim(-60,150)
-ax.set_ylim(24000,34500)
+# ax.set_ylim(22000,39000)
+# ax.set_ylim(24000,34500)
 # ax.set_ylim(25000, 41000)
+# ax.set_ylim(25000, 50500)
+# ax.set_ylim(-50,340)
 ax.set_xlim(0,80)
 # palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
-palette = sns.color_palette("OrRd", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #sns.color_palette("PuBu", 7)
+palette = sns.color_palette("YlGn", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #sns.color_palette("PuBu", 7)
 # palette.reverse()
 # aggregation_functions = {'pop_perc_change': 'median'}
 # df_combined_agg = df_combined.groupby(['model_year','run_name','flood_zone'], as_index=False).aggregate(aggregation_functions)
 
-sns.lineplot(x="model_year", y="wavg_income", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.mean, ci = None)
+sns.lineplot(x="model_year", y="wavg_price", hue="run_name", style="flood_zone", palette=palette, data=df_combined, estimator=np.mean, ci = None)
 # sns.scatterplot(x="model_year", y="pop_perc_change", hue="run_name", style="flood_zone", palette=palette, data=df_combined_agg, estimator=np.median, ci = None)
 plt.savefig("temp.svg")
 plt.show()

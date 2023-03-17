@@ -129,7 +129,7 @@ class ICOMSimulator(Simulator):
         # currently assume a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
         logging.info("Converting initial population to building availability")
         for bg in self.network.nodes:
-            bg.available_units = round(initial_vacancy * bg.occupied_units)
+            bg.available_units = round((initial_vacancy * bg.occupied_units) / (1 - initial_vacancy))
 
 
 
