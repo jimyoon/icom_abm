@@ -41,6 +41,10 @@ df = s.network.get_history('housing_bg_df')[0]
 ax = df.plot(column = 'population', cmap='OrRd', alpha=0.8, legend=True)
 ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
 
+df = s.network.housing_bg_df
+ax = df.plot(column = 'residuals', cmap='OrRd', alpha=0.8, legend=True)
+ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
+
 ##### Plot final population
 s.network.get_history('housing_bg_df')[-1].plot(column = 'population', cmap='OrRd', legend=True)
 
@@ -148,7 +152,8 @@ mpl.rcParams.update(new_rc_params)
 runs_list = [0, 0.01, 0.05, 0.1, 0.2, 0.5, 0.9] # [0, -1000, -10000, -100000, -1000000, -10000000, -100000000] # [0, 0.10, 0.25, 0.5, 0.75, 0.85, 0.95] #  # [0, 0.01, 0.05, 0.1, 0.2, 0.5, 0.9] #
 first = True
 for run_name in runs_list:
-    df = pd.read_csv('./constance_runs/20220620/results_utility_budget_reduction_' + str(run_name) + '.csv')
+    # df = pd.read_csv('./constance_runs/20220620/results_utility_budget_reduction_' + str(run_name) + '.csv')
+    df = pd.read_csv('./constance_runs/20230322_CEUS_publication/pop_01/results_utility_budget_reduction_' + str(run_name) + '.csv')
     df['run_name'] = run_name
     if first:
         df_combined = df
@@ -156,7 +161,8 @@ for run_name in runs_list:
     else:
         df_combined = pd.concat([df_combined, df])
 df_combined['flood_zone'] = "Not in Flood Zone"
-df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+# df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
+df_combined.loc[(df_combined.perc_fld_area > .10), 'flood_zone'] = "In Flood Zone"
 # df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 # df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 # df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
@@ -214,13 +220,13 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
 ax.set_ylim(0,95000)
 # ax.set_ylim(-60,350)
-# ax.set_ylim(-60,150)
+# ax.set_ylim(-60,150) # use for Panel 1 (pop growth)
 # ax.set_ylim(22000,39000)
 # ax.set_ylim(24000,34500)
 # ax.set_ylim(25000, 41000)
 # ax.set_ylim(25000, 50500)
 # ax.set_ylim(-50,340)
-ax.set_xlim(0,80)
+ax.set_xlim(0,95)
 # palette = sns.color_palette("mako_r", 7) # mako_r sns.light_palette("seagreen", as_cmap=True)
 palette = sns.color_palette("YlGn", 7) # sns.color_palette("OrRd", 7) # sns.color_palette("YlGn", 7) #sns.color_palette("PuBu", 7)
 # palette.reverse()
