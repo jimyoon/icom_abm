@@ -1,3 +1,6 @@
+# ignore all __pycache__ folders
+__pycache__/
+
 # system
 .DS_Store
 
