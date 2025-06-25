@@ -21,6 +21,8 @@ class CountyZoningManager(Institution):
         """
         super(CountyZoningManager, self).__init__(name, **kwargs)
 
+        self.zoning_threshold = 0.03
+
     def setup(self, timestep: int) -> None:
         """Set up the institution for a given timestep.
         
@@ -35,9 +37,9 @@ class CountyZoningManager(Institution):
         Iterates through all nodes (census block groups) and sets zoning
         to 'not_allowed' if population density exceeds 0.03.
         """
-        for bg in self.nodes:
-            if bg.pop_density > 0.03:
-                bg.zoning = 'not_allowed'
+        for block_group in self.nodes:
+            if block_group.pop_density > self.zoning_threshold:
+                block_group.zoning = 'not_allowed'
 
 
 class LeveeManager(Institution):
