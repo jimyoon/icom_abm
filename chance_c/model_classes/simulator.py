@@ -1,11 +1,13 @@
+import datetime
+import logging
+
+import geopandas as gpd
+import pandas as pd
+import numpy as np
 from pynsim import Simulator
 from model_classes.landscape import ABMLandscape, BlockGroup
 from model_classes.urban_agents import HHAgent
-import datetime
-import geopandas as gpd
-import pandas as pd
-import logging
-import numpy as np
+
 
 class ICOMSimulator(Simulator):
     """An ICOM Simulator class (a child of the pynsim Simulator class)

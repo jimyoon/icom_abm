@@ -1,5 +1,6 @@
 from pynsim import Institution
 
+
 class CountyZoningManager(Institution):
     def __init__(self, name, **kwargs):
         super(CountyZoningManager, self).__init__(name, **kwargs)
@@ -12,6 +13,7 @@ class CountyZoningManager(Institution):
             if bg.pop_density > 0.03:
                 bg.zoning = 'not_allowed'
 
+
 class LeveeManager(Institution):
     def __init__(self, name, **kwargs):
         super(LeveeManager, self).__init__(name, **kwargs)
@@ -21,6 +23,7 @@ class LeveeManager(Institution):
 
     def build_new_levee(self):
         pass
+
 
 class RealEstate(Institution):
     def __init__(self, name, **kwargs):

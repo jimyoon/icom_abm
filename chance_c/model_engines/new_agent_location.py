@@ -1,7 +1,9 @@
 from pynsim import Engine
-from model_classes.urban_agents import HHAgent
 import random
 import logging
+
+from model_classes.urban_agents import HHAgent
+
 
 class NewAgentLocation(Engine):
     """An engine class to determine calculate new household agent's utility for homes.

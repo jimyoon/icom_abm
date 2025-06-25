@@ -1,6 +1,8 @@
-from pynsim.components.component import Component
-import random
 import math
+import random
+
+from pynsim.components.component import Component
+
 
 class HHAgent(Component):
     """The HHAgent component class.

@@ -1,11 +1,13 @@
-from pynsim import Network
-from pynsim import Node
 import logging
+from math import nan
 import statistics
+
 import geopandas as gpd
 import pandas as pd
-from math import nan
 import numpy as np
+from pynsim import Network
+from pynsim import Node
+
 
 class ABMLandscape(Network):
     """The ABMLandscape class.
@@ -118,6 +120,7 @@ class ABMLandscape(Network):
 
             pass  # added to allow for debugger
 
+
 class BlockGroup(Node):
     """The BlockGroup node class.
 
@@ -205,5 +208,3 @@ class BlockGroup(Node):
 
         self.demand_exceeds_supply = False
         self.pop_density = self.population / self.area
-
-

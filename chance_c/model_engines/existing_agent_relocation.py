@@ -1,6 +1,8 @@
-from pynsim import Engine
 import random
 import logging
+
+from pynsim import Engine
+
 
 class ExistingAgentReloSampler(Engine):
     """An engine class to identify existing agents to relocate and determine utility for homes.

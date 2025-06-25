@@ -1,6 +1,7 @@
 from pynsim import Engine
 import numpy as np
 
+
 class BuildingDevelopment(Engine):
     def __init__(self, target, stock_increase_mode='simple_perc', stock_increase_perc=0.05, **kwargs):
         super(BuildingDevelopment, self).__init__(target, **kwargs)

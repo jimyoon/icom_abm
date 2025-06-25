@@ -1,8 +1,12 @@
-from pynsim import Engine
-from model_classes.urban_agents import HHAgent
-import scipy.stats as stats
 import logging
 import random
+
+from pynsim import Engine
+import scipy.stats as stats
+
+from model_classes.urban_agents import HHAgent
+
+
 
 class NewAgentCreation(Engine):
     """An engine class that creates new agent's based upon population growth or exogenous scenario assumptions.
