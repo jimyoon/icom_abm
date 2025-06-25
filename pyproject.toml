@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chance_c"
+version = "0.1.0"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Jim Yoon", email = "jim.yoon@pnnl.gov"},
+]
+description = "The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments."
+readme = "README.md"
+requires-python = ">=3.11" # Adjusted based on PyMuPDF and asyncio features
+maintainers = [
+    {name = "Jim Yoon", email = "jim.yoon@pnnl.gov"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pynsim>=0.1.5",
+    "pandas>=2.3.0",
+    "numpy>=2.3.1",
+    "geopandas>=1.1.0",
+    "scipy>=1.16.0",
+    "matplotlib>=3.10.3",
+    "contextily-1.6.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.12.1",
+    "trio>=0.30.0",
+]
+docs = [
+    "setuptools>=57.0.0",
+    "build>=0.5.1",
+    "ipykernel>=6.15.1",
+    "autodoc>=0.5.0",
+    "nbsphinx~=0.8.6",
+    "sphinx~=7.2.6",
+]
+deploy = [
+    "twine>=4.0.1",
+]
+
+[project.urls]
+Repository = "https://github.com/jimyoon/icom_abm"
+
+[tool.hatch.build]
+packages = ["knowai"]  # set importable package name to "cerf"
+include = ["knowai"]
