@@ -7,10 +7,47 @@ import pandas as pd
 
 
 class LandscapeStatistics(Engine):
-    def __init__(self, target, **kwargs):
+    """An engine class that calculates and updates landscape-level and block group-level statistics.
+    
+    The LandscapeStatistics class is a pynsim engine that computes various demographic
+    and housing statistics from household agents. It calculates population, income,
+    household size, population density, and housing inventory statistics at both
+    the landscape and block group levels, then updates the housing dataframe with
+    current values.
+    
+    Args:
+        target: The simulation network target containing block group nodes and household data.
+        **kwargs: Additional keyword arguments passed to the parent class.
+    
+    Inter-module Outputs/Modifications:
+        target.total_population (int): Total population across all block groups.
+        target.avg_hh_income (float): Average household income across the landscape.
+        target.avg_hh_size (float): Average household size across the landscape.
+        target.housing_bg_df (pandas.DataFrame): Updated housing dataframe with 
+            current statistics for each block group.
+        bg.population (int): Population count for each block group node.
+        bg.avg_hh_income (float): Average household income for each block group node.
+        bg.avg_hh_size (float): Average household size for each block group node.
+        bg.pop_density (float): Population density for each block group node.
+    """
+    
+    def __init__(self, target, **kwargs) -> None:
+        """Initialize the LandscapeStatistics engine.
+        
+        Args:
+            target: The simulation network target containing block group nodes and household data.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(LandscapeStatistics, self).__init__(target, **kwargs)
 
-    def run(self):
+    def run(self) -> None:
+        """Execute the landscape statistics calculation process.
+        
+        Calculates population, income, household size, and housing inventory
+        statistics from household agents. Updates both block group node attributes
+        and the housing dataframe with current values. Handles edge cases such as
+        empty block groups and invalid household size values.
+        """
         # reset population sums
         self.target.total_population = 0
 
@@ -31,7 +68,6 @@ class LandscapeStatistics(Engine):
             incomes_bg = []
             hh_size_bg = []
             bg.no_of_hhs = len(bg.hh_agents)
-
 
             for name, a in bg.hh_agents.items():
                 if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values

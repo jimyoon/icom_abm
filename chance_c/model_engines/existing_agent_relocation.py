@@ -6,31 +6,44 @@ from pynsim import Engine
 
 
 class ExistingAgentReloSampler(Engine):
-    """An engine class to identify existing agents to relocate and determine utility for homes.
+    """An engine class that identifies existing agents to relocate and determines utility for homes.
 
-    The ExistingAgentRelocation class is a pynsim engine that determines which agents wish to relocate.
-    The target of the engine is the model landscape.
-
-    Target:
-        s.network: the simulation network
+    The ExistingAgentReloSampler class is a pynsim engine that determines which agents wish to relocate.
+    The target of the engine is the simulation network. For each block group, it randomly samples a
+    percentage of the existing household population to relocate, vacates their existing properties,
+    and adds them to the relocation queue.
 
     Args:
-        None
+        target: The simulation network target.
+        perc_move (float, optional): The percentage of agents that desire to move in any given 
+            time period. Defaults to 0.10.
+        **kwargs: Additional keyword arguments passed to the parent class.
 
-    Attributes:
-        perc_move (float): the percentage of agents that desire to move in any given time period
-
+    Inter-module Outputs/Modifications:
+        target.relocating_hhs (dict): Dictionary of HHAgent objects in the relocation queue.
+        bg.hh_agents (dict): Updated household agents dictionary for each block group.
+        bg.occupied_units (int): Updated occupied units count for each block group.
+        bg.available_units (int): Updated available units count for each block group.
     """
-    def __init__(self, target, perc_move=.10, **kwargs):
+
+    def __init__(self, target, perc_move: float = 0.10, **kwargs) -> None:
+        """Initialize the ExistingAgentReloSampler engine.
+
+        Args:
+            target: The simulation network target.
+            perc_move: The percentage of agents that desire to move in any given time period.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(ExistingAgentReloSampler, self).__init__(target, **kwargs)
         self.perc_move = perc_move
 
+    def run(self) -> None:
+        """Execute the existing agent relocation sampling process.
 
-    def run(self):
-        """ Run the ExistingAgentRelocation Engine. The target of this engine is the simulation landscape.
-            For each block group, we randomly sample a percentage of the existing household population to relocate.
-            The engine vacates the agent's existing property (adding the property to the block group's available unit)
-            and adds the agent to the unassigned hh agents queue.
+        For each block group, randomly samples a percentage of the existing household
+        population to relocate. The engine vacates the agent's existing property
+        (adding the property to the block group's available units) and adds the
+        agent to the relocation queue.
         """
         logging.info("Running the existing agent sampler engine, year " + str(self.target.current_timestep.year))
 
@@ -47,37 +60,58 @@ class ExistingAgentReloSampler(Engine):
                 # need to adjust available units in block group that agent is moving from
         pass  # to accommodate debugger
 
+
 class ExistingAgentLocation(Engine):
-    """An engine class to determine calculate existing (relocating) household agent's utility for homes.
+    """An engine class to calculate existing (relocating) household agent's utility for homes.
 
-    The ExistingAgentLocation class is a pynsim engine that calculates an existing/relocating household agent's utility for a sample of available homes.
-    The target of the engine is a list of relocating existing agents in the queue. For each relocating agent, the engine samples from available
-    homes and calculates a utility function for each of those homes.
-
-    Target:
-        s.network: the simulation network
+    The ExistingAgentLocation class is a pynsim engine that calculates an existing/relocating 
+    household agent's utility for a sample of available homes. The target of the engine is 
+    a list of relocating existing agents in the queue. For each relocating agent, the engine 
+    samples from available homes and calculates a utility function for each of those homes.
 
     Args:
-        None
+        target: The simulation network target.
+        bg_sample_size (int, optional): Sample size for new agent's housing search. 
+            Defaults to 10.
+        house_choice_mode (str, optional): Mode for house choice utility calculation. 
+            Defaults to 'simple_anova_utility'.
+        simple_anova_coefficients (list, optional): Coefficients for simple ANOVA utility 
+            calculation. Defaults to [].
+        budget_reduction_perc (float, optional): Budget reduction percentage. 
+            Defaults to 0.10.
+        **kwargs: Additional keyword arguments passed to the parent class.
 
-    Attributes:
-        sample_size (integer): a single value that indicates the sample size for new agent's housing search
-
+    Inter-module Outputs/Modifications:
+        target.hh_utilities_df (pandas.DataFrame): DataFrame containing household utilities.
     """
-    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', simple_anova_coefficients=[], budget_reduction_perc=.10, **kwargs):
+
+    def __init__(self, target, bg_sample_size: int = 10, 
+                 house_choice_mode: str = 'simple_anova_utility', 
+                 simple_anova_coefficients: list = None, 
+                 budget_reduction_perc: float = 0.10, **kwargs) -> None:
+        """Initialize the ExistingAgentLocation engine.
+
+        Args:
+            target: The simulation network target.
+            bg_sample_size: Sample size for new agent's housing search.
+            house_choice_mode: Mode for house choice utility calculation.
+            simple_anova_coefficients: Coefficients for simple ANOVA utility calculation.
+            budget_reduction_perc: Budget reduction percentage.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
         self.house_choice_mode = house_choice_mode
-        self.simple_anova_coefficients = simple_anova_coefficients
+        self.simple_anova_coefficients = simple_anova_coefficients or []
         self.budget_reduction_perc = budget_reduction_perc
 
+    def run(self) -> None:
+        """Execute the existing agent location process.
 
-    def run(self):
-        """ Run the ExistingAgentLocation Engine. The target of this engine are all existing household agents waiting in the re-location queue.
-            For each agent in the re-location queue, the engine randomly samples from the available homes
-            list, calculating an agent utility for each home.
+        The target of this engine are all existing household agents waiting in the 
+        re-location queue. For each agent in the re-location queue, the engine randomly 
+        samples from the available homes list, calculating an agent utility for each home.
         """
-
         logging.info("Running the existing agent relocation engine, year " + str(self.target.current_timestep.year))
 
         first = True

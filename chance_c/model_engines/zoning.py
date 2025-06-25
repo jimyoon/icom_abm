@@ -2,9 +2,37 @@ from pynsim import Engine
 
 
 class Zoning(Engine):
-    def __init__(self, target, **kwargs):
+    """An engine class that manages zoning regulations and land use policies.
+    
+    The Zoning engine handles zoning-related operations including determining
+    zoning classifications for block groups. It currently executes zoning
+    determination for the year 2020, with framework in place for additional
+    zoning operations.
+    
+    Args:
+        target: The simulation network target containing block group nodes.
+        **kwargs: Additional keyword arguments passed to the parent class.
+    
+    Inter-module Outputs/Modifications:
+        target: Updated with zoning classifications through
+            target.determine_zoning() method.
+    """
+    
+    def __init__(self, target, **kwargs) -> None:
+        """Initialize the Zoning engine.
+        
+        Args:
+            target: The simulation network target containing block group nodes.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(Zoning, self).__init__(target, **kwargs)
 
-    def run(self):
+    def run(self) -> None:
+        """Execute the zoning determination process.
+        
+        Determines zoning classifications for block groups. Currently executes
+        zoning determination specifically for the year 2020, with potential
+        for expansion to handle multiple years or dynamic zoning changes.
+        """
         if self.timestep.year == 2020:
             self.target.determine_zoning()

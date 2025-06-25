@@ -10,19 +10,32 @@ from pynsim import Node
 
 
 class ABMLandscape(Network):
-    """The ABMLandscape class.
-
-    An ABM Landscape class to set the environment on which agents make residential choice decisions. The landscape contains
-    block groups as cells/nodes, as well as attributes that account for unassigned households waiting in the residential
-    location queue and a list of available units
-
-    **Attributes**:
-
-        |  *unassigned_hhs* (list / HHAgent) - list of HHAgent objects that are waiting to be assigned
-        |  *available_units* (list / str) - list of available units labeled by block group name
-
+    """Agent-based model landscape for residential choice decisions.
+    
+    An ABM Landscape class that sets the environment on which agents make 
+    residential choice decisions. The landscape contains block groups as 
+    cells/nodes, as well as attributes that account for unassigned households 
+    waiting in the residential location queue and a list of available units.
+    
+    Attributes:
+        unassigned_hhs: Dictionary of unassigned new household agents keyed 
+            on household name.
+        relocating_hhs: Dictionary of existing household agents that are 
+            relocating keyed on household name.
+        available_units_list: List of available units.
+        avg_hh_income: Average household income across the landscape.
+        avg_hh_size: Average household size across the landscape.
+        total_population: Total population across all block groups.
+        housing_bg_df: DataFrame containing block group housing data.
     """
-    def __init__(self, name, **kwargs):
+    
+    def __init__(self, name: str, **kwargs) -> None:
+        """Initialize the ABMLandscape.
+        
+        Args:
+            name: The name identifier for this landscape.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(ABMLandscape, self).__init__(name, **kwargs)
         self.name = name
         self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
@@ -38,7 +51,15 @@ class ABMLandscape(Network):
         'housing_bg_df': None,  # Currently stores bg dataframe, note history record will correspond to bg status at the beginning of the time period/year
     }
 
-    def setup(self, timestep):
+    def setup(self, timestep: int) -> None:
+        """Set up the landscape for a given timestep.
+        
+        Resets various queues and lists, and for the first timestep, loads 
+        housing_bg_df based upon initial agent population.
+        
+        Args:
+            timestep: The current timestep for setup operations.
+        """
         logging.info('Starting model year: ' + str(self.current_timestep.year))
         # reset various queues and lists
         self.unassigned_hhs = {}
@@ -122,36 +143,78 @@ class ABMLandscape(Network):
 
 
 class BlockGroup(Node):
-    """The BlockGroup node class.
-
-    A block group node is representative of a United States census block group. The block groups provide the spatial
-    landscape for the ABM. Each block group contains various physical characteristics that can provide amenities/
-    disamenities for urban agents. The block groups also contain building stock, tracking the availability of residences
-
-    **Attributes**:
-
-        |  *hh_agents* (list) - list of HHAgent objects that reside in block group
-        |  *distance_to_cbd* (list) - distance to central business district
-        |  *geometry* (shapely multipolygon object) - shapely multipolygon object (for spatial calculations)
-
-    **Properties**:
-
-        |  *population* (int) - population residing in the block group
-        |  *flood_hazard_risk* (int) - flood hazard risk score for block group
-        |  *levee_protection* (str) - "no" or "yes"
-        |  *years_since_major_flooding* (int) - years since major flooding
-        |  *occupied_units* (int) - number of occupied units
-        |  *available_units* (int) - number of available units
-        |  *pop_density* (int) - population density
-        |  *zoning* (str) - "allowed" or "restricted"
-        |  *avg_home_price* (int) - average home price ($)
-        |  *avg_hh_income* (int) - average household income of residents ($)
-
-    **Inter-module Outputs/Modifications**:
-
+    """Represents a United States census block group node.
+    
+    A block group node provides the spatial landscape for the ABM. Each block 
+    group contains various physical characteristics that can provide amenities/
+    disamenities for urban agents. The block groups also contain building stock, 
+    tracking the availability of residences.
+    
+    Args:
+        name (str): The name identifier for this block group.
+        x (float): X coordinate of the block group centroid.
+        y (float): Y coordinate of the block group centroid.
+        county (str): County identifier.
+        tract (str): Census tract identifier.
+        blkgrpce (str): Block group identifier.
+        geometry: Shapely multipolygon object for spatial calculations.
+        area (float): Land area of the block group (excludes water).
+        init_pop (int): Initial population (deprecated).
+        perc_fld_area (float): Percentage of area in flood zone.
+        pop90 (int): Population in 1990.
+        mhi90 (float): Median household income in 1990.
+        hhsize90 (float): Average household size in 1990.
+        coastdist (float): Distance to coast.
+        cbddist (float): Distance to central business district.
+        hhtrans93 (float): Household transportation data from 1993.
+        salesprice93 (float): Sales price in 1993.
+        salespricesf93 (float): Sales price per square foot in 1993.
+        **kwargs: Additional keyword arguments passed to the parent class.
+    
+    Attributes:
+        hh_agents (dict): Dictionary of HHAgent objects that reside in block group.
+        distance_to_cbd (list): Distance to central business district.
+        geometry: Shapely multipolygon object for spatial calculations.
+        population (int): Population residing in the block group.
+        flood_hazard_risk (int): Flood hazard risk score for block group.
+        levee_protection (str): "no" or "yes".
+        years_since_major_flooding (int): Years since major flooding.
+        occupied_units (int): Number of occupied units.
+        available_units (int): Number of available units.
+        pop_density (float): Population density.
+        zoning (str): "allowed" or "restricted".
+        avg_home_price (float): Average home price ($).
+        avg_hh_income (float): Average household income of residents ($).
     """
-    def __init__(self, name, x, y, county, tract, blkgrpce, geometry, area, init_pop, perc_fld_area,
-                 pop90, mhi90, hhsize90, coastdist, cbddist, hhtrans93, salesprice93, salespricesf93, **kwargs):
+    
+    def __init__(self, name: str, x: float, y: float, county: str, tract: str, 
+                 blkgrpce: str, geometry, area: float, init_pop: int, 
+                 perc_fld_area: float, pop90: int, mhi90: float, hhsize90: float,
+                 coastdist: float, cbddist: float, hhtrans93: float, 
+                 salesprice93: float, salespricesf93: float, **kwargs) -> None:
+        """Initialize the BlockGroup node.
+        
+        Args:
+            name: The name identifier for this block group.
+            x: X coordinate of the block group centroid.
+            y: Y coordinate of the block group centroid.
+            county: County identifier.
+            tract: Census tract identifier.
+            blkgrpce: Block group identifier.
+            geometry: Shapely multipolygon object for spatial calculations.
+            area: Land area of the block group (excludes water).
+            init_pop: Initial population (deprecated).
+            perc_fld_area: Percentage of area in flood zone.
+            pop90: Population in 1990.
+            mhi90: Median household income in 1990.
+            hhsize90: Average household size in 1990.
+            coastdist: Distance to coast.
+            cbddist: Distance to central business district.
+            hhtrans93: Household transportation data from 1993.
+            salesprice93: Sales price in 1993.
+            salespricesf93: Sales price per square foot in 1993.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(BlockGroup, self).__init__(name, x, y, **kwargs)
         # fixed attributes
         self.name = name
@@ -161,7 +224,7 @@ class BlockGroup(Node):
         self.geometry = geometry
         self.area = area
         self.land_elevation = 0
-        self.init_pop = init_pop # JY init pop is deprecated!
+        self.init_pop = init_pop  # JY init pop is deprecated!
         self.perc_fld_area = perc_fld_area
         self.pop90 = pop90
         self.mhi90 = mhi90
@@ -173,7 +236,7 @@ class BlockGroup(Node):
         self.salespricesf93 = salespricesf93
 
         # pynsim properties
-        self.population = pop90 # JY init_pop and pop90 are duplicate, figure out which to use
+        self.population = pop90  # JY init_pop and pop90 are duplicate, figure out which to use
         self.hh_agents = {}
         self.avg_home_price = 0
         self.flood_hazard_risk = 0
@@ -182,7 +245,6 @@ class BlockGroup(Node):
         self.new_units_constructed = 0
         self.occupied_units = 0
         self.new_price = salesprice93
-
 
     _properties = {
         'population': 0,  # number of individuals residing in block group
@@ -201,7 +263,16 @@ class BlockGroup(Node):
         'new_units_constructed': 0,
     }
 
-    def setup(self, timestep):
+    def setup(self, timestep: int) -> None:
+        """Set up the block group for a given timestep.
+        
+        Note: Block group population statistics are updated in the landscape's 
+        setup method. This method calculates various block group level statistics 
+        based on household agent population at beginning of each timestep.
+        
+        Args:
+            timestep: The current timestep for setup operations.
+        """
         # Note: block group population statistics are updated in the landscape's setup method
         # calculate various block group level statistics based on hh agent population at beginning of each timestep
         # (note: population is updated in the landscape's setup method)

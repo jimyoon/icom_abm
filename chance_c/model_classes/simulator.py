@@ -11,20 +11,56 @@ from .urban_agents import HHAgent
 
 
 class ICOMSimulator(Simulator):
-    """An ICOM Simulator class (a child of the pynsim Simulator class)
+    """An ICOM Simulator class for agent-based modeling simulations.
+    
+    This class extends the pynsim Simulator to provide specialized functionality
+    for Integrated Coastal and Ocean Modeling (ICOM) simulations. It manages
+    landscape setup, agent creation, and simulation parameters.
+    
+    Args:
+        network: The network object for the simulation.
+        record_time (bool): Whether to record simulation time.
+        progress (bool): Whether to show progress indicators.
+        max_iterations (int): Maximum number of iterations for the simulation.
+        name (str): Name identifier for the simulator.
+        scenario (str): Scenario identifier for the simulation.
+        intervention (str): Intervention type for the simulation.
+        start_year (int): Starting year for the simulation.
+        no_of_years (int): Number of years to simulate.
     """
-    def __init__(self, network, record_time, progress, max_iterations, name, scenario, intervention, start_year, no_of_years):
+    
+    def __init__(self, network, record_time: bool, progress: bool, 
+                 max_iterations: int, name: str, scenario: str, 
+                 intervention: str, start_year: int, no_of_years: int) -> None:
+        """Initialize the ICOM Simulator.
+        
+        Args:
+            network: The network object for the simulation.
+            record_time: Whether to record simulation time.
+            progress: Whether to show progress indicators.
+            max_iterations: Maximum number of iterations for the simulation.
+            name: Name identifier for the simulator.
+            scenario: Scenario identifier for the simulation.
+            intervention: Intervention type for the simulation.
+            start_year: Starting year for the simulation.
+            no_of_years: Number of years to simulate.
+        """
         super(ICOMSimulator, self).__init__(network, record_time, progress, max_iterations)
         # set simulator characteristics
         self.name = name
         self.scenario = scenario
         self.intervention = intervention
 
-        #set timestep information
+        # set timestep information
         self.start_year = start_year
         self.no_of_years = no_of_years
 
-    def set_timestep_information(self):
+    def set_timestep_information(self) -> None:
+        """Set up timestep information for the simulation.
+        
+        Creates a list of datetime objects representing each year in the
+        simulation period, starting from the specified start year.
+        """
         logging.info("Setting up timestep information")
         timesteps = [datetime.datetime.strptime(str(self.start_year), '%Y')]
         for y in range(self.no_of_years):
@@ -34,8 +70,23 @@ class ICOMSimulator(Simulator):
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name, geo_filename, pop_filename, pop_fieldname, flood_filename, housing_filename, hedonic_filename):
-        """Create landscape based on census geographies / data (assumes data structure follows IPUMS/NHGIS format
+    def set_landscape(self, landscape_name: str, geo_filename: str, 
+                     pop_filename: str, pop_fieldname: str, flood_filename: str, 
+                     housing_filename: str, hedonic_filename: str) -> None:
+        """Create landscape based on census geographies and data.
+        
+        Assumes data structure follows IPUMS/NHGIS format. Loads and processes
+        geographic, population, flood, housing, and hedonic data to create
+        block group nodes for the simulation landscape.
+        
+        Args:
+            landscape_name: Name identifier for the landscape.
+            geo_filename: Path to geographic boundary file.
+            pop_filename: Path to population data file.
+            pop_fieldname: Field name containing population data.
+            flood_filename: Path to flood data file.
+            housing_filename: Path to housing data file.
+            hedonic_filename: Path to hedonic regression data file.
         """
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
@@ -133,6 +184,3 @@ class ICOMSimulator(Simulator):
         logging.info("Converting initial population to building availability")
         for bg in self.network.nodes:
             bg.available_units = round((initial_vacancy * bg.occupied_units) / (1 - initial_vacancy))
-
-
-

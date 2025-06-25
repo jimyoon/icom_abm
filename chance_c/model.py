@@ -1,12 +1,14 @@
 from typing import Tuple,Union
 import logging
 import time
+
 import geopandas as gpd
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import contextily as ctx
+from pynsim import Network
 
 from .data_loader import SimulationConfig
 from .model_classes.simulator import ICOMSimulator
@@ -30,6 +32,26 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Model:
+    """Agent-based model for housing market dynamics simulation.
+    
+    This class implements a comprehensive agent-based model (ABM) for simulating
+    housing market dynamics, including population growth, agent relocation,
+    housing choice, market pricing, and environmental factors like flood hazards.
+    
+    The model integrates multiple engines for different aspects of the simulation:
+    - Agent creation and relocation
+    - Housing market dynamics
+    - Building development
+    - Environmental hazard assessment
+    - Zoning and regulatory factors
+    
+    Attributes:
+        config_file_path (Union[str, None]): Path to configuration YAML file
+        config (SimulationConfig): Configuration object containing all simulation parameters
+        start_time (float): Timestamp when simulation started
+        simulator (ICOMSimulator): The main simulation engine
+    """
+    
     def __init__(
         self,   
         config_file_path: Union[str, None] = None,
@@ -69,15 +91,65 @@ class Model:
         progress: bool = False,
         max_iterations: int = 1,
         name: str = 'ABM_Baltimore_example',
-        network = None,
+        network: Network = None, 
         sensitivity_run: bool = False,
         county_agent_id: str = '005',
         bg_sample_size: int = 10, # the number of homes that a new agent samples for residential choice
         zoning_mode: str = 'simple_perc',
         zoning_perc: float = 0.05,
         market_mode: str = 'top_candidate',
-):
-
+    ) -> None:
+        """Initialize the Model with configuration parameters.
+        
+        Args:
+            config_file_path: Path to YAML configuration file. If None, uses default parameters.
+            simulation_name: Name identifier for the simulation.
+            scenario: Scenario name for the simulation run.
+            intervention: Intervention type being simulated.
+            start_year: Starting year for the simulation.
+            no_years: Number of years to simulate.
+            agent_housing_aggregation: Number of households represented by each agent.
+            hh_size: Average household size.
+            initial_vacancy: Initial vacancy rate in the housing market.
+            pop_growth_mode: Mode for population growth calculation.
+            pop_growth_perc: Percentage rate of population growth.
+            inc_growth_mode: Mode for income growth calculation.
+            pop_growth_inc_perc: Percentage of population growth attributed to income.
+            inc_growth_perc: Percentage rate of income growth.
+            bld_growth_perc: Percentage rate of building growth.
+            perc_move: Percentage of agents that move each year.
+            perc_move_mode: Mode for determining which agents move.
+            house_budget_mode: Mode for calculating housing budgets.
+            house_choice_mode: Mode for housing choice decisions.
+            simple_anova_coefficients: Coefficients for ANOVA-based utility calculation.
+            simple_avoidance_perc: Percentage of agents that avoid flood-prone areas.
+            budget_reduction_perc: Percentage reduction in budget for flood-prone areas.
+            stock_increase_mode: Mode for housing stock increase.
+            stock_increase_perc: Percentage increase in housing stock.
+            housing_pricing_mode: Mode for housing price calculations.
+            price_increase_perc: Percentage increase in housing prices.
+            landscape_name: Name of the geographic landscape.
+            geo_filename: Filename for geographic boundary data.
+            pop_filename: Filename for population data.
+            pop_fieldname: Field name containing population data.
+            flood_filename: Filename for flood hazard data.
+            housing_filename: Filename for housing data.
+            hedonic_filename: Filename for hedonic pricing data.
+            record_time: Whether to record timing information.
+            progress: Whether to show progress indicators.
+            max_iterations: Maximum number of iterations per timestep.
+            name: Name of the simulation instance.
+            network: Network object (if None, will be created).
+            sensitivity_run: Whether this is a sensitivity analysis run.
+            county_agent_id: County identifier for zoning decisions.
+            bg_sample_size: Number of block groups to sample for residential choice.
+            zoning_mode: Mode for zoning decisions.
+            zoning_perc: Percentage for zoning calculations.
+            market_mode: Mode for housing market operations.
+            
+        Returns:
+            None
+        """
         self.config_file_path = config_file_path
 
         if self.config_file_path is not None:
@@ -125,6 +197,7 @@ class Model:
         self.config.sensitivity_run = sensitivity_run
         self.config.bg_sample_size = bg_sample_size
         self.config.market_mode = market_mode
+        self.network = network
 
         if self.config.sensitivity_run is False:
             self.config.county_agent_id = county_agent_id
@@ -157,7 +230,7 @@ class Model:
 
         # Create pynsim simulation object and set timesteps, landscape on simulation
         self.s = ICOMSimulator(
-            network=None, 
+            network=self.network, 
             record_time=self.config.record_time, 
             progress=self.config.progress, 
             max_iterations=self.config.max_iterations,

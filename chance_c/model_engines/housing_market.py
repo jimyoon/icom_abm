@@ -7,29 +7,53 @@ from pynsim import Engine
 class HousingMarket(Engine):
     """An engine class that matches buyers with housing inventory representing the housing market.
 
-    The HousingMarket engine matches buyers with sellers in the housing market.
+    The HousingMarket engine matches buyers with sellers in the housing market through
+    an iterative process that prioritizes households based on income and utility preferences.
+    It handles both new households entering the market and existing households relocating
+    within the domain.
 
-    **Target**:
-        s.network
+    Args:
+        target: The simulation network target containing block group nodes and household data.
+        market_mode (str, optional): Mode for market matching algorithm. 
+            Currently supports 'top_candidate'. Defaults to 'top_candidate'.
+        bg_sample_size (int, optional): Number of market iterations to perform. 
+            Defaults to 10.
+        **kwargs: Additional keyword arguments passed to the parent class.
 
-    **Args**:
-        market_mode (string): defined to indicate the type of market
-
-    **Inter-module Outputs/Modifications**:
-        s.network.unassigned_hhs (list): list of HHAgent objects that are in the location queue
-        s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
+    Inter-module Outputs/Modifications:
+        target.unassigned_hhs (dict): Dictionary of unassigned household agents.
+        target.relocating_hhs (dict): Dictionary of relocating household agents.
+        target.get_institution('all_hh_agents'): Institution containing all household agents.
+        target.get_node(bg).hh_agents (dict): Household agents assigned to block group nodes.
+        target.get_node(bg).occupied_units (int): Updated occupied units in block group.
+        target.get_node(bg).available_units (int): Updated available units in block group.
+        target.get_node(bg).demand_exceeds_supply (bool): Flag indicating demand exceeds supply.
     """
 
-    def __init__(self, target, market_mode='top_candidate', bg_sample_size=10, **kwargs):
+    def __init__(self, target, market_mode: str = 'top_candidate', 
+                 bg_sample_size: int = 10, **kwargs) -> None:
+        """Initialize the HousingMarket engine.
+        
+        Args:
+            target: The simulation network target containing block group nodes and household data.
+            market_mode: Mode for market matching algorithm.
+            bg_sample_size: Number of market iterations to perform.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(HousingMarket, self).__init__(target, **kwargs)
         self.market_mode = market_mode
         self.bg_sample_size = bg_sample_size
 
-    def run(self):
-        """ Run the HousingMarket Engine.
+    def run(self) -> None:
+        """Execute the housing market matching process.
+        
+        Performs iterative matching between households and block groups based on
+        utility preferences and income. Handles both new households and relocating
+        households, with priority given to higher-income households when demand
+        exceeds supply. Households unable to find affordable housing are marked
+        as outmigrated.
         """
         logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
-
 
         for market_iter in range(self.bg_sample_size):
 

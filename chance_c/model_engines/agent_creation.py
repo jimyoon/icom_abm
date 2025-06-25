@@ -8,27 +8,47 @@ from ..model_classes.urban_agents import HHAgent
 
 
 class NewAgentCreation(Engine):
-    """An engine class that creates new agent's based upon population growth or exogenous scenario assumptions.
+    """An engine class that creates new agents based upon population growth or exogenous scenario assumptions.
 
     The NewAgentCreation class is a pynsim engine that creates new agents based upon population growth or exogenous scenario assumptions.
     The target of the engine is the simulation network. Based upon population growth assumptions, the engine creates new household agents
-    and adds them to the queue of agents waiting to be assigned to a residence
+    and adds them to the queue of agents waiting to be assigned to a residence.
 
-    **Target**:
-        s.network
+    Args:
+        target: The simulation network target.
+        growth_mode (str): Defined as either "perc" or "exog" depending upon simulation mode.
+        growth_rate (float): If growth_mode = "perc", defines the annual percentage population growth rate.
+        inc_growth_mode (str): Mode for income growth calculation.
+        pop_growth_inc_perc (float): Population growth income percentage.
+        inc_growth_perc (float, optional): Income growth percentage. Defaults to 0.05.
+        no_hhs_per_agent (int, optional): Number of households per agent. Defaults to 10.
+        hh_size (float, optional): Household size. Defaults to 2.7.
+        simple_avoidance_perc (float, optional): Simple avoidance percentage. Defaults to 0.10.
+        **kwargs: Additional keyword arguments passed to the parent class.
 
-    **Args**:
-        growth_mode (string): defined as either "perc" or "exog" depending upon simulation mode
-        growth_rate (float): if growth_mode = "perc", defines the annual percentage population growth rate
-        growth_inc (float): if growth_mode = "perc", defines the increase in the mean income for incoming population
-
-    **Inter-module Outputs/Modifications**:
-        s.network.unassigned_hhs (dict): dictionary of HHAgent objects in the location queue (keys are household agent names)
-        s.network.get_institution('all_hh_agents') (list): all_hh_agents institution
+    Inter-module Outputs/Modifications:
+        s.network.unassigned_hhs (dict): Dictionary of HHAgent objects in the location queue (keys are household agent names).
+        s.network.get_institution('all_hh_agents') (list): all_hh_agents institution.
     """
 
-    def __init__(self, target, growth_mode, growth_rate, inc_growth_mode, pop_growth_inc_perc, inc_growth_perc=.05, no_hhs_per_agent=10, hh_size=2.7,
-                 simple_avoidance_perc=.10, **kwargs):
+    def __init__(self, target, growth_mode: str, growth_rate: float, inc_growth_mode: str, 
+                 pop_growth_inc_perc: float, inc_growth_perc: float = 0.05, 
+                 no_hhs_per_agent: int = 10, hh_size: float = 2.7,
+                 simple_avoidance_perc: float = 0.10, **kwargs) -> None:
+        """Initialize the NewAgentCreation engine.
+
+        Args:
+            target: The simulation network target.
+            growth_mode: Defined as either "perc" or "exog" depending upon simulation mode.
+            growth_rate: If growth_mode = "perc", defines the annual percentage population growth rate.
+            inc_growth_mode: Mode for income growth calculation.
+            pop_growth_inc_perc: Population growth income percentage.
+            inc_growth_perc: Income growth percentage.
+            no_hhs_per_agent: Number of households per agent.
+            hh_size: Household size.
+            simple_avoidance_perc: Simple avoidance percentage.
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super(NewAgentCreation, self).__init__(target, **kwargs)
         self.growth_mode = growth_mode
         self.growth_rate = growth_rate
@@ -39,10 +59,11 @@ class NewAgentCreation(Engine):
         self.inc_growth_perc = inc_growth_perc
         self.simple_avoidance_perc = simple_avoidance_perc
 
-    def run(self):
-        """ Run the NewAgentCreation Engine.
-        """
+    def run(self) -> None:
+        """Run the NewAgentCreation Engine.
 
+        Creates new agents based upon population growth mode and adds them to the unassigned households queue.
+        """
         logging.info("Running the new agent creation engine, year " + str(self.target.current_timestep.year))
         # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':

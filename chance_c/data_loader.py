@@ -1,69 +1,121 @@
 from dataclasses import dataclass
 from typing import Tuple
+
 import yaml
 
 
 @dataclass
 class SimulationConfig:
-    """Configuration class for ABM simulation parameters."""
+    """Configuration class for ABM simulation parameters.
+    
+    A dataclass that holds all configuration parameters for an Agent-Based Model
+    simulation, including simulation setup, agent parameters, growth rates,
+    housing choice models, and file paths for data sources.
+    
+    Attributes:
+        simulation_name: Name identifier for the simulation run.
+        scenario: Scenario identifier for the simulation.
+        intervention: Intervention type being simulated.
+        start_year: Starting year for the simulation.
+        no_years: Number of years to run the simulation (model runs for n+1 years).
+        agent_housing_aggregation: Level of agent/building aggregation (e.g., 100
+            means 1 representative agent = 100 households).
+        hh_size: Average household size across all households.
+        initial_vacancy: Initial vacancy rate for all block groups.
+        pop_growth_mode: Population growth calculation method ('perc', etc.).
+        pop_growth_perc: Annual population percentage growth rate.
+        inc_growth_mode: Income growth method for incoming agents.
+        pop_growth_inc_perc: Income percentile for in-migrating population.
+        inc_growth_perc: Mean income increase for in-migrating population.
+        bld_growth_perc: Building stock increase percentage when demand exceeds supply.
+        perc_move: Percentage of households that move each timestep.
+        perc_move_mode: Method for selecting relocating households.
+        house_budget_mode: Method for calculating agent housing budgets.
+        house_choice_mode: Household location choice model type.
+        simple_anova_coefficients: Coefficients for ANOVA utility calculation.
+        simple_avoidance_perc: Percentage of agents that avoid flood plains.
+        budget_reduction_perc: Budget reduction percentage for flood insurance costs.
+        stock_increase_mode: Method for price increases in high demand areas.
+        stock_increase_perc: Percentage increase in housing stock prices.
+        housing_pricing_mode: Method for housing price calculations.
+        price_increase_perc: Percentage increase for housing prices.
+        landscape_name: Geographic area name for the simulation.
+        geo_filename: Shapefile containing census geographies.
+        pop_filename: CSV file containing population data.
+        pop_fieldname: Field name for population data in the CSV.
+        flood_filename: CSV file containing FEMA 100-year flood data.
+        housing_filename: CSV file containing housing characteristics data.
+        hedonic_filename: CSV file containing hedonic regression results.
+    """
     
     # Simulation setup
     simulation_name: str = 'ABM_Baltimore_example'
     scenario: str = 'Baseline'
     intervention: str = 'Baseline'
     start_year: int = 2018
-    no_years: int = 2  # no of years (model will run for n+1 years)
+    no_years: int = 2
     
     # Agent and housing parameters
-    agent_housing_aggregation: int = 10  # indicates the level of agent/building aggregation (e.g., 100 indicates that 1 representative agent = 100 households, 1 representative building = 100 residences)
-    hh_size: float = 2.7  # define household size (currently assumes all households have the same size, using average from 1990 data)
-    initial_vacancy: float = 0.20  # define initial vacancy for all block groups (currently assumes all block groups have same initial vacancy rate)
+    agent_housing_aggregation: int = 10
+    hh_size: float = 2.7
+    initial_vacancy: float = 0.20
     
     # Population growth parameters
-    pop_growth_mode: str = 'perc'  # indicates which mode of population growth is used for the model run (e.g., percent-based, exogenous time series, etc.) - currently assume constant percentage growth
-    pop_growth_perc: float = 0.01  # annual population percentage growth rate (only used if pop_growth_mode = 'perc')
+    pop_growth_mode: str = 'perc'
+    pop_growth_perc: float = 0.01
     
     # Income growth parameters
-    inc_growth_mode: str = 'random_agent_replication'  # defines the mode of income growth for incoming agents (e.g., 'normal_distribution', 'percentile_based', 'random_agent_replication', etc.)
-    pop_growth_inc_perc: float = 0.90  # defines the income percentile for the in-migrating population (if inc_growth_mode is 'percentile_based')
-    inc_growth_perc: float = 0.05  # defines the increase mean incomes of the in-migrating population (if inc_growth_mode is 'normal_distribution')
+    inc_growth_mode: str = 'random_agent_replication'
+    pop_growth_inc_perc: float = 0.90
+    inc_growth_perc: float = 0.05
     
     # Building and movement parameters
-    bld_growth_perc: float = 0.01  # indicates the percentage of building stock increase if demand exceeds supply
-    perc_move: float = 0.10  # indicates the percentage of households that move each time step
-    perc_move_mode: str = 'random'  # indicates the mode by which relocating households are selected (random, disutility, flood, etc.)
+    bld_growth_perc: float = 0.01
+    perc_move: float = 0.10
+    perc_move_mode: str = 'random'
     
     # Housing choice parameters
-    house_budget_mode: str = 'rhea'  # indicates the mode by which agent's housing budget is calculated (specified percent, rhea, etc.)
-    house_choice_mode: str = 'simple_avoidance_utility'  # indicates the mode of household location choice model (cobb_douglas_utility, simple_flood_utility, simple_avoidance_utility, budget_reduction)
-    simple_anova_coefficients: Tuple[int] = (-121428, 294707, 130553, 128990, 154887, -500000)  # coefficients for simple anova experiment [intercept, sqfeet, age, stories, baths, flood]
-    simple_avoidance_perc: float = 0.95  # defines the percentage of agents that avoid the flood plain
-    budget_reduction_perc: float = 0.90  # defines the percentage that a household reduces budget for housing good (to reserve for flood insurance costs)
+    house_budget_mode: str = 'rhea'
+    house_choice_mode: str = 'simple_avoidance_utility'
+    simple_anova_coefficients: Tuple[int, ...] = (-121428, 294707, 130553, 128990, 154887, -500000)
+    simple_avoidance_perc: float = 0.95
+    budget_reduction_perc: float = 0.90
     
     # Stock and pricing parameters
-    stock_increase_mode: str = 'simple_perc'  # indicates the mode in which prices increase for homes that are in high demand (simple perc, etc.)
-    stock_increase_perc: float = 0.05  # indicates the percentage increase in price
+    stock_increase_mode: str = 'simple_perc'
+    stock_increase_perc: float = 0.05
     housing_pricing_mode: str = 'simple_perc'
     price_increase_perc: float = 0.05
     
     # File paths and data sources
     landscape_name: str = 'Baltimore'
-    geo_filename: str = 'blck_grp_extract_prj.shp'  # accommodates census geographies in IPUMS/NHGIS and imported as QGIS Geopackage
-    pop_filename: str = 'balt_bg_population_2018.csv'  # accommodates census data in IPUMS/NHGIS and imported as csv
-    pop_fieldname: str = 'AJWME001'  # from IPUMS/NHGIS metadata
-    flood_filename: str = 'bg_perc_100yr_flood.csv'  # FEMA 100-yr flood area data (see pre_"processing/flood_risk_calcs.py")
-    housing_filename: str = 'bg_housing_1993.csv'  # housing characteristic data and other information from early 90s (for initialization)
-    hedonic_filename: str = 'simple_anova_hedonic_without_flood_bg0418.csv'  # simple ANOVA hedonic regression conducted by Alfred
+    geo_filename: str = 'blck_grp_extract_prj.shp'
+    pop_filename: str = 'balt_bg_population_2018.csv'
+    pop_fieldname: str = 'AJWME001'
+    flood_filename: str = 'bg_perc_100yr_flood.csv'
+    housing_filename: str = 'bg_housing_1993.csv'
+    hedonic_filename: str = 'simple_anova_hedonic_without_flood_bg0418.csv'
     
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'SimulationConfig':
-        """Load configuration from a YAML file."""
+        """Load configuration from a YAML file.
+        
+        Args:
+            yaml_path: Path to the YAML configuration file.
+            
+        Returns:
+            SimulationConfig: Configuration object populated from YAML data.
+        """
         with open(yaml_path, 'r') as file:
             config_dict = yaml.safe_load(file)
         return cls(**config_dict)
     
     def to_yaml(self, yaml_path: str) -> None:
-        """Save configuration to a YAML file."""
+        """Save configuration to a YAML file.
+        
+        Args:
+            yaml_path: Path where the YAML file should be saved.
+        """
         config_dict = {
             'simulation_name': self.simulation_name,
             'scenario': self.scenario,

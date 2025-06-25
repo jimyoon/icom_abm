@@ -1,42 +1,74 @@
-from pynsim import Engine
 import random
 import logging
+
+from pynsim import Engine
 import pandas as pd
 
 from ..model_classes.urban_agents import HHAgent
 
 
 class NewAgentLocation(Engine):
-    """An engine class to determine calculate new household agent's utility for homes.
-
-    The NewAgentLocation class is a pynsim engine that calculates a new household agent's utility for a sample of available homes.
-    The target of the engine is a list of unlocated new agents in the queue. For each unlocated agent, the engine samples from available
-    homes and calculates a utility function for each of those homes.
-
-    Target:
-        s.network: the simulation network
-
+    """Calculate new household agent's utility for available homes.
+    
+    A pynsim engine that calculates utility scores for new household agents
+    considering a sample of available homes. The engine processes unlocated
+    agents in the queue, samples from available homes, and calculates utility
+    functions for each home based on the specified choice mode.
+    
     Args:
-        None
-
+        target: The simulation network containing housing data and agents.
+        bg_sample_size: Number of block groups to sample for each agent.
+            Defaults to 10.
+        house_choice_mode: Method for calculating housing utility. Options:
+            'simple_anova_utility', 'cobb_douglas_utility', 'simple_flood_utility',
+            'simple_avoidance_utility', 'budget_reduction'. Defaults to
+            'simple_anova_utility'.
+        simple_anova_coefficients: Coefficients for ANOVA-based utility
+            calculation. Defaults to empty list.
+        budget_reduction_perc: Percentage reduction in budget for flood-prone
+            areas when using budget_reduction mode. Defaults to 0.10.
+        **kwargs: Additional keyword arguments passed to parent class.
+    
     Attributes:
-        sample_size (integer): a single value that indicates the sample size for new agent's housing search
-
+        bg_sample_size: Number of block groups to sample per agent.
+        house_choice_mode: Selected utility calculation method.
+        simple_anova_coefficients: Coefficients for ANOVA utility calculation.
+        budget_reduction_perc: Budget reduction percentage for flood areas.
     """
-    def __init__(self, target, bg_sample_size=10, house_choice_mode='simple_anova_utility', simple_anova_coefficients=[], budget_reduction_perc=.10, **kwargs):
+    
+    def __init__(
+        self, 
+        target, 
+        bg_sample_size: int = 10, 
+        house_choice_mode: str = 'simple_anova_utility', 
+        simple_anova_coefficients: list = None, 
+        budget_reduction_perc: float = 0.10, 
+        **kwargs
+    ) -> None:
+        """Initialize the NewAgentLocation engine.
+        
+        Args:
+            target: The simulation network target.
+            bg_sample_size: Number of block groups to sample for each agent.
+            house_choice_mode: Method for calculating housing utility.
+            simple_anova_coefficients: Coefficients for ANOVA-based utility.
+            budget_reduction_perc: Budget reduction percentage for flood areas.
+            **kwargs: Additional keyword arguments.
+        """
         super(NewAgentLocation, self).__init__(target, **kwargs)
         self.bg_sample_size = bg_sample_size
         self.house_choice_mode = house_choice_mode
-        self.simple_anova_coefficients = simple_anova_coefficients
+        self.simple_anova_coefficients = simple_anova_coefficients or []
         self.budget_reduction_perc = budget_reduction_perc
 
-
-    def run(self):
-        """ Run the NewAgentLocation Engine. The target of this engine are all new household agents waiting in the location queue.
-            For each agent in the household agent location queue, the engine randomly samples from the available homes
-            list, calculating an agent utility for each home.
+    def run(self) -> None:
+        """Run the NewAgentLocation engine.
+        
+        Processes all new household agents waiting in the location queue.
+        For each agent, samples from available homes and calculates utility
+        scores based on the specified house choice mode. Agents that cannot
+        afford any homes are marked as outmigrated.
         """
-
         logging.info("Running the new agent location engine, year " + str(self.target.current_timestep.year))
 
         # for hh in self.target.unassigned_hhs.values():
