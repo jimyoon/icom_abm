@@ -1,8 +1,9 @@
 from pynsim import Engine
 import random
 import logging
+import pandas as pd
 
-from model_classes.urban_agents import HHAgent
+from ..model_classes.urban_agents import HHAgent
 
 
 class NewAgentLocation(Engine):
@@ -87,7 +88,7 @@ class NewAgentLocation(Engine):
                 bg_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 bg_append['b'] = 0.4
                 bg_append['c'] = 0.2
-                bg_sample = bg_sample.append(bg_append)
+                bg_sample = pd.concat([bg_sample, bg_append], ignore_index=True)
 
             first = False
 
@@ -100,14 +101,21 @@ class NewAgentLocation(Engine):
             bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
 
         elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (self.simple_anova_coefficients[5] * self.target.housing_bg_df['N_perc_area_flood']) + (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + \
+                (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + \
+                (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) + \
+                (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + \
+                (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber']) + \
+                (self.simple_anova_coefficients[5] * self.target.housing_bg_df['N_perc_area_flood']) + \
+                (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
 
         elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) \
-                                                                + (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber'])\
-                                                                + (1 * self.target.housing_bg_df['residuals'])
+            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + \
+                (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + \
+                (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) + \
+                (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + \
+                (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber']) + \
+                (1 * self.target.housing_bg_df['residuals'])
 
         self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
 

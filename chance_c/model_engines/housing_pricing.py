@@ -1,5 +1,5 @@
 from pynsim import Engine
-import numpy as np
+
 
 class HousingPricing(Engine):
     def __init__(self, target, housing_pricing_mode='simple_perc', price_increase_perc=0.05, **kwargs):

@@ -1,6 +1,7 @@
 from pynsim import Engine
 import logging
 
+
 class FloodHazard(Engine):
     def __init__(self, target, **kwargs):
         super(FloodHazard, self).__init__(target, **kwargs)

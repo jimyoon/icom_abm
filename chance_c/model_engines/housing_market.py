@@ -1,6 +1,8 @@
-from pynsim import Engine
-from operator import itemgetter
 import logging
+from operator import itemgetter
+
+from pynsim import Engine
+
 
 class HousingMarket(Engine):
     """An engine class that matches buyers with housing inventory representing the housing market.

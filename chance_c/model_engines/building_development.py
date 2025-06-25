@@ -1,5 +1,4 @@
 from pynsim import Engine
-import numpy as np
 
 
 class BuildingDevelopment(Engine):

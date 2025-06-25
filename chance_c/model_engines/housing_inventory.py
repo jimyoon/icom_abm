@@ -1,5 +1,7 @@
-from pynsim import Engine
 import logging
+
+from pynsim import Engine
+
 
 class HousingInventoryOld(Engine):  # JY: deprecated; housing inventory tracked via dataframe
     """An engine class that identifies housing inventory for the current timestep.

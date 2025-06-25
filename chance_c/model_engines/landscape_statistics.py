@@ -1,8 +1,10 @@
+import statistics
+from math import nan
+
 from pynsim import Engine
 import numpy as np
 import pandas as pd
-from math import nan
-import statistics
+
 
 class LandscapeStatistics(Engine):
     def __init__(self, target, **kwargs):
@@ -98,29 +100,3 @@ class LandscapeStatistics(Engine):
         # merge with housing_bg_df to retain geometry features
         cols_to_use = self.target.housing_bg_df.columns.difference(housing_current_df.columns)
         self.target.housing_bg_df = pd.merge(self.target.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
-
-        # if self.target.current_timestep_idx > 0:
-        #     for bg in self.target.nodes:
-        #         bg_old_units = bg.get_history('available_units')[-1] + bg.get_history('occupied_units')[-1]
-        #         bg_new_units = bg.available_units + bg.occupied_units
-        #         if bg_new_units < bg_old_units:
-        #             print(bg.name)
-        #             print('UH OH 1')
-        #         hdf_old = self.target.get_history('housing_bg_df')[-1]
-        #         hdf_new = self.target.housing_bg_df
-        #         df_old_units = hdf_old[(hdf_old.GEOID == bg.name)]['available_units'].values[0] + \
-        #                        hdf_old[(hdf_old.GEOID == bg.name)]['occupied_units'].values[0]
-        #         df_new_units = hdf_new[(hdf_new.GEOID == bg.name)]['available_units'].values[0] + \
-        #                        hdf_new[(hdf_new.GEOID == bg.name)]['occupied_units'].values[0]
-        #         if df_new_units < df_old_units:
-        #             print(bg.name)
-        #             print('UH OH 2')
-        #         elif bg_old_units != df_old_units:
-        #             print(bg.name)
-        #             print('UH OH 3')
-        #         elif bg_new_units != df_new_units:
-        #             print(bg.name)
-        #             print('UH OH 4')
-        #         else:
-        #             print(bg.name)
-        #             print('IM OK!')

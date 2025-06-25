@@ -5,8 +5,9 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from pynsim import Simulator
-from model_classes.landscape import ABMLandscape, BlockGroup
-from model_classes.urban_agents import HHAgent
+
+from .landscape import ABMLandscape, BlockGroup
+from .urban_agents import HHAgent
 
 
 class ICOMSimulator(Simulator):
@@ -39,11 +40,11 @@ class ICOMSimulator(Simulator):
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
 
-        bg = gpd.read_file('data_inputs/' + geo_filename)
-        pop = pd.read_csv('data_inputs/' + pop_filename)
-        flood = pd.read_csv('data_inputs/' + flood_filename)
-        housing = pd.read_csv('data_inputs/' + housing_filename)
-        hedonic = pd.read_csv('data_inputs/' + hedonic_filename)
+        bg = gpd.read_file(geo_filename)
+        pop = pd.read_csv(pop_filename)
+        flood = pd.read_csv(flood_filename)
+        housing = pd.read_csv(housing_filename)
+        hedonic = pd.read_csv(hedonic_filename)
 
         # join census/population data to block groups
         bg = pd.merge(bg, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
@@ -74,14 +75,14 @@ class ICOMSimulator(Simulator):
                 location = row['geometry']
                 bg_subset = bg[(bg.GEOID != row['GEOID']) & (np.isfinite(bg.salesprice1993)) & (np.isfinite(bg.N_MeanSqfeet))]
                 polygon_index = bg_subset.distance(location).sort_values().index[0]
-                bg.at[index, 'salesprice1993'] = bg_subset.loc[[polygon_index]]['salesprice1993']
-                bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[[polygon_index]]['N_MeanSqfeet']
-                bg.at[index, 'N_MeanAge'] = bg_subset.loc[[polygon_index]]['N_MeanAge']
-                bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[[polygon_index]]['N_MeanNoOfStories']
-                bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[[polygon_index]]['N_MeanFullBathNumber']
-                bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[[polygon_index]]['N_perc_area_flood']
-                bg.at[index, 'residuals'] = bg_subset.loc[[polygon_index]]['residuals']
-                bg.at[index, 'salespricesf1993'] = bg_subset.loc[[polygon_index]]['salespricesf1993']
+                bg.at[index, 'salesprice1993'] = bg_subset.loc[polygon_index, 'salesprice1993']
+                bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[polygon_index, 'N_MeanSqfeet']
+                bg.at[index, 'N_MeanAge'] = bg_subset.loc[polygon_index, 'N_MeanAge']
+                bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[polygon_index, 'N_MeanNoOfStories']
+                bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[polygon_index, 'N_MeanFullBathNumber']
+                bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[polygon_index, 'N_perc_area_flood']
+                bg.at[index, 'residuals'] = bg_subset.loc[polygon_index, 'residuals']
+                bg.at[index, 'salespricesf1993'] = bg_subset.loc[polygon_index, 'salespricesf1993']
 
         # initialize new price for updating
         bg['new_price'] = bg['salesprice1993']
