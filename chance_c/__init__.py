@@ -1,6 +1,6 @@
-from .model import simulate
+from .model import Model
 
 
 __version__ = "0.1.0"
 
-__all__ = ["simulate"]
+__all__ = ["Model"]
