@@ -1,10 +1,6 @@
-# CHANCE-C
-The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments. 
+# ICoM ABM Command Line Interface
 
-
-# CHANCE-C Command Line Interface
-
-The CHANCE-C (Agent-Based Model) provides a comprehensive command-line interface for simulating housing market dynamics, including population growth, agent relocation, housing choice, market pricing, and environmental factors like flood hazards.
+The ICoM ABM (Agent-Based Model) provides a comprehensive command-line interface for simulating housing market dynamics, including population growth, agent relocation, housing choice, market pricing, and environmental factors like flood hazards.
 
 ## Installation
 
@@ -70,7 +66,7 @@ icom-abm run \
 
 ### `run` - Execute Simulation
 
-Runs the CHANCE-C simulation with specified parameters.
+Runs the ICoM ABM simulation with specified parameters.
 
 **Options:**
 - `--config, -c`: Path to YAML configuration file
@@ -337,4 +333,4 @@ To extend the CLI with new commands or options:
 3. Update this documentation
 4. Test your changes thoroughly
 
-For more information about the CHANCE-C model, see the main README.md file. 
+For more information about the ICoM ABM model, see the main README.md file. 

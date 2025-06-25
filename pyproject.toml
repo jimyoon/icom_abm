@@ -30,6 +30,7 @@ dependencies = [
     "matplotlib>=3.10.3",
     "contextily>=1.6.2",
     "pyyaml>=6.0.2",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,9 @@ deploy = [
 
 [project.urls]
 Repository = "https://github.com/jimyoon/icom_abm"
+
+[project.scripts]
+icom-abm = "chance_c.cli:cli"
 
 [tool.hatch.build]
 packages = ["chance_c"]  # set importable package name to "cerf"
