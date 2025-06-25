@@ -25,12 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="ICoM ABM")
+@click.version_option(version="0.1.0", prog_name="CHANCE-C")
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.option('--quiet', '-q', is_flag=True, help='Suppress output except errors')
 def cli(verbose: bool, quiet: bool):
     """
-    ICoM ABM - Agent-Based Model for housing market dynamics simulation.
+    CHANCE-C - Agent-Based Model for housing market dynamics simulation.
     
     This tool provides a comprehensive framework for simulating housing market
     dynamics, including population growth, agent relocation, housing choice,
@@ -41,7 +41,7 @@ def cli(verbose: bool, quiet: bool):
     elif quiet:
         logging.getLogger().setLevel(logging.ERROR)
     
-    click.echo("ICoM ABM - Housing Market Dynamics Simulator")
+    click.echo("CHANCE-C - Housing Market Dynamics Simulator")
 
 
 @cli.command()
@@ -77,7 +77,7 @@ def cli(verbose: bool, quiet: bool):
               help='Show progress indicators')
 def run(config: Optional[str], output_dir: str, **kwargs):
     """
-    Run the ICoM ABM simulation.
+    Run the CHANCE-C simulation.
     
     This command executes a complete agent-based model simulation for housing
     market dynamics. It creates the simulation landscape, populates it with
@@ -89,7 +89,7 @@ def run(config: Optional[str], output_dir: str, **kwargs):
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         
-        click.echo(f"Starting ICoM ABM simulation...")
+        click.echo(f"Starting CHANCE-C simulation...")
         click.echo(f"Output directory: {output_path.absolute()}")
         
         # Initialize the model
@@ -149,7 +149,7 @@ def validate_config(config_file: str, output: Optional[str]):
         # Save validation report if output specified
         if output:
             with open(output, 'w') as f:
-                f.write("ICoM ABM Configuration Validation Report\n")
+                f.write("CHANCE-C Configuration Validation Report\n")
                 f.write("=" * 50 + "\n\n")
                 f.write(f"Configuration file: {config_file}\n")
                 f.write(f"Validation status: PASSED\n\n")
@@ -292,12 +292,12 @@ def summarize(results_dir: str, output_format: str, output: Optional[str]):
 @cli.command()
 def info():
     """
-    Display information about the ICoM ABM model.
+    Display information about the CHANCE-C model.
     
     This command shows version information, available features, and
     basic usage instructions.
     """
-    click.echo("ICoM ABM - Agent-Based Model for Housing Market Dynamics")
+    click.echo("CHANCE-C - Agent-Based Model for Housing Market Dynamics")
     click.echo("=" * 60)
     click.echo("Version: 0.1.0")
     click.echo("Author: Jim Yoon (jim.yoon@pnnl.gov)")
@@ -318,7 +318,7 @@ def info():
     click.echo("  plot-results - Generate visualizations")
     click.echo("  summarize    - Create summary reports")
     click.echo()
-    click.echo("For detailed help on any command, use: icom-abm <command> --help")
+    click.echo("For detailed help on any command, use: chance-c <command> --help")
 
 
 if __name__ == '__main__':

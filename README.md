@@ -2,63 +2,63 @@
 The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments. 
 
 
-# CHANCE-C Command Line Interface
+## CHANCE-C Command Line Interface
 
 The CHANCE-C (Agent-Based Model) provides a comprehensive command-line interface for simulating housing market dynamics, including population growth, agent relocation, housing choice, market pricing, and environmental factors like flood hazards.
 
-## Installation
+### Installation
 
-After installing the package, the CLI will be available as `icom-abm`:
+After installing the package, the CLI will be available as `chance-c`:
 
 ```bash
 # Install the package
 pip install -e .
 
 # Verify installation
-icom-abm --help
+chance-c --help
 ```
 
-## Quick Start
+### Quick Start
 
-### 1. Get Information About the Model
+#### 1. Get Information About the Model
 
 ```bash
-icom-abm info
+chance-c info
 ```
 
-### 2. Create a Configuration File
+#### 2. Create a Configuration File
 
 ```bash
 # Create a basic configuration
-icom-abm create-config --template basic --output my_config.yaml
+chance-c create-config --template basic --output my_config.yaml
 
 # Create a Baltimore-specific configuration
-icom-abm create-config --template baltimore --output baltimore_config.yaml
+chance-c create-config --template baltimore --output baltimore_config.yaml
 
 # Create a custom configuration interactively
-icom-abm create-config --template custom --output custom_config.yaml
+chance-c create-config --template custom --output custom_config.yaml
 ```
 
-### 3. Validate Your Configuration
+#### 3. Validate Your Configuration
 
 ```bash
-icom-abm validate-config my_config.yaml
+chance-c validate-config my_config.yaml
 ```
 
-### 4. Run a Simulation
+#### 4. Run a Simulation
 
 ```bash
 # Run with default parameters
-icom-abm run
+chance-c run
 
 # Run with a configuration file
-icom-abm run --config my_config.yaml
+chance-c run --config my_config.yaml
 
 # Run a sensitivity analysis
-icom-abm run --sensitivity-run --no-years 1 --output-dir ./sensitivity_results
+chance-c run --sensitivity-run --no-years 1 --output-dir ./sensitivity_results
 
 # Run with custom parameters
-icom-abm run \
+chance-c run \
     --start-year 2020 \
     --no-years 5 \
     --pop-growth-perc 0.02 \
@@ -66,9 +66,9 @@ icom-abm run \
     --output-dir ./my_simulation
 ```
 
-## Available Commands
+### Available Commands
 
-### `run` - Execute Simulation
+#### `run` - Execute Simulation
 
 Runs the CHANCE-C simulation with specified parameters.
 
@@ -91,7 +91,7 @@ Runs the CHANCE-C simulation with specified parameters.
 
 **Example:**
 ```bash
-icom-abm run \
+chance-c run \
     --config my_config.yaml \
     --output-dir ./simulation_results \
     --start-year 2020 \
@@ -100,7 +100,7 @@ icom-abm run \
     --progress
 ```
 
-### `validate-config` - Validate Configuration
+#### `validate-config` - Validate Configuration
 
 Validates a YAML configuration file and displays the parameters.
 
@@ -112,10 +112,10 @@ Validates a YAML configuration file and displays the parameters.
 
 **Example:**
 ```bash
-icom-abm validate-config my_config.yaml --output validation_report.txt
+chance-c validate-config my_config.yaml --output validation_report.txt
 ```
 
-### `create-config` - Create Configuration File
+#### `create-config` - Create Configuration File
 
 Creates a new configuration file from a template.
 
@@ -125,10 +125,10 @@ Creates a new configuration file from a template.
 
 **Example:**
 ```bash
-icom-abm create-config --template baltimore --output baltimore_simulation.yaml
+chance-c create-config --template baltimore --output baltimore_simulation.yaml
 ```
 
-### `plot-results` - Generate Visualizations
+#### `plot-results` - Generate Visualizations
 
 Generates plots from simulation results.
 
@@ -142,10 +142,10 @@ Generates plots from simulation results.
 
 **Example:**
 ```bash
-icom-abm plot-results ./simulation_results --output population_map.png --format png
+chance-c plot-results ./simulation_results --output population_map.png --format png
 ```
 
-### `summarize` - Generate Summary Report
+#### `summarize` - Generate Summary Report
 
 Creates a comprehensive summary of simulation results.
 
@@ -158,19 +158,19 @@ Creates a comprehensive summary of simulation results.
 
 **Example:**
 ```bash
-icom-abm summarize ./simulation_results --format csv --output summary.csv
+chance-c summarize ./simulation_results --format csv --output summary.csv
 ```
 
-### `info` - Display Model Information
+#### `info` - Display Model Information
 
 Shows version information, features, and usage instructions.
 
 **Example:**
 ```bash
-icom-abm info
+chance-c info
 ```
 
-## Global Options
+### Global Options
 
 All commands support these global options:
 
@@ -179,7 +179,7 @@ All commands support these global options:
 - `--version`: Show version information
 - `--help`: Show help message
 
-## Configuration Files
+### Configuration Files
 
 Configuration files are in YAML format and contain all simulation parameters. You can create them using the `create-config` command or manually.
 
@@ -198,7 +198,7 @@ pop_growth_perc: 0.01
 # ... additional parameters
 ```
 
-## Output Structure
+### Output Structure
 
 When you run a simulation, the following structure is created:
 
@@ -213,19 +213,19 @@ output_directory/
     └── plots/                # Generated visualizations
 ```
 
-## Examples
+### Examples
 
-### Basic Simulation
+#### Basic Simulation
 ```bash
 # Run a simple 2-year simulation
-icom-abm run --output-dir ./basic_simulation
+chance-c run --output-dir ./basic_simulation
 ```
 
 ### Sensitivity Analysis
 ```bash
 # Run multiple sensitivity scenarios
 for growth_rate in 0.005 0.01 0.015 0.02; do
-    icom-abm run \
+    chance-c run \
         --sensitivity-run \
         --pop-growth-perc $growth_rate \
         --output-dir "./sensitivity_${growth_rate}" \
@@ -233,35 +233,35 @@ for growth_rate in 0.005 0.01 0.015 0.02; do
 done
 ```
 
-### Custom Configuration
+#### Custom Configuration
 ```bash
 # Create and use a custom configuration
-icom-abm create-config --template custom --output my_simulation.yaml
+chance-c create-config --template custom --output my_simulation.yaml
 # Edit the configuration file as needed
-icom-abm run --config my_simulation.yaml --output-dir ./custom_simulation
+chance-c run --config my_simulation.yaml --output-dir ./custom_simulation
 ```
 
-### Batch Processing
+##3# Batch Processing
 ```bash
 # Run multiple scenarios
 scenarios=("baseline" "high_growth" "low_growth")
 for scenario in "${scenarios[@]}"; do
-    icom-abm run \
+    chance-c run \
         --scenario "$scenario" \
         --output-dir "./results_${scenario}" \
         --pop-growth-perc 0.01
 done
 ```
 
-## Troubleshooting
+### Troubleshooting
 
-### Common Issues
+#### Common Issues
 
 1. **Configuration file not found**
    ```bash
    # Make sure the file exists and path is correct
    ls -la my_config.yaml
-   icom-abm validate-config my_config.yaml
+   chance-c validate-config my_config.yaml
    ```
 
 2. **Permission errors**
@@ -274,26 +274,26 @@ done
 3. **Memory issues with large simulations**
    ```bash
    # Reduce agent aggregation or simulation years
-   icom-abm run --agent-housing-aggregation 20 --no-years 1
+   chance-c run --agent-housing-aggregation 20 --no-years 1
    ```
 
-### Getting Help
+#### Getting Help
 
 ```bash
 # General help
-icom-abm --help
+chance-c --help
 
 # Command-specific help
-icom-abm run --help
-icom-abm validate-config --help
+chance-c run --help
+chance-c validate-config --help
 
 # Verbose output for debugging
-icom-abm run --verbose --config my_config.yaml
+chance-c run --verbose --config my_config.yaml
 ```
 
-## Advanced Usage
+### Advanced Usage
 
-### Programmatic CLI Usage
+#### Programmatic CLI Usage
 
 You can also use the CLI programmatically:
 
@@ -302,7 +302,7 @@ import subprocess
 
 # Run a simulation
 result = subprocess.run([
-    'icom-abm', 'run',
+    'chance-c', 'run',
     '--config', 'my_config.yaml',
     '--output-dir', './results'
 ], capture_output=True, text=True)
@@ -310,7 +310,7 @@ result = subprocess.run([
 print(result.stdout)
 ```
 
-### Custom Scripts
+#### Custom Scripts
 
 Create custom scripts that use the CLI:
 
@@ -320,7 +320,7 @@ Create custom scripts that use the CLI:
 
 for year in 2018 2019 2020; do
     for growth in 0.01 0.02 0.03; do
-        icom-abm run \
+        chance-c run \
             --start-year $year \
             --pop-growth-perc $growth \
             --output-dir "./results_${year}_${growth}"
@@ -328,7 +328,7 @@ for year in 2018 2019 2020; do
 done
 ```
 
-## Contributing
+### Contributing
 
 To extend the CLI with new commands or options:
 

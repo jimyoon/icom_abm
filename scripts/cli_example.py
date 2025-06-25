@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example script demonstrating how to use the ICoM ABM CLI programmatically.
+Example script demonstrating how to use the CHANCE-C CLI programmatically.
 
 This script shows how to run simulations, validate configurations, and
 generate results using the command line interface.
@@ -33,7 +33,7 @@ def run_cli_command(command_args):
 
 def main():
     """Main function demonstrating CLI usage."""
-    print("ICoM ABM CLI Example")
+    print("CHANCE-C CLI Example")
     print("=" * 50)
     
     # Example 1: Show help information

@@ -55,7 +55,7 @@ deploy = [
 Repository = "https://github.com/jimyoon/icom_abm"
 
 [project.scripts]
-icom-abm = "chance_c.cli:cli"
+chance-c = "chance_c.cli:cli"
 
 [tool.hatch.build]
 packages = ["chance_c"]  # set importable package name to "cerf"
