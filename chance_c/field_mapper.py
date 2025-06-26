@@ -14,15 +14,20 @@ import logging
 class FieldMapper:
     """Handles mapping between user input file column names and required model field names."""
     
-    def __init__(self, mapping_file: Optional[str] = None):
+    def __init__(self, mapping_file: Optional[str] = None, mappings: Optional[Dict[str, Dict[str, str]]] = None):
         """Initialize the FieldMapper.
         
         Args:
             mapping_file: Path to YAML file containing field mappings. 
-                         If None, uses default mappings.
+                         If None and mappings is None, uses default mappings.
+            mappings: Dictionary containing field mappings for each file type.
+                     Takes precedence over mapping_file if both are provided.
         """
         self.mapping_file = mapping_file
-        self.mappings = self._load_mappings()
+        if mappings is not None:
+            self.mappings = mappings
+        else:
+            self.mappings = self._load_mappings()
         
     def _load_mappings(self) -> Dict[str, Dict[str, str]]:
         """Load field mappings from YAML file or use defaults.
@@ -205,6 +210,28 @@ class FieldMapper:
             logging.error(f"Error validating mapping file: {e}")
             return False
     
+    def validate_mappings(self) -> bool:
+        """Validate the current mappings.
+        
+        Returns:
+            True if valid, False otherwise
+        """
+        required_keys = [
+            'geo_file_mapping', 'pop_file_mapping', 'flood_file_mapping',
+            'housing_file_mapping', 'hedonic_file_mapping'
+        ]
+        
+        for key in required_keys:
+            if key not in self.mappings:
+                logging.error(f"Missing required mapping key: {key}")
+                return False
+            
+            if not isinstance(self.mappings[key], dict):
+                logging.error(f"Mapping key {key} must be a dictionary")
+                return False
+        
+        return True
+    
     def create_example_mapping_file(self, output_file: str) -> None:
         """Create an example mapping file with common alternative column names.
         
@@ -259,13 +286,15 @@ class FieldMapper:
         logging.info(f"Example mapping file created: {output_file}")
 
 
-def load_and_map_data(file_path: str, file_type: str, mapping_file: Optional[str] = None) -> pd.DataFrame:
+def load_and_map_data(file_path: str, file_type: str, mapping_file: Optional[str] = None, 
+                     mappings: Optional[Dict[str, Dict[str, str]]] = None) -> pd.DataFrame:
     """Load data from file and apply field mapping.
     
     Args:
         file_path: Path to the input data file
         file_type: Type of file ('geo', 'pop', 'flood', 'housing', 'hedonic')
         mapping_file: Optional path to mapping file
+        mappings: Optional dictionary containing field mappings
         
     Returns:
         Dataframe with mapped column names
@@ -280,5 +309,5 @@ def load_and_map_data(file_path: str, file_type: str, mapping_file: Optional[str
         raise ValueError(f"Unsupported file format: {file_path}")
     
     # Apply field mapping
-    mapper = FieldMapper(mapping_file)
+    mapper = FieldMapper(mapping_file=mapping_file, mappings=mappings)
     return mapper.map_dataframe(df, file_type) 

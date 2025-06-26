@@ -2,51 +2,68 @@
 # This file shows how to map your custom column names to the required field names used by the model
 # Copy this file and modify the values on the right to match your data file column names
 
+# Example of custom field mappings for CHANCE-C
+# This file demonstrates how to customize field mappings when your data files
+# use different column names than the standard ones.
+#
+# NOTE: With the new system, these mappings are now embedded directly in your
+# configuration YAML file instead of being in a separate file.
+#
+# To use custom field mappings, copy the relevant sections below and paste them
+# into your configuration file, replacing the default mappings.
+
 # Geographic file field mappings
 geo_file_mapping:
   # Map your column names to the required field names used by the model
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  GEOID: "CENSUS_ID"             # Your column name for census identifier
-  COUNTYFP: "COUNTY_CODE"        # Your column name for county code
-  TRACTCE: "TRACT_CODE"          # Your column name for tract code
-  BLKGRPCE: "BLOCK_GROUP_CODE"   # Your column name for block group code
-  ALAND: "LAND_AREA"             # Your column name for land area
-  geometry: "geom"               # Your column name for geometry
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID instead of GISJOIN
+  GEOID: "CENSUS_ID"             # Your file uses CENSUS_ID instead of GEOID
+  COUNTYFP: "COUNTY_CODE"        # Your file uses COUNTY_CODE instead of COUNTYFP
+  TRACTCE: "TRACT_CODE"          # Your file uses TRACT_CODE instead of TRACTCE
+  BLKGRPCE: "BLOCK_GROUP_CODE"   # Your file uses BLOCK_GROUP_CODE instead of BLKGRPCE
+  ALAND: "LAND_AREA"             # Your file uses LAND_AREA instead of ALAND
+  geometry: "geom"               # Your file uses geom instead of geometry
 
 # Population file field mappings
 pop_file_mapping:
   # Map your column names to the required field names used by the model
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  AJWME001: "POPULATION_2018"    # Your column name for population count
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID instead of GISJOIN
+  AJWME001: "POPULATION_2018"    # Your file uses POPULATION_2018 instead of AJWME001
 
 # Flood file field mappings
 flood_file_mapping:
   # Map your column names to the required field names used by the model
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  Shape_Area: "FLOOD_AREA"       # Your column name for flood area
-  fld_area: "FLOODED_AREA"       # Your column name for flooded area
-  perc_fld_area: "FLOOD_PERCENT" # Your column name for flood percentage
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID instead of GISJOIN
+  Shape_Area: "FLOOD_AREA"       # Your file uses FLOOD_AREA instead of Shape_Area
+  fld_area: "FLOODED_AREA"       # Your file uses FLOODED_AREA instead of fld_area
+  perc_fld_area: "FLOOD_PERCENT" # Your file uses FLOOD_PERCENT instead of perc_fld_area
 
 # Housing file field mappings
 housing_file_mapping:
   # Map your column names to the required field names used by the model
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  pop1990: "POP_1990"            # Your column name for 1990 population
-  mhi1990: "MEDIAN_INCOME_1990"  # Your column name for 1990 median household income
-  hhsize1990: "HH_SIZE_1990"     # Your column name for 1990 household size
-  coastdist: "DIST_TO_COAST"     # Your column name for distance to coast
-  cbddist: "DIST_TO_CBD"         # Your column name for distance to CBD
-  hhtrans1993: "HH_COUNT_1993"   # Your column name for 1993 household count
-  salesprice1993: "SALES_PRICE_1993"  # Your column name for 1993 sales price
-  salespricesf1993: "SALES_PRICE_SF_1993"  # Your column name for 1993 sales price per sq ft
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID instead of GISJOIN
+  pop1990: "POP_1990"            # Your file uses POP_1990 instead of pop1990
+  mhi1990: "MEDIAN_INCOME_1990"  # Your file uses MEDIAN_INCOME_1990 instead of mhi1990
+  hhsize1990: "HH_SIZE_1990"     # Your file uses HH_SIZE_1990 instead of hhsize1990
+  coastdist: "DIST_TO_COAST"     # Your file uses DIST_TO_COAST instead of coastdist
+  cbddist: "DIST_TO_CBD"         # Your file uses DIST_TO_CBD instead of cbddist
+  hhtrans1993: "HH_COUNT_1993"   # Your file uses HH_COUNT_1993 instead of hhtrans1993
+  salesprice1993: "SALES_PRICE_1993"  # Your file uses SALES_PRICE_1993 instead of salesprice1993
+  salespricesf1993: "SALES_PRICE_SF_1993"  # Your file uses SALES_PRICE_SF_1993 instead of salespricesf1993
 
 # Hedonic file field mappings
 hedonic_file_mapping:
   # Map your column names to the required field names used by the model
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  N_MeanSqfeet: "NORM_SQFT"      # Your column name for normalized square feet
-  N_MeanAge: "NORM_AGE"          # Your column name for normalized age
-  N_MeanNoOfStories: "NORM_STORIES"  # Your column name for normalized stories
-  N_MeanFullBathNumber: "NORM_BATHS"  # Your column name for normalized bathrooms
-  N_perc_area_flood: "NORM_FLOOD"  # Your column name for normalized flood percentage
-  residuals: "HEDONIC_RESIDUALS"  # Your column name for hedonic residuals 
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID instead of GISJOIN
+  N_MeanSqfeet: "NORM_SQFT"      # Your file uses NORM_SQFT instead of N_MeanSqfeet
+  N_MeanAge: "NORM_AGE"          # Your file uses NORM_AGE instead of N_MeanAge
+  N_MeanNoOfStories: "NORM_STORIES"  # Your file uses NORM_STORIES instead of N_MeanNoOfStories
+  N_MeanFullBathNumber: "NORM_BATHS"  # Your file uses NORM_BATHS instead of N_MeanFullBathNumber
+  N_perc_area_flood: "NORM_FLOOD"  # Your file uses NORM_FLOOD instead of N_perc_area_flood
+  residuals: "HEDONIC_RESIDUALS"  # Your file uses HEDONIC_RESIDUALS instead of residuals
+
+# USAGE INSTRUCTIONS:
+# 1. Copy the relevant mapping sections above
+# 2. Paste them into your configuration YAML file
+# 3. Replace the default mappings in your config file
+# 4. Modify the column names on the right side to match your data files
+# 5. Keep the required field names on the left side unchanged 

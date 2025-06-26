@@ -88,7 +88,7 @@ class ICOMSimulator(Simulator):
             flood_filename: str, 
             housing_filename: str, 
             hedonic_filename: str,
-            field_mapping_file: str = None,
+            field_mappings: dict = None,
             **kwargs
     ) -> None:
         """Create landscape based on census geographies and data.
@@ -105,7 +105,7 @@ class ICOMSimulator(Simulator):
             flood_filename: Path to flood data file.
             housing_filename: Path to housing data file.
             hedonic_filename: Path to hedonic regression data file.
-            field_mapping_file: Optional path to field mapping file.
+            field_mappings: Optional dictionary containing field mappings.
         """
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
@@ -116,8 +116,8 @@ class ICOMSimulator(Simulator):
         except ImportError:
             FieldMapper = None
             
-        # Initialize field mapper if mapping file is provided
-        mapper = FieldMapper(field_mapping_file) if field_mapping_file and FieldMapper else None
+        # Initialize field mapper if mappings are provided
+        mapper = FieldMapper(mappings=field_mappings) if field_mappings and FieldMapper else None
 
         # Load geographic data
         block_group = gpd.read_file(geo_filename)

@@ -1,204 +1,214 @@
-# Field Mapping Configuration
+# Field Mapping System for CHANCE-C
 
-This document explains how to use the field mapping functionality in the CHANCE ABM model to handle input files with different column names.
+The CHANCE-C model uses a flexible field mapping system that allows you to use data files with different column names than the standard ones expected by the model. This system is now integrated directly into the configuration file, making it easier to manage and version control your field mappings.
 
 ## Overview
 
-The CHANCE ABM model requires specific column names in its input files. However, your data files may use different column names. The field mapping functionality allows you to map your custom column names to the required field names used by the model.
+The field mapping system allows you to:
+- Use data files with custom column names
+- Map your column names to the required field names used by the model
+- Maintain flexibility while ensuring data compatibility
+- Keep all configuration in one place
 
-## Required Field Names
+## How It Works
 
-The model requires the following field names for each input file type:
+Instead of using a separate field mapping file, you now define field mappings directly in your configuration YAML file. The model will automatically apply these mappings when loading your data files.
 
-### Geographic File (geo_file_mapping)
-- `GISJOIN` - Unique identifier for each block group
-- `GEOID` - Unique identifier for each block group  
-- `COUNTYFP` - County code
-- `TRACTCE` - Tract code
-- `BLKGRPCE` - Block group code
-- `ALAND` - Land area
-- `geometry` - Geometry of the block group
+### Required Field Names
 
-### Population File (pop_file_mapping)
-- `GISJOIN` - Unique identifier for each block group
-- `AJWME001` - Population count (mapped from your custom column name)
+The model expects specific field names for each type of input file:
 
-### Flood File (flood_file_mapping)
-- `GISJOIN` - Unique identifier for each flood zone
-- `Shape_Area` - Area of the flood zone
-- `fld_area` - Area of the flood zone
-- `perc_fld_area` - Percentage of the flood zone
+#### Geographic File (Shapefile)
+- `GISJOIN`: Unique identifier for each block group
+- `GEOID`: Geographic identifier
+- `COUNTYFP`: County code
+- `TRACTCE`: Tract code
+- `BLKGRPCE`: Block group code
+- `ALAND`: Land area
+- `geometry`: Geometry column
 
-### Housing File (housing_file_mapping)
-- `GISJOIN` - Unique identifier for each block group
-- `pop1990` - Population in 1990
-- `mhi1990` - Median household income in 1990
-- `hhsize1990` - Average household size in 1990
-- `coastdist` - Distance to the coast
-- `cbddist` - Distance to the CBD
-- `hhtrans1993` - Number of households in 1993
-- `salesprice1993` - Sales price in 1993
-- `salespricesf1993` - Sales price per square foot in 1993
+#### Population File (CSV)
+- `GISJOIN`: Unique identifier for each block group
+- `AJWME001`: Population count
 
-### Hedonic File (hedonic_file_mapping)
-- `GISJOIN` - Unique identifier for each block group
-- `N_MeanSqfeet` - Normalized mean square feet
-- `N_MeanAge` - Normalized mean age
-- `N_MeanNoOfStories` - Normalized mean number of stories
-- `N_MeanFullBathNumber` - Normalized mean number of full bathrooms
-- `N_perc_area_flood` - Normalized percentage of the block group in the flood zone
-- `residuals` - Residuals from hedonic regression
+#### Flood File (CSV)
+- `GISJOIN`: Unique identifier for each block group
+- `Shape_Area`: Total area
+- `fld_area`: Flood area
+- `perc_fld_area`: Percentage of area in flood zone
 
-## How to Use Field Mapping
+#### Housing File (CSV)
+- `GISJOIN`: Unique identifier for each block group
+- `pop1990`: Population in 1990
+- `mhi1990`: Median household income in 1990
+- `hhsize1990`: Average household size in 1990
+- `coastdist`: Distance to coast
+- `cbddist`: Distance to CBD
+- `hhtrans1993`: Number of house transactions in 1993
+- `salesprice1993`: Sales price in 1993
+- `salespricesf1993`: Sales price per square foot in 1993
 
-### Step 1: Create a Field Mapping File
+#### Hedonic File (CSV)
+- `GISJOIN`: Unique identifier for each block group
+- `N_MeanSqfeet`: Normalized mean square feet
+- `N_MeanAge`: Normalized mean age
+- `N_MeanNoOfStories`: Normalized mean number of stories
+- `N_MeanFullBathNumber`: Normalized mean number of full bathrooms
+- `N_perc_area_flood`: Normalized percentage in flood zone
+- `residuals`: Hedonic regression residuals
 
-Create a YAML file that maps your column names to the required field names. You can use the example file `data/example_field_mapping.yml` as a starting point.
+## Configuration Format
 
-Example mapping file (`my_mapping.yml`):
+Field mappings are defined directly in your configuration YAML file using the following structure:
+
 ```yaml
-# Geographic file field mappings
+# Field mapping configurations
 geo_file_mapping:
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  GEOID: "CENSUS_ID"             # Your column name for census identifier
-  COUNTYFP: "COUNTY_CODE"        # Your column name for county code
-  TRACTCE: "TRACT_CODE"          # Your column name for tract code
-  BLKGRPCE: "BLOCK_GROUP_CODE"   # Your column name for block group code
-  ALAND: "LAND_AREA"             # Your column name for land area
-  geometry: "geom"               # Your column name for geometry
+  GISJOIN: "your_column_name"
+  GEOID: "your_column_name"
+  # ... other mappings
 
-# Population file field mappings
 pop_file_mapping:
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  AJWME001: "POPULATION_2018"    # Your column name for population count
+  GISJOIN: "your_column_name"
+  AJWME001: "your_column_name"
+  # ... other mappings
 
-# Flood file field mappings
-flood_file_mapping:
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  Shape_Area: "FLOOD_AREA"       # Your column name for flood area
-  fld_area: "FLOODED_AREA"       # Your column name for flooded area
-  perc_fld_area: "FLOOD_PERCENT" # Your column name for flood percentage
-
-# Housing file field mappings
-housing_file_mapping:
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  pop1990: "POP_1990"            # Your column name for 1990 population
-  mhi1990: "MEDIAN_INCOME_1990"  # Your column name for 1990 median household income
-  hhsize1990: "HH_SIZE_1990"     # Your column name for 1990 household size
-  coastdist: "DIST_TO_COAST"     # Your column name for distance to coast
-  cbddist: "DIST_TO_CBD"         # Your column name for distance to CBD
-  hhtrans1993: "HH_COUNT_1993"   # Your column name for 1993 household count
-  salesprice1993: "SALES_PRICE_1993"  # Your column name for 1993 sales price
-  salespricesf1993: "SALES_PRICE_SF_1993"  # Your column name for 1993 sales price per sq ft
-
-# Hedonic file field mappings
-hedonic_file_mapping:
-  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
-  N_MeanSqfeet: "NORM_SQFT"      # Your column name for normalized square feet
-  N_MeanAge: "NORM_AGE"          # Your column name for normalized age
-  N_MeanNoOfStories: "NORM_STORIES"  # Your column name for normalized stories
-  N_MeanFullBathNumber: "NORM_BATHS"  # Your column name for normalized bathrooms
-  N_perc_area_flood: "NORM_FLOOD"  # Your column name for normalized flood percentage
-  residuals: "HEDONIC_RESIDUALS"  # Your column name for hedonic residuals
+# ... other file type mappings
 ```
 
-### Step 2: Update Your Configuration
+## Usage Examples
 
-Add the field mapping file path to your simulation configuration:
+### Example 1: Standard Column Names
+If your data files already use the standard column names, you can use the default mappings:
 
 ```yaml
-# In your config.yml file
-field_mapping_file: "my_mapping.yml"
+geo_file_mapping:
+  GISJOIN: "GISJOIN"
+  GEOID: "GEOID"
+  COUNTYFP: "COUNTYFP"
+  TRACTCE: "TRACTCE"
+  BLKGRPCE: "BLKGRPCE"
+  ALAND: "ALAND"
+  geometry: "geometry"
 ```
 
-### Step 3: Use the Configuration
+### Example 2: Custom Column Names
+If your data files use different column names, map them accordingly:
 
-When you create your simulation configuration, the field mapping will be automatically applied:
+```yaml
+geo_file_mapping:
+  GISJOIN: "BLOCK_GROUP_ID"      # Your file uses BLOCK_GROUP_ID
+  GEOID: "CENSUS_ID"             # Your file uses CENSUS_ID
+  COUNTYFP: "COUNTY_CODE"        # Your file uses COUNTY_CODE
+  TRACTCE: "TRACT_CODE"          # Your file uses TRACT_CODE
+  BLKGRPCE: "BLOCK_GROUP_CODE"   # Your file uses BLOCK_GROUP_CODE
+  ALAND: "LAND_AREA"             # Your file uses LAND_AREA
+  geometry: "geom"               # Your file uses geom
+```
 
-```python
-from chance_c.data_loader import SimulationConfig
+### Example 3: Mixed Standard and Custom Names
+You can mix standard and custom column names:
 
-# Load configuration with field mapping
-config = SimulationConfig.from_yaml('config.yml')
+```yaml
+pop_file_mapping:
+  GISJOIN: "GISJOIN"           # Standard name
+  AJWME001: "POPULATION_2018"  # Custom name
+```
 
-# Validate field mapping
-if config.validate_field_mapping():
-    print("Field mapping is valid!")
-else:
-    print("Field mapping validation failed!")
+## Complete Configuration Example
 
-# Get required columns for a specific file type
-required_columns = config.get_required_columns('geo')
-print("Required columns for geo file:", required_columns)
+Here's a complete example showing all field mappings in a configuration file:
+
+```yaml
+# ... other configuration parameters ...
+
+# Field mapping configurations
+geo_file_mapping:
+  GISJOIN: "GISJOIN"
+  GEOID: "GEOID"
+  COUNTYFP: "COUNTYFP"
+  TRACTCE: "TRACTCE"
+  BLKGRPCE: "BLKGRPCE"
+  ALAND: "ALAND"
+  geometry: "geometry"
+
+pop_file_mapping:
+  GISJOIN: "GISJOIN"
+  AJWME001: "AJWME001"
+
+flood_file_mapping:
+  GISJOIN: "GISJOIN"
+  Shape_Area: "Shape_Area"
+  fld_area: "fld_area"
+  perc_fld_area: "perc_fld_area"
+
+housing_file_mapping:
+  GISJOIN: "GISJOIN"
+  pop1990: "pop1990"
+  mhi1990: "mhi1990"
+  hhsize1990: "hhsize1990"
+  coastdist: "coastdist"
+  cbddist: "cbddist"
+  hhtrans1993: "hhtrans1993"
+  salesprice1993: "salesprice1993"
+  salespricesf1993: "salespricesf1993"
+
+hedonic_file_mapping:
+  GISJOIN: "GISJOIN"
+  N_MeanSqfeet: "N_MeanSqfeet"
+  N_MeanAge: "N_MeanAge"
+  N_MeanNoOfStories: "N_MeanNoOfStories"
+  N_MeanFullBathNumber: "N_MeanFullBathNumber"
+  N_perc_area_flood: "N_perc_area_flood"
+  residuals: "residuals"
 ```
 
 ## Validation
 
-The field mapping system includes validation to ensure:
+The system automatically validates your field mappings to ensure:
+- All required mappings are present
+- Mapping values are properly formatted
+- Referenced columns exist in your data files
 
-1. All required mapping keys are present
-2. All required columns are mapped
-3. The mapping file is valid YAML
+## Best Practices
 
-## Error Handling
+1. **Keep mappings organized**: Group related mappings together in your configuration file
+2. **Use descriptive comments**: Add comments to explain custom column names
+3. **Test your mappings**: Validate your configuration before running simulations
+4. **Version control**: Keep your configuration files in version control
+5. **Document changes**: Document any changes to field mappings for reproducibility
 
-If your input files are missing required columns, the system will provide clear error messages indicating which columns are missing and what they should map to.
+## Migration from Separate Field Mapping Files
 
-## Examples
+If you were previously using separate field mapping files, you can easily migrate:
 
-### Example 1: Using Default Field Names
-If your data files already use the required field names, you don't need a mapping file. The system will use default mappings.
-
-### Example 2: Custom Column Names
-If your data files use different column names, create a mapping file and specify it in your configuration.
-
-### Example 3: Partial Mapping
-You only need to map the columns that have different names. Columns that already match the required names can be omitted from the mapping file.
+1. Open your existing field mapping YAML file
+2. Copy the mapping sections
+3. Paste them into your configuration file
+4. Remove the `field_mapping_file` parameter from your configuration
+5. Test your configuration to ensure it works correctly
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Missing Required Columns**: Ensure all required columns are present in your mapping file
-2. **Invalid YAML**: Check that your mapping file is valid YAML syntax
-3. **File Not Found**: Verify the path to your mapping file is correct
-4. **Column Name Mismatch**: Ensure the column names in your mapping file exactly match those in your data files
+1. **Missing required fields**: Ensure all required field mappings are present
+2. **Column not found**: Verify that the column names in your mappings match your data files exactly
+3. **Case sensitivity**: Column names are case-sensitive
+4. **Typos**: Double-check spelling of column names
 
-### Getting Help
+### Error Messages
+
+- `Missing required mapping key`: Add the missing field mapping section
+- `Missing required columns`: Check that your data files contain the expected columns
+- `Unknown file type`: Verify that you're using the correct file type identifier
+
+## Getting Help
 
 If you encounter issues with field mapping:
+1. Check this documentation
+2. Verify your data file column names
+3. Test with the example configuration file
+4. Check the model logs for detailed error messages
 
-1. Check the example files provided (`data/example_field_mapping.yml`, `data/example_config.yml`)
-2. Validate your mapping file using the validation function
-3. Review the error messages for specific missing columns
-4. Ensure your data files contain all required columns
-
-## Advanced Usage
-
-### Programmatic Field Mapping
-
-You can also use the field mapping functionality programmatically:
-
-```python
-from chance_c.field_mapper import FieldMapper, load_and_map_data
-
-# Create a field mapper
-mapper = FieldMapper('my_mapping.yml')
-
-# Load and map data
-df = load_and_map_data('my_data.csv', 'geo', 'my_mapping.yml')
-
-# Or map an existing dataframe
-mapped_df = mapper.map_dataframe(df, 'geo')
-```
-
-### Creating Example Mapping Files
-
-You can programmatically create example mapping files:
-
-```python
-from chance_c.field_mapper import FieldMapper
-
-mapper = FieldMapper()
-mapper.create_example_mapping_file('example_mapping.yml')
-``` 
+The field mapping system is designed to be flexible and user-friendly while maintaining data integrity and model compatibility. 

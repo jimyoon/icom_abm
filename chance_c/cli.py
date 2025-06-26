@@ -86,7 +86,6 @@ def cli(verbose: bool, quiet: bool):
 @click.option('--flood-filename', help='Filename for flood hazard data (uses default if not specified)')
 @click.option('--housing-filename', help='Filename for housing data (uses default if not specified)')
 @click.option('--hedonic-filename', help='Filename for hedonic pricing data (uses default if not specified)')
-@click.option('--field-mapping-file', help='Path to field mapping configuration file')
 def run(config: Optional[str], output_dir: str, **kwargs):
     """
     Run the ICoM ABM simulation with the specified configuration.

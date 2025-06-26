@@ -56,49 +56,63 @@ landscape_name: "Baltimore"
 # housing_filename: "path/to/your/housing_file.csv"
 # hedonic_filename: "path/to/your/hedonic_file.csv"
 
-# Field mapping configuration
-# Set this to the path of your field mapping file if your data files use different column names
-field_mapping_file: "data/example_field_mapping.yml"
+# Field mapping configurations
+# These mappings allow you to use data files with different column names
+# The format is: required_field_name: "your_column_name"
+# If your data files use the standard column names, you can keep these as-is
 
-# Example with custom field mapping:
-# field_mapping_file: "my_custom_mapping.yml"
-#
-# Where my_custom_mapping.yml might contain:
+# Geographic file field mappings
+geo_file_mapping:
+  GISJOIN: "GISJOIN"      # Unique identifier for each block group
+  GEOID: "GEOID"          # Geographic identifier
+  COUNTYFP: "COUNTYFP"    # County code
+  TRACTCE: "TRACTCE"      # Tract code
+  BLKGRPCE: "BLKGRPCE"    # Block group code
+  ALAND: "ALAND"          # Land area
+  geometry: "geometry"    # Geometry column
+
+# Population file field mappings
+pop_file_mapping:
+  GISJOIN: "GISJOIN"      # Unique identifier for each block group
+  AJWME001: "AJWME001"    # Population count
+
+# Flood file field mappings
+flood_file_mapping:
+  GISJOIN: "GISJOIN"        # Unique identifier for each block group
+  Shape_Area: "Shape_Area"  # Total area
+  fld_area: "fld_area"      # Flood area
+  perc_fld_area: "perc_fld_area"  # Percentage of area in flood zone
+
+# Housing file field mappings
+housing_file_mapping:
+  GISJOIN: "GISJOIN"                    # Unique identifier for each block group
+  pop1990: "pop1990"                    # Population in 1990
+  mhi1990: "mhi1990"                    # Median household income in 1990
+  hhsize1990: "hhsize1990"              # Average household size in 1990
+  coastdist: "coastdist"                # Distance to coast
+  cbddist: "cbddist"                    # Distance to CBD
+  hhtrans1993: "hhtrans1993"            # Number of house transactions in 1993
+  salesprice1993: "salesprice1993"      # Sales price in 1993
+  salespricesf1993: "salespricesf1993"  # Sales price per square foot in 1993
+
+# Hedonic file field mappings
+hedonic_file_mapping:
+  GISJOIN: "GISJOIN"                            # Unique identifier for each block group
+  N_MeanSqfeet: "N_MeanSqfeet"                  # Normalized mean square feet
+  N_MeanAge: "N_MeanAge"                        # Normalized mean age
+  N_MeanNoOfStories: "N_MeanNoOfStories"        # Normalized mean number of stories
+  N_MeanFullBathNumber: "N_MeanFullBathNumber"  # Normalized mean number of full bathrooms
+  N_perc_area_flood: "N_perc_area_flood"        # Normalized percentage in flood zone
+  residuals: "residuals"                        # Hedonic regression residuals
+
+# Example with custom field mappings:
+# If your data files use different column names, modify the mappings above.
+# For example, if your geographic file uses "BLOCK_GROUP_ID" instead of "GISJOIN":
 # geo_file_mapping:
-#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
-#   GEOID: "CENSUS_ID"             # Your custom column name
-#   COUNTYFP: "COUNTY_CODE"        # Your custom column name
-#   TRACTCE: "TRACT_CODE"          # Your custom column name
-#   BLKGRPCE: "BLOCK_GROUP_CODE"   # Your custom column name
-#   ALAND: "LAND_AREA"             # Your custom column name
-#   geometry: "geom"               # Your custom column name
-#
-# pop_file_mapping:
-#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
-#   AJWME001: "POPULATION_2018"    # Your custom column name
-#
-# flood_file_mapping:
-#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
-#   Shape_Area: "FLOOD_AREA"       # Your custom column name
-#   fld_area: "FLOODED_AREA"       # Your custom column name
-#   perc_fld_area: "FLOOD_PERCENT" # Your custom column name
-#
-# housing_file_mapping:
-#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
-#   pop1990: "POP_1990"            # Your custom column name
-#   mhi1990: "MEDIAN_INCOME_1990"  # Your custom column name
-#   hhsize1990: "HH_SIZE_1990"     # Your custom column name
-#   coastdist: "DIST_TO_COAST"     # Your custom column name
-#   cbddist: "DIST_TO_CBD"         # Your custom column name
-#   hhtrans1993: "HH_COUNT_1993"   # Your custom column name
-#   salesprice1993: "SALES_PRICE_1993"  # Your custom column name
-#   salespricesf1993: "SALES_PRICE_SF_1993"  # Your custom column name
-#
-# hedonic_file_mapping:
-#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
-#   N_MeanSqfeet: "NORM_SQFT"      # Your custom column name
-#   N_MeanAge: "NORM_AGE"          # Your custom column name
-#   N_MeanNoOfStories: "NORM_STORIES"  # Your custom column name
-#   N_MeanFullBathNumber: "NORM_BATHS"  # Your custom column name
-#   N_perc_area_flood: "NORM_FLOOD"  # Your custom column name
-#   residuals: "HEDONIC_RESIDUALS"  # Your custom column name 
+#   GISJOIN: "BLOCK_GROUP_ID"
+#   GEOID: "CENSUS_ID"
+#   COUNTYFP: "COUNTY_CODE"
+#   TRACTCE: "TRACT_CODE"
+#   BLKGRPCE: "BLOCK_GROUP_CODE"
+#   ALAND: "LAND_AREA"
+#   geometry: "geom" 

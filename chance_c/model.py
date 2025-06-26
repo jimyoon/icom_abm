@@ -88,7 +88,6 @@ class Model:
         flood_filename: str = '',
         housing_filename: str = '',
         hedonic_filename: str = '',
-        field_mapping_file: str = None,
         record_time: bool = False,
         progress: bool = False,
         max_iterations: int = 1,
@@ -192,7 +191,6 @@ class Model:
                 flood_filename=flood_filename,
                 housing_filename=housing_filename,
                 hedonic_filename=hedonic_filename,
-                field_mapping_file=field_mapping_file,
             )
         
         self.config.record_time = record_time
@@ -258,7 +256,13 @@ class Model:
             flood_filename=self.config.flood_filename,
             housing_filename=self.config.housing_filename, 
             hedonic_filename=self.config.hedonic_filename,
-            field_mapping_file=self.config.field_mapping_file
+            field_mappings={
+                'geo_file_mapping': self.config.geo_file_mapping,
+                'pop_file_mapping': self.config.pop_file_mapping,
+                'flood_file_mapping': self.config.flood_file_mapping,
+                'housing_file_mapping': self.config.housing_file_mapping,
+                'hedonic_file_mapping': self.config.hedonic_file_mapping
+            }
         )
         
         if self.config.sensitivity_run is False:

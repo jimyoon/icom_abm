@@ -161,7 +161,7 @@ def demonstrate_geo_datatypes():
     print("With field mapping:")
     print("  # If you have custom column names, use field mapping")
     print("  config = SimulationConfig(")
-    print("      field_mapping_file='your_mapping.yml',")
+    print("      # Field mappings are now defined directly in the configuration file")
     print("      geo_filename='your_geo_file.shp',")
     print("      # ... other parameters")
     print("  )")

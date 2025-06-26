@@ -1,3 +1,6 @@
+# ignore any YAML files in the notebooks directory
+notebooks/*.yml
+
 # ignore all __pycache__ folders
 __pycache__/
 

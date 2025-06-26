@@ -25,13 +25,43 @@ def get_default_data_path(filename: str) -> str:
         return os.path.join(current_dir, 'data', 'example_input_data', filename)
 
 
+def get_example_config_path() -> str:
+    """Get the path to the example configuration file in the package.
+    
+    Returns:
+        str: Full path to the example configuration file
+    """
+    try:
+        # Try to get the path from the installed package
+        return pkg_resources.resource_filename('chance_c', 'data/example_config.yml')
+    except:
+        # Fallback for development/local installation
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(current_dir, 'data', 'example_config.yml')
+
+
+def get_example_field_mapping_path() -> str:
+    """Get the path to the example field mapping file in the package.
+    
+    Returns:
+        str: Full path to the example field mapping file
+    """
+    try:
+        # Try to get the path from the installed package
+        return pkg_resources.resource_filename('chance_c', 'data/example_field_mapping.yml')
+    except:
+        # Fallback for development/local installation
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(current_dir, 'data', 'example_field_mapping.yml')
+
+
 @dataclass
 class SimulationConfig:
     """Configuration class for ABM simulation parameters.
     
     A dataclass that holds all configuration parameters for an Agent-Based Model
     simulation, including simulation setup, agent parameters, growth rates,
-    housing choice models, and file paths for data sources.
+    housing choice models, field mappings, and file paths for data sources.
     
     Attributes:
         simulation_name: Name identifier for the simulation run.
@@ -62,11 +92,15 @@ class SimulationConfig:
         price_increase_perc: Percentage increase for housing prices.
         landscape_name: Geographic area name for the simulation.
         geo_filename: Shapefile containing census geographies.
-            pop_filename: CSV file containing population data.
-    flood_filename: CSV file containing FEMA 100-year flood data.
+        pop_filename: CSV file containing population data.
+        flood_filename: CSV file containing FEMA 100-year flood data.
         housing_filename: CSV file containing housing characteristics data.
         hedonic_filename: CSV file containing hedonic regression results.
-        field_mapping_file: Optional path to field mapping configuration file.
+        geo_file_mapping: Field mapping for geographic data files.
+        pop_file_mapping: Field mapping for population data files.
+        flood_file_mapping: Field mapping for flood data files.
+        housing_file_mapping: Field mapping for housing data files.
+        hedonic_file_mapping: Field mapping for hedonic data files.
         block_group_sample_size: Sample size for block groups.
         zoning_mode: Method for zoning.
         zoning_perc: Percentage of zoning.
@@ -123,10 +157,16 @@ class SimulationConfig:
     flood_filename: str = ''  # Will be set in __post_init__
     housing_filename: str = ''  # Will be set in __post_init__
     hedonic_filename: str = ''  # Will be set in __post_init__
-    field_mapping_file: Optional[str] = None
+    
+    # Field mapping configurations
+    geo_file_mapping: dict = None
+    pop_file_mapping: dict = None
+    flood_file_mapping: dict = None
+    housing_file_mapping: dict = None
+    hedonic_file_mapping: dict = None
     
     def __post_init__(self):
-        """Set default file paths if not provided."""
+        """Set default file paths and field mappings if not provided."""
         if not self.geo_filename:
             self.geo_filename = get_default_data_path('block_group_extract.shp')
         if not self.pop_filename:
@@ -137,14 +177,71 @@ class SimulationConfig:
             self.housing_filename = get_default_data_path('block_group_housing_1993.csv')
         if not self.hedonic_filename:
             self.hedonic_filename = get_default_data_path('simple_anova_hedonic_without_flood_bg0418.csv')
+        
+        # Set default field mappings if not provided
+        if self.geo_file_mapping is None:
+            self.geo_file_mapping = {
+                'GISJOIN': 'GISJOIN',
+                'GEOID': 'GEOID',
+                'COUNTYFP': 'COUNTYFP',
+                'TRACTCE': 'TRACTCE',
+                'BLKGRPCE': 'BLKGRPCE',
+                'ALAND': 'ALAND',
+                'geometry': 'geometry'
+            }
+        
+        if self.pop_file_mapping is None:
+            self.pop_file_mapping = {
+                'GISJOIN': 'GISJOIN',
+                'AJWME001': 'AJWME001'
+            }
+        
+        if self.flood_file_mapping is None:
+            self.flood_file_mapping = {
+                'GISJOIN': 'GISJOIN',
+                'Shape_Area': 'Shape_Area',
+                'fld_area': 'fld_area',
+                'perc_fld_area': 'perc_fld_area'
+            }
+        
+        if self.housing_file_mapping is None:
+            self.housing_file_mapping = {
+                'GISJOIN': 'GISJOIN',
+                'pop1990': 'pop1990',
+                'mhi1990': 'mhi1990',
+                'hhsize1990': 'hhsize1990',
+                'coastdist': 'coastdist',
+                'cbddist': 'cbddist',
+                'hhtrans1993': 'hhtrans1993',
+                'salesprice1993': 'salesprice1993',
+                'salespricesf1993': 'salespricesf1993'
+            }
+        
+        if self.hedonic_file_mapping is None:
+            self.hedonic_file_mapping = {
+                'GISJOIN': 'GISJOIN',
+                'N_MeanSqfeet': 'N_MeanSqfeet',
+                'N_MeanAge': 'N_MeanAge',
+                'N_MeanNoOfStories': 'N_MeanNoOfStories',
+                'N_MeanFullBathNumber': 'N_MeanFullBathNumber',
+                'N_perc_area_flood': 'N_perc_area_flood',
+                'residuals': 'residuals'
+            }
     
     def get_field_mapper(self) -> FieldMapper:
-        """Get a FieldMapper instance configured with the field mapping file.
+        """Get a FieldMapper instance configured with the field mappings.
         
         Returns:
             FieldMapper: Configured field mapper instance.
         """
-        return FieldMapper(self.field_mapping_file)
+        mappings = {
+            'geo_file_mapping': self.geo_file_mapping,
+            'pop_file_mapping': self.pop_file_mapping,
+            'flood_file_mapping': self.flood_file_mapping,
+            'housing_file_mapping': self.housing_file_mapping,
+            'hedonic_file_mapping': self.hedonic_file_mapping
+        }
+        return FieldMapper(mappings=mappings)
     
     def validate_field_mapping(self) -> bool:
         """Validate the field mapping configuration.
@@ -152,10 +249,8 @@ class SimulationConfig:
         Returns:
             bool: True if valid, False otherwise.
         """
-        if self.field_mapping_file:
-            mapper = FieldMapper()
-            return mapper.validate_mapping_file(self.field_mapping_file)
-        return True
+        mapper = self.get_field_mapper()
+        return mapper.validate_mappings()
     
     def get_required_columns(self, file_type: str) -> dict:
         """Get required columns for a specific file type.
@@ -218,7 +313,7 @@ class SimulationConfig:
             'perc_move_mode': self.perc_move_mode,
             'house_budget_mode': self.house_budget_mode,
             'house_choice_mode': self.house_choice_mode,
-            'simple_anova_coefficients': self.simple_anova_coefficients,
+            'simple_anova_coefficients': list(self.simple_anova_coefficients),
             'simple_avoidance_perc': self.simple_avoidance_perc,
             'budget_reduction_perc': self.budget_reduction_perc,
             'stock_increase_mode': self.stock_increase_mode,
@@ -231,7 +326,11 @@ class SimulationConfig:
             'flood_filename': self.flood_filename,
             'housing_filename': self.housing_filename,
             'hedonic_filename': self.hedonic_filename,
-            'field_mapping_file': self.field_mapping_file,
+            'geo_file_mapping': self.geo_file_mapping,
+            'pop_file_mapping': self.pop_file_mapping,
+            'flood_file_mapping': self.flood_file_mapping,
+            'housing_file_mapping': self.housing_file_mapping,
+            'hedonic_file_mapping': self.hedonic_file_mapping,
             'block_group_sample_size': self.block_group_sample_size,
             'zoning_mode': self.zoning_mode,
             'zoning_perc': self.zoning_perc,
