@@ -153,7 +153,7 @@ class FieldMapper:
         # Load metadata to get descriptions
         try:
             import os
-            import pkg_resources
+            import importlib.resources as pkg_resources
             
             # Try to get the path from the installed package
             try:
