@@ -1,3 +1,6 @@
+# ignore pytest cache
+.pytest_cache/
+
 # ignore any YAML files in the notebooks directory
 notebooks/*.yml
 
