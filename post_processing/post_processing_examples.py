@@ -404,17 +404,17 @@ df = s.network.get_history('housing_bg_df')[-1]
 df['flood_zone'] = "Not in Flood Zone"
 df.loc[(df.perc_fld_area > df.perc_fld_area.quantile(.9)), 'flood_zone'] = "In Flood Zone"
 hh_df = pd.DataFrame(columns=['name','type','income','house_status'])
-for hh in s.network.get_institution('all_hh_agents').components:
-    start_loc = hh.get_history('location')[0]
-    end_loc = hh.get_history('location')[-1]
+for household in s.network.get_institution('all_household_agents').components:
+    start_loc = household.get_history('location')[0]
+    end_loc = household.get_history('location')[-1]
     start_loc_fld = df[(df.GEOID==start_loc)]['flood_zone']
     end_loc_fld = df[(df.GEOID == end_loc)]['flood_zone']
-    if hh.name[9:16] == 'initial':
+    if household.name[9:16] == 'initial':
         type = 'initial'
     else:
         type = 'new'
     if type == 'initial':
-        if hh.location == 'outmigrated':
+        if household.location == 'outmigrated':
             status = 'outmigrated'
         elif start_loc_fld.values[0] == end_loc_fld.values[0]:
             status = 'stayed w/in zone'
@@ -423,13 +423,13 @@ for hh in s.network.get_institution('all_hh_agents').components:
         elif end_loc_fld.values[0] == 'In Flood Zone':
             status = 'moved into the flood zone'
     elif type == 'new':
-        if hh.location == 'outmigrated':
+        if household.location == 'outmigrated':
             status = 'outmigrated'
         elif end_loc_fld.values[0] == 'Not in Flood Zone':
             status = 'moved into the non-flood zone'
         elif end_loc_fld.values[0] == 'In Flood Zone':
             status = 'moved into the flood zone'
-    hh_df = hh_df.append({'name': hh.name, 'type': type, 'income': hh.income, 'house_status': status}, ignore_index=True)
+    hh_df = hh_df.append({'name': household.name, 'type': type, 'income': household.income, 'house_status': status}, ignore_index=True)
 
 hh_df['income_category'] = "1. Low"
 hh_df.loc[(hh_df.income > hh_df.income.quantile(.25)) & (hh_df.income < hh_df.income.quantile(.50)), 'income_category'] = "2. Medium-Low"

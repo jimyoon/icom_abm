@@ -4,7 +4,7 @@ import random
 from pynsim import Engine
 import scipy.stats as stats
 
-from ..model_classes.urban_agents import HHAgent
+from ..model_classes.urban_agents import HouseholdAgent
 
 
 class NewAgentCreation(Engine):
@@ -21,19 +21,19 @@ class NewAgentCreation(Engine):
         inc_growth_mode (str): Mode for income growth calculation.
         pop_growth_inc_perc (float): Population growth income percentage.
         inc_growth_perc (float, optional): Income growth percentage. Defaults to 0.05.
-        no_hhs_per_agent (int, optional): Number of households per agent. Defaults to 10.
-        hh_size (float, optional): Household size. Defaults to 2.7.
+        no_households_per_agent (int, optional): Number of households per agent. Defaults to 10.
+        household_size (float, optional): Household size. Defaults to 2.7.
         simple_avoidance_perc (float, optional): Simple avoidance percentage. Defaults to 0.10.
         **kwargs: Additional keyword arguments passed to the parent class.
 
     Inter-module Outputs/Modifications:
-        s.network.unassigned_hhs (dict): Dictionary of HHAgent objects in the location queue (keys are household agent names).
+        s.network.unassigned_households (dict): Dictionary of HHAgent objects in the location queue (keys are household agent names).
         s.network.get_institution('all_hh_agents') (list): all_hh_agents institution.
     """
 
     def __init__(self, target, growth_mode: str, growth_rate: float, inc_growth_mode: str, 
                  pop_growth_inc_perc: float, inc_growth_perc: float = 0.05, 
-                 no_hhs_per_agent: int = 10, hh_size: float = 2.7,
+                 no_households_per_agent: int = 10, household_size: float = 2.7,
                  simple_avoidance_perc: float = 0.10, **kwargs) -> None:
         """Initialize the NewAgentCreation engine.
 
@@ -44,16 +44,16 @@ class NewAgentCreation(Engine):
             inc_growth_mode: Mode for income growth calculation.
             pop_growth_inc_perc: Population growth income percentage.
             inc_growth_perc: Income growth percentage.
-            no_hhs_per_agent: Number of households per agent.
-            hh_size: Household size.
+            no_households_per_agent: Number of households per agent.
+            household_size: Household size.
             simple_avoidance_perc: Simple avoidance percentage.
             **kwargs: Additional keyword arguments passed to the parent class.
         """
         super(NewAgentCreation, self).__init__(target, **kwargs)
         self.growth_mode = growth_mode
         self.growth_rate = growth_rate
-        self.no_hhs_per_agent = no_hhs_per_agent
-        self.hh_size = hh_size
+        self.no_households_per_agent = no_households_per_agent
+        self.household_size = household_size
         self.inc_growth_mode = inc_growth_mode
         self.pop_growth_inc_perc = pop_growth_inc_perc
         self.inc_growth_perc = inc_growth_perc
@@ -68,7 +68,7 @@ class NewAgentCreation(Engine):
         # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':
             new_population = self.target.total_population * self.growth_rate
-            no_of_new_agents = (new_population / self.hh_size + self.no_hhs_per_agent // 2) // self.no_hhs_per_agent  # division with rounding to nearest integer
+            no_of_new_agents = (new_population / self.household_size + self.no_households_per_agent // 2) // self.no_households_per_agent  # division with rounding to nearest integer
 
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
@@ -81,11 +81,11 @@ class NewAgentCreation(Engine):
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
                     hh_income = X.rvs(1)[0]  # sample from household income distribution
-                    self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
-                                                       hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
+                    self.target.add_component(HouseholdAgent(name=name, location=None, no_households_per_agent=self.no_households_per_agent,
+                                                       household_size=self.household_size, income=hh_income, house_budget_mode='rhea',
                                                       year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
-                    self.target.get_institution('all_hh_agents').add_component(self.target.components[-1])  # add pynsim household agent to all hh agents institution
-                    self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
+                    self.target.get_institution('all_household_agents').add_component(self.target.components[-1])  # add pynsim household agent to all household agents institution
+                    self.target.unassigned_households[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
             elif self.inc_growth_mode == 'percentile_based':
                 # JY ADD CODE HERE
@@ -93,26 +93,26 @@ class NewAgentCreation(Engine):
                 count = 1
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
-                    self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
-                                                      hh_size=self.hh_size, income=hh_income, house_budget_mode='rhea',
+                    self.target.add_component(HouseholdAgent(name=name, location=None, no_households_per_agent=self.no_households_per_agent,
+                                                      household_size=self.household_size, income=hh_income, house_budget_mode='rhea',
                                                       year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
-                    self.target.get_institution('all_hh_agents').add_component(
-                        self.target.components[-1])  # add pynsim household agent to all hh agents institution
-                    self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
+                    self.target.get_institution('all_household_agents').add_component(
+                        self.target.components[-1])  # add pynsim household agent to all household agents institution
+                    self.target.unassigned_households[self.target.components[-1].name] = self.target.components[
                         -1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
             elif self.inc_growth_mode == 'random_agent_replication':
                 count = 1
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
-                    random_agent = random.choice(self.target.get_institution('all_hh_agents').components)
+                    random_agent = random.choice(self.target.get_institution('all_household_agents').components)
                     random_income = random_agent.income
-                    self.target.add_component(HHAgent(name=name, location=None, no_hhs_per_agent=self.no_hhs_per_agent,
-                                                          hh_size=self.hh_size, income=random_income, house_budget_mode='rhea',
+                    self.target.add_component(HouseholdAgent(name=name, location=None, no_households_per_agent=self.no_households_per_agent,
+                                                          household_size=self.household_size, income=random_income, house_budget_mode='rhea',
                                                           year_of_residence=self.timestep.year, simple_avoidance_perc = self.simple_avoidance_perc))  # add household agent to pynsim network; currently uses landscape avg hh income & size
-                    self.target.get_institution('all_hh_agents').add_component(
-                        self.target.components[-1])  # add pynsim household agent to all hh agents institution
-                    self.target.unassigned_hhs[self.target.components[-1].name] = self.target.components[
+                    self.target.get_institution('all_household_agents').add_component(
+                        self.target.components[-1])  # add pynsim household agent to all household agents institution
+                    self.target.unassigned_households[self.target.components[-1].name] = self.target.components[
                         -1]  # add pynsim household agent to unassigned agent dictionary
                     count += 1
         elif self.growth_mode == 'exog':

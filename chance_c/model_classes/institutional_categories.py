@@ -1,11 +1,12 @@
 from pynsim import Institution
 
 
-class AllHHAgents(Institution):
-    """Represents all household agents in the institutional framework.
+class AllHouseholdAgents(Institution):
+    """An institution that contains all household agents in the simulation.
     
-    This class manages the collection and coordination of all household
-    agents within the institutional system.
+    This institution serves as a container for all household agents,
+    providing a centralized way to access and manage household agents
+    across the entire simulation landscape.
     
     Args:
         name (str): The name identifier for this institution.
@@ -13,13 +14,13 @@ class AllHHAgents(Institution):
     """
     
     def __init__(self, name: str, **kwargs) -> None:
-        """Initialize the AllHHAgents institution.
+        """Initialize the AllHouseholdAgents institution.
         
         Args:
-            name: The name identifier for this institution.
+            name: Name identifier for the institution.
             **kwargs: Additional keyword arguments passed to the parent class.
         """
-        super(AllHHAgents, self).__init__(name, **kwargs)
+        super(AllHouseholdAgents, self).__init__(name, **kwargs)
 
     def setup(self, timestep: int) -> None:
         """Set up the institution for a given timestep.

@@ -20,7 +20,7 @@ class SimulationConfig:
         n_years: Number of years to run the simulation (model runs for n+1 years).
         agent_housing_aggregation: Level of agent/building aggregation (e.g., 100
             means 1 representative agent = 100 households).
-        hh_size: Average household size across all households.
+        household_size: Average household size across all households.
         initial_vacancy: Initial vacancy rate for all block groups.
         pop_growth_mode: Population growth calculation method ('perc', etc.).
         pop_growth_perc: Annual population percentage growth rate.
@@ -61,7 +61,7 @@ class SimulationConfig:
     
     # Agent and housing parameters
     agent_housing_aggregation: int = 10
-    hh_size: float = 2.7
+    household_size: float = 2.7
     initial_vacancy: float = 0.20
     
     # Population growth parameters
@@ -131,7 +131,7 @@ class SimulationConfig:
             'start_year': self.start_year,
             'n_years': self.n_years,
             'agent_housing_aggregation': self.agent_housing_aggregation,
-            'hh_size': self.hh_size,
+            'household_size': self.household_size,
             'initial_vacancy': self.initial_vacancy,
             'pop_growth_mode': self.pop_growth_mode,
             'pop_growth_perc': self.pop_growth_perc,

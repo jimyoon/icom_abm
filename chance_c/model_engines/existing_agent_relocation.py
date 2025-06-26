@@ -20,8 +20,8 @@ class ExistingAgentReloSampler(Engine):
         **kwargs: Additional keyword arguments passed to the parent class.
 
     Inter-module Outputs/Modifications:
-        target.relocating_hhs (dict): Dictionary of HHAgent objects in the relocation queue.
-        bg.hh_agents (dict): Updated household agents dictionary for each block group.
+        target.relocating_households (dict): Dictionary of HHAgent objects in the relocation queue.
+        bg.household_agents (dict): Updated household agents dictionary for each block group.
         bg.occupied_units (int): Updated occupied units count for each block group.
         bg.available_units (int): Updated available units count for each block group.
     """
@@ -48,15 +48,15 @@ class ExistingAgentReloSampler(Engine):
         logging.info("Running the existing agent sampler engine, year " + str(self.target.current_timestep.year))
 
         for block_group in self.target.nodes:
-            no_of_agents = len(block_group.hh_agents)  # number of representative household agents
+            no_of_agents = len(block_group.household_agents)  # number of representative household agents
             no_of_agents_moving = round(no_of_agents * self.perc_move)
-            agents_moving = random.sample(list(block_group.hh_agents), no_of_agents_moving)  # randomly sample agents that will move
-            for hh in agents_moving:
-                self.target.relocating_hhs[hh] = self.target.get_institution('all_hh_agents')._component_map[hh]  # add agent to unassigned hh list (is there a better way in pynsim rather than accessing _components_map)
-                bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh].location)
-                del bg_old_location.hh_agents[hh]  # remove agent from old location
-                bg_old_location.occupied_units -= 1  # adjust occupied units
-                bg_old_location.available_units += 1  # adjust available units
+            agents_moving = random.sample(list(block_group.household_agents), no_of_agents_moving)  # randomly sample agents that will move
+            for household in agents_moving:
+                self.target.relocating_households[household] = self.target.get_institution('all_household_agents')._component_map[household]  # add agent to unassigned household list (is there a better way in pynsim rather than accessing _components_map)
+                block_group_old_location = self.target.get_node(self.target.get_institution('all_household_agents')._component_map[household].location)
+                del block_group_old_location.household_agents[household]  # remove agent from old location
+                block_group_old_location.occupied_units -= 1  # adjust occupied units
+                block_group_old_location.available_units += 1  # adjust available units
                 # need to adjust available units in block group that agent is moving from
         pass  # to accommodate debugger
 
@@ -118,18 +118,18 @@ class ExistingAgentLocation(Engine):
         logging.info("Running the existing agent location engine, year " + str(self.target.current_timestep.year))
 
         first = True
-        to_delete_relocating_hhs = []
-        for hh in self.target.relocating_hhs.values():
+        to_delete_relocating_households = []
+        for household in self.target.relocating_households.values():
             block_group_all = self.target.housing_block_group_df
-            block_group_budget = block_group_all[(block_group_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
+            block_group_budget = block_group_all[(block_group_all.new_price <= household.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
                     block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_hhs
-                    hh.location = 'outmigrated'
+                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
+                    household.location = 'outmigrated'
                     continue
-                block_group_sample['hh'] = hh.name
+                block_group_sample['household'] = household.name
                 block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 block_group_sample['b'] = 0.4
                 block_group_sample['c'] = 0.2
@@ -137,10 +137,10 @@ class ExistingAgentLocation(Engine):
                 try:
                     block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_hhs
-                    hh.location = 'outmigrated'
+                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
+                    household.location = 'outmigrated'
                     continue
-                block_group_append['hh'] = hh.name
+                block_group_append['household'] = household.name
                 block_group_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 block_group_append['b'] = 0.4
                 block_group_append['c'] = 0.2
@@ -173,4 +173,4 @@ class ExistingAgentLocation(Engine):
                 (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
                 (1 * self.target.housing_block_group_df['residuals'])
 
-        self.target.hh_utilities_df = block_group_sample[['GEOID', 'hh', 'utility']]
+        self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]

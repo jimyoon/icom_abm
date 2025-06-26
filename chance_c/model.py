@@ -12,7 +12,7 @@ from pynsim import Network
 
 from .data_loader import SimulationConfig
 from .model_classes.simulator import ICOMSimulator
-from .model_classes.institutional_categories import AllHHAgents
+from .model_classes.institutional_categories import AllHouseholdAgents
 from .model_engines.agent_creation import NewAgentCreation
 from .model_engines.existing_agent_relocation import ExistingAgentReloSampler
 from .model_engines.new_agent_location import NewAgentLocation
@@ -25,6 +25,7 @@ from .model_classes.institutional_agents import CountyZoningManager, RealEstate
 from .model_engines.real_estate_prices import RealEstatePrices
 from .model_engines.flood_hazard import FloodHazard
 from .model_engines.zoning import Zoning
+from .model_classes.urban_agents import HouseholdAgent
 
 
 # Setup logging
@@ -61,7 +62,7 @@ class Model:
         start_year: int = 2018,
         n_years: int = 2,
         agent_housing_aggregation: int = 10,
-        hh_size: float = 2.7,
+        household_size: float = 2.7,
         initial_vacancy: float = 0.20,
         pop_growth_mode: str = 'perc',
         pop_growth_perc: float = 0.01,
@@ -109,7 +110,7 @@ class Model:
             start_year: Starting year for the simulation.
             n_years: Number of years to simulate.
             agent_housing_aggregation: Number of households represented by each agent.
-            hh_size: Average household size.
+            household_size: Average household size.
             initial_vacancy: Initial vacancy rate in the housing market.
             pop_growth_mode: Mode for population growth calculation.
             pop_growth_perc: Percentage rate of population growth.
@@ -162,7 +163,7 @@ class Model:
                 start_year=start_year,
                 n_years=n_years,
                 agent_housing_aggregation=agent_housing_aggregation,
-                hh_size=hh_size,
+                household_size=household_size,
                 initial_vacancy=initial_vacancy,
                 pop_growth_mode=pop_growth_mode,
                 pop_growth_perc=pop_growth_perc,
@@ -267,11 +268,11 @@ class Model:
             self.simulator.network.add_institution(RealEstate(name='real_estate'))
 
         # Create an institution (categorical) that will contain all household agents
-        self.simulator.network.add_institution(AllHHAgents(name='all_hh_agents'))
+        self.simulator.network.add_institution(AllHouseholdAgents(name='all_household_agents'))
 
         # Create household agents based on initial population data
         self.simulator.convert_initial_population_to_agents(
-            no_hhs_per_agent=self.config.agent_housing_aggregation, 
+            no_households_per_agent=self.config.agent_housing_aggregation, 
             simple_avoidance_perc=self.config.simple_avoidance_perc
         )
 
@@ -293,8 +294,8 @@ class Model:
                 inc_growth_mode=self.config.inc_growth_mode,
                 pop_growth_inc_perc=self.config.pop_growth_inc_perc, 
                 inc_growth_perc=self.config.inc_growth_perc, 
-                no_hhs_per_agent=self.config.agent_housing_aggregation, 
-                hh_size=self.config.hh_size,
+                no_households_per_agent=self.config.agent_housing_aggregation, 
+                household_size=self.config.household_size,
                 simple_avoidance_perc=self.config.simple_avoidance_perc
             )
         )
@@ -436,7 +437,7 @@ class Model:
         Returns:
             pd.DataFrame: The location history data for the specified agent
         """
-        return self.simulator.network.get_institution('all_hh_agents').components[agent_id].get_history(history_name)
+        return self.simulator.network.get_institution('all_household_agents').components[agent_id].get_history(history_name)
 
     def get_agents_in_node(self, node_id: Union[int, str]) -> list:
         """Get list of agents that reside in a specific block group
@@ -448,9 +449,9 @@ class Model:
             list: The list of household agents residing in the specified node
         """
         if isinstance(node_id, int):
-            return self.simulator.network.nodes[node_id].hh_agents
+            return self.simulator.network.nodes[node_id].household_agents
         else:
-            return self.simulator.network.get_node(node_id).hh_agents
+            return self.simulator.network.get_node(node_id).household_agents
 
     def export_housing_dataframe(
             self, 

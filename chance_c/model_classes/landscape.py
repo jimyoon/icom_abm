@@ -18,9 +18,9 @@ class ABMLandscape(Network):
     waiting in the residential location queue and a list of available units.
     
     Attributes:
-        unassigned_hhs: Dictionary of unassigned new household agents keyed 
+        unassigned_households: Dictionary of unassigned new household agents keyed 
             on household name.
-        relocating_hhs: Dictionary of existing household agents that are 
+        relocating_households: Dictionary of existing household agents that are 
             relocating keyed on household name.
         available_units_list: List of available units.
         avg_hh_income: Average household income across the landscape.
@@ -46,8 +46,8 @@ class ABMLandscape(Network):
         """
         super(ABMLandscape, self).__init__(name, **kwargs)
         self.name = name
-        self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
-        self.relocating_hhs = {}  # dictionary of existing hh agents that are relocating keyed on hh name (long dict, do not include as property to save memory)
+        self.unassigned_households = {}  # dictionary of unassigned new household agents keyed on household name (long dict, do not include as property to save memory)
+        self.relocating_households = {}  # dictionary of existing household agents that are relocating keyed on household name (long dict, do not include as property to save memory)
         self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
         self.avg_hh_income = avg_hh_income
         self.avg_hh_size = avg_hh_size
@@ -72,42 +72,41 @@ class ABMLandscape(Network):
         """
         logging.info('Starting model year: ' + str(self.current_timestep.year))
         # reset various queues and lists
-        self.unassigned_hhs = {}
-        self.relocating_hhs = {}
+        self.unassigned_households = {}
+        self.relocating_households = {}
         self.available_units_list = []
 
         if self.current_timestep_idx == 0:  # For first timestep, load housing_block_group_df based upon initial agent population
             # reset population sums
             self.total_population = 0
 
-            # calculate various statistics (landscape level) from hh agents
+            # calculate various statistics (landscape level) from household agents
             incomes_landscape = []
-            hh_size_landscape = []
+            household_sizes_landscape = []
 
             # update master block group pandas dataframe (JY Add engine so this takes place at end of timestep rather than at beginning of next timestep)
             rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
             for block_group in self.nodes:
                 block_group_dict = {}
                 block_group_dict['name'] = block_group.name
-                block_group_dict['no_hh_agents'] = len(block_group.hh_agents)
+                block_group_dict['no_hh_agents'] = len(block_group.household_agents)
 
-                # calculate various statistics (block level) from hh agents
+                # calculate various statistics (block level) from household agents
                 block_group.population = 0
                 incomes_block_group = []
-                hh_size_block_group = []
-                block_group.no_of_hhs = len(block_group.hh_agents)
+                household_size_block_group = []
+                block_group.no_of_households = len(block_group.household_agents)
 
-
-                for name, a in block_group.hh_agents.items():
-                    if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
-                        self.total_population += a.no_hhs_per_agent * a.hh_size
+                for a in block_group.household_agents.values():
+                    if hasattr(a, 'household_size') and a.household_size > 0:
+                        self.total_population += a.no_households_per_agent * a.household_size
                     else:  # use mean
-                        self.total_population += a.no_hhs_per_agent * self.housing_block_group_df.hhsize1990.mean()
-                    block_group.population += a.no_hhs_per_agent * a.hh_size
+                        self.total_population += a.no_households_per_agent * self.housing_block_group_df["hhsize1990"].mean()
+                    block_group.population += a.no_households_per_agent * a.household_size
                     incomes_block_group.append(a.income)
                     incomes_landscape.append(a.income)
-                    hh_size_block_group.append(a.hh_size)
-                    hh_size_landscape.append(a.hh_size)
+                    household_size_block_group.append(a.household_size)
+                    household_sizes_landscape.append(a.household_size)
 
                 block_group_dict['population'] = block_group.population
                 if not incomes_block_group:  # i.e. no households reside in block group
@@ -116,12 +115,12 @@ class ABMLandscape(Network):
                 else:
                     block_group_dict['average_income'] = statistics.mean(incomes_block_group)
                     block_group.avg_hh_income = statistics.mean(incomes_block_group)  # update attribute on block group
-                if not hh_size_block_group:
+                if not household_size_block_group:
                     block_group_dict['avg_hh_size'] = nan
                     block_group.avg_hh_size = nan  # update attribute on block group
                 else:
-                    block_group_dict['avg_hh_size'] = statistics.mean(hh_size_block_group)
-                    block_group.avg_hh_size = statistics.mean(hh_size_block_group)  # update attribute on block group
+                    block_group_dict['avg_hh_size'] = statistics.mean(household_size_block_group)
+                    block_group.avg_hh_size = statistics.mean(household_size_block_group)  # update attribute on block group
 
                 # pop density calc
                 block_group_dict['pop_density'] = block_group.population / block_group.area
@@ -140,7 +139,7 @@ class ABMLandscape(Network):
 
             housing_current_df = pd.DataFrame(rows_list)
             self.avg_hh_income = statistics.mean(incomes_landscape)
-            self.avg_hh_size = statistics.mean(hh_size_landscape)
+            self.avg_hh_size = statistics.mean(household_sizes_landscape)
 
             # calculate normalized statistics for block groups
             housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
@@ -173,7 +172,7 @@ class BlockGroup(Node):
         perc_fld_area (float): Percentage of area in flood zone.
         pop90 (int): Population in 1990.
         mhi90 (float): Median household income in 1990.
-        hhsize90 (float): Average household size in 1990.
+        household_size90 (float): Average household size in 1990.
         coastdist (float): Distance to coast.
         cbddist (float): Distance to central business district.
         hhtrans93 (float): Household transportation data from 1993.
@@ -211,7 +210,7 @@ class BlockGroup(Node):
             perc_fld_area: float, 
             pop90: int, 
             mhi90: float, 
-            hhsize90: float, 
+            household_size90: float, 
             coastdist: float, 
             cbddist: float, 
             hhtrans93: float, 
@@ -256,7 +255,7 @@ class BlockGroup(Node):
         self.perc_fld_area = perc_fld_area
         self.pop90 = pop90
         self.mhi90 = mhi90
-        self.hhsize90 = hhsize90
+        self.household_size90 = household_size90
         self.coastdist = coastdist
         self.cbddist = cbddist
         self.hhtrans93 = hhtrans93
@@ -265,7 +264,7 @@ class BlockGroup(Node):
 
         # pynsim properties
         self.population = pop90  # JY init_pop and pop90 are duplicate, figure out which to use
-        self.hh_agents = {}
+        self.household_agents = {}
         self.avg_home_price = 0
         self.flood_hazard_risk = 0
         self.available_units = 0
@@ -286,7 +285,7 @@ class BlockGroup(Node):
         'new_price': 0,
         'years_since_major_flooding': None,
         'avg_hh_income': 0,
-        'no_of_hhs': 0,
+        'no_of_households': 0,
         'demand_exceeds_supply': False,
         'new_units_constructed': 0,
     }

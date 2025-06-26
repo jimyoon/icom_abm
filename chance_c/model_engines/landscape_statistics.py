@@ -51,9 +51,9 @@ class LandscapeStatistics(Engine):
         # reset population sums
         self.target.total_population = 0
 
-        # calculate various statistics (landscape level) from hh agents
+        # calculate various statistics (landscape level) from household agents
         incomes_landscape = []
-        hh_size_landscape = []
+        household_sizes_landscape = []
 
         # self.target.housing_bg_df['population'] = 0
         # update master block group pandas dataframe
@@ -61,24 +61,24 @@ class LandscapeStatistics(Engine):
         for block_group in self.target.nodes:
             block_group_dict = {}
             block_group_dict['name'] = block_group.name
-            block_group_dict['no_hh_agents'] = len(block_group.hh_agents)
+            block_group_dict['no_hh_agents'] = len(block_group.household_agents)
 
-            # calculate various statistics (block level) from hh agents
+            # calculate various statistics (block level) from household agents
             block_group.population = 0
             incomes_block_group = []
-            hh_size_block_group = []
-            block_group.no_of_hhs = len(block_group.hh_agents)
+            household_size_block_group = []
+            block_group.no_of_households = len(block_group.household_agents)
 
-            for name, a in block_group.hh_agents.items():
-                if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
-                    self.target.total_population += a.no_hhs_per_agent * a.hh_size
+            for a in block_group.household_agents.values():
+                if hasattr(a, 'household_size') and a.household_size > 0:
+                    self.target.total_population += a.no_households_per_agent * a.household_size
                 else:  # use mean
-                    self.target.total_population += a.no_hhs_per_agent * self.target.housing_block_group_df.hhsize1990.mean()
-                block_group.population += a.no_hhs_per_agent * a.hh_size
+                    self.target.total_population += a.no_households_per_agent * self.target.housing_block_group_df["hhsize1990"].mean()
+                block_group.population += a.no_households_per_agent * a.household_size
                 incomes_block_group.append(a.income)
                 incomes_landscape.append(a.income)
-                hh_size_block_group.append(a.hh_size)
-                hh_size_landscape.append(a.hh_size)
+                household_size_block_group.append(a.household_size)
+                household_sizes_landscape.append(a.household_size)
 
             block_group_dict['population'] = block_group.population
             # self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == block_group.name, 'population'] = block_group.population
@@ -92,16 +92,16 @@ class LandscapeStatistics(Engine):
                 # self.target.housing_bg_df.loc[
                 #     self.target.housing_bg_df['GEOID'] == block_group.name, 'average_income'] = statistics.mean(incomes_bg)
                 block_group.avg_hh_income = statistics.mean(incomes_block_group)  # update attribute on block group
-            if not hh_size_block_group:
+            if not household_size_block_group:
                 block_group_dict['avg_hh_size'] = nan
                 # self.target.housing_bg_df.loc[
                 #     self.target.housing_bg_df['GEOID'] == block_group.name, 'avg_hh_size'] = nan
                 block_group.avg_hh_size = nan  # update attribute on block group
             else:
-                block_group_dict['avg_hh_size'] = statistics.mean(hh_size_block_group)
+                block_group_dict['avg_hh_size'] = statistics.mean(household_size_block_group)
                 # self.target.housing_bg_df.loc[
-                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'avg_hh_size'] = statistics.mean(hh_size_block_group)
-                block_group.avg_hh_size = statistics.mean(hh_size_block_group)  # update attribute on block group
+                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'avg_hh_size'] = statistics.mean(household_size_block_group)
+                block_group.avg_hh_size = statistics.mean(household_size_block_group)  # update attribute on block group
 
             # pop density calc
             block_group_dict['pop_density'] = block_group.population / block_group.area
@@ -128,7 +128,7 @@ class LandscapeStatistics(Engine):
 
         housing_current_df = pd.DataFrame(rows_list)
         self.target.avg_hh_income = statistics.mean(incomes_landscape)
-        self.target.avg_hh_size = statistics.mean(hh_size_landscape)
+        self.target.avg_hh_size = statistics.mean(household_sizes_landscape)
 
         # calculate normalized statistics for block groups
         housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()

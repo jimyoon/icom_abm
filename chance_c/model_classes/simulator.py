@@ -7,7 +7,7 @@ import numpy as np
 from pynsim import Simulator
 
 from .landscape import ABMLandscape, BlockGroup
-from .urban_agents import HHAgent
+from .urban_agents import HouseholdAgent
 
 
 class ICOMSimulator(Simulator):
@@ -123,7 +123,7 @@ class ICOMSimulator(Simulator):
         # load table with hedonic regression information for utility function
         block_group = pd.merge(block_group, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
 
-        # determine relative cbd proximity and relative flood risk for input to hh utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
+        # determine relative cbd proximity and relative flood risk for input to household utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
         block_group['rel_prox_cbd'] = block_group['cbddist'].max() + 1 - block_group['cbddist']
         block_group['rel_flood_risk'] = block_group['perc_fld_area'].max() + 1 - block_group['perc_fld_area']
 
@@ -160,12 +160,28 @@ class ICOMSimulator(Simulator):
         for index, row in block_group.iterrows():
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
-            cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
-                                    blkgrpce=row['BLKGRPCE'], area=row['ALAND'], geometry=row['geometry'],
-                                    init_pop=row[pop_fieldname], perc_fld_area=row['perc_fld_area'],
-                                    pop90=row['pop1990'], mhi90=row['mhi1990'], hhsize90=row['hhsize1990'],
-                                    coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
-                                    salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
+            cells.append(
+                BlockGroup(
+                    name=row['GEOID'], 
+                    x=x, 
+                    y=y, 
+                    county=row['COUNTYFP'], 
+                    tract=row['TRACTCE'],
+                    blkgrpce=row['BLKGRPCE'], 
+                    area=row['ALAND'], 
+                    geometry=row['geometry'],
+                    init_pop=row[pop_fieldname], 
+                    perc_fld_area=row['perc_fld_area'],
+                    pop90=row['pop1990'], 
+                    mhi90=row['mhi1990'], 
+                    household_size90=row['hhsize1990'],
+                    coastdist=row['coastdist'], 
+                    cbddist=row['cbddist'], 
+                    hhtrans93=row['hhtrans1993'],
+                    salesprice93=row['salesprice1993'], 
+                    salespricesf93=row['salespricesf1993']
+                )
+            )
 
         # store the block_group pandas dataframe on the network object as a reference
         landscape.housing_block_group_df = block_group
@@ -176,23 +192,36 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
 
 
-    def convert_initial_population_to_agents(self, no_hhs_per_agent=10, simple_avoidance_perc=.10):
+    def convert_initial_population_to_agents(self, no_households_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
         for block_group in self.network.nodes:
-            if block_group.hhsize90 != 0 and np.isfinite(block_group.hhsize90):
-                no_of_hhs = round(block_group.pop90 / block_group.hhsize90)
-            else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
-                no_of_hhs = round(block_group.pop90 / self.network.housing_block_group_df.hhsize1990.median())
-            no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
+            if block_group.household_size90 != 0 and np.isfinite(block_group.household_size90):
+                no_of_households = round(block_group.pop90 / block_group.household_size90)
+
+            else:  # if household size is 0 or nan (i.e., data error) using median household size for population
+                no_of_households = round(block_group.pop90 / self.network.housing_block_group_df["hhsize1990"].median())
+
+            no_of_agents = (no_of_households + no_households_per_agent // 2) // no_households_per_agent  # division with rounding to nearest integer
+            
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
-                self.network.add_component(HHAgent(name=name, location=block_group.name, no_hhs_per_agent=no_hhs_per_agent,
-                                                   hh_size=block_group.hhsize90, income=block_group.mhi90, house_budget_mode='rhea',
-                                                   year_of_residence=self.start_year, simple_avoidance_perc=simple_avoidance_perc))  # add household agent to pynsim network
-                block_group.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
+                self.network.add_component(
+                    HouseholdAgent(
+                        name=name, 
+                        location=block_group.name, 
+                        no_households_per_agent=no_households_per_agent,
+                        household_size=block_group.household_size90, 
+                        income=block_group.mhi90, 
+                        house_budget_mode='rhea',
+                        year_of_residence=self.start_year, 
+                        simple_avoidance_perc=simple_avoidance_perc
+                    )
+                )  # add household agent to pynsim network
+
+                block_group.household_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
                 block_group.occupied_units += 1  # add occupied unit to associated block group node
-                self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution
+                self.network.get_institution('all_household_agents').add_component(self.network.components[-1])  # add pynsim household agent to all household agents institution
                 count += 1
         logging.info(str(count) + " initial agents added to the simulation")
 

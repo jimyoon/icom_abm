@@ -4,7 +4,7 @@ import logging
 from pynsim import Engine
 import pandas as pd
 
-from ..model_classes.urban_agents import HHAgent
+from ..model_classes.urban_agents import HouseholdAgent
 
 
 class NewAgentLocation(Engine):
@@ -27,6 +27,8 @@ class NewAgentLocation(Engine):
             calculation. Defaults to empty list.
         budget_reduction_perc: Percentage reduction in budget for flood-prone
             areas when using budget_reduction mode. Defaults to 0.10.
+        no_households_per_agent: Number of households per agent.
+        household_size: Average household size.
         **kwargs: Additional keyword arguments passed to parent class.
     
     Attributes:
@@ -34,6 +36,8 @@ class NewAgentLocation(Engine):
         house_choice_mode: Selected utility calculation method.
         simple_anova_coefficients: Coefficients for ANOVA utility calculation.
         budget_reduction_perc: Budget reduction percentage for flood areas.
+        no_households_per_agent: Number of households per agent.
+        household_size: Average household size.
     """
     
     def __init__(
@@ -43,6 +47,8 @@ class NewAgentLocation(Engine):
         house_choice_mode: str = 'simple_anova_utility', 
         simple_anova_coefficients: list = None, 
         budget_reduction_perc: float = 0.10, 
+        no_households_per_agent: int = 10,
+        household_size: float = 2.7,
         **kwargs
     ) -> None:
         """Initialize the NewAgentLocation engine.
@@ -53,6 +59,8 @@ class NewAgentLocation(Engine):
             house_choice_mode: Method for calculating housing utility.
             simple_anova_coefficients: Coefficients for ANOVA-based utility.
             budget_reduction_perc: Budget reduction percentage for flood areas.
+            no_households_per_agent: Number of households per agent.
+            household_size: Average household size.
             **kwargs: Additional keyword arguments.
         """
         super(NewAgentLocation, self).__init__(target, **kwargs)
@@ -60,6 +68,8 @@ class NewAgentLocation(Engine):
         self.house_choice_mode = house_choice_mode
         self.simple_anova_coefficients = simple_anova_coefficients or []
         self.budget_reduction_perc = budget_reduction_perc
+        self.no_households_per_agent = no_households_per_agent
+        self.household_size = household_size
 
     def run(self) -> None:
         """Run the NewAgentLocation engine.
@@ -71,41 +81,41 @@ class NewAgentLocation(Engine):
         """
         logging.info("Running the new agent location engine, year " + str(self.target.current_timestep.year))
 
-        # for hh in self.target.unassigned_hhs.values():
-        #     block_group_budget = self.target.housing_block_group_df[(self.target.housing_block_group_df.salesprice1993 <= hh.house_budget)]
+        # for household in self.target.unassigned_households.values():
+        #     block_group_budget = self.target.housing_block_group_df[(self.target.housing_block_group_df.salesprice1993 <= household.house_budget)]
         #     block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units').GEOID.to_list() # Sample from available units
         #     if not block_group_sample:
-        #         logging.info(hh.name + ' cannot afford any available homes!')
+        #         logging.info(household.name + ' cannot afford any available homes!')
         #     for block_group in block_group_sample:
-        #         hh.calc_utility_cobb_douglas(block_group)
+        #         household.calc_utility_cobb_douglas(block_group)
 
         first = True
-        to_delete_unassigned_hhs = []
-        for hh in self.target.unassigned_hhs.values():
+        to_delete_unassigned_households = []
+        for household in self.target.unassigned_households.values():
             block_group_all = self.target.housing_block_group_df
             # JY restart here
             if self.house_choice_mode == 'simple_avoidance_utility':
-                if hh.avoidance == True:
+                if household.avoidance == True:
                     # block_group_budget = block_group_all[(block_group_all.perc_fld_area <= block_group_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
                     block_group_budget = block_group_all[(block_group_all.perc_fld_area <= .10)]  # JY threshold for flood zone (10 percent of building footprint inundated)
                 else:
                     block_group_budget = block_group_all
-                block_group_budget = block_group_budget[(block_group_budget.new_price <= hh.house_budget)]
+                block_group_budget = block_group_budget[(block_group_budget.new_price <= household.house_budget)]
             elif self.house_choice_mode == 'budget_reduction':
-                block_group_all['house_budget'] = hh.house_budget
-                # block_group_all.loc[(block_group_all.perc_fld_area >= block_group_all.perc_fld_area.quantile(.9)), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
-                block_group_all.loc[(block_group_all.perc_fld_area >= .10), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
+                block_group_all['house_budget'] = household.house_budget
+                # block_group_all.loc[(block_group_all.perc_fld_area >= block_group_all.perc_fld_area.quantile(.9)), 'house_budget'] = household.house_budget * (1.0 - self.budget_reduction_perc)
+                block_group_all.loc[(block_group_all.perc_fld_area >= .10), 'house_budget'] = household.house_budget * (1.0 - self.budget_reduction_perc)
                 block_group_budget = block_group_all[(block_group_all.new_price <= block_group_all.house_budget)]
             else:
-                block_group_budget = block_group_all[(block_group_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
+                block_group_budget = block_group_all[(block_group_all.new_price <= household.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
                     block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
-                    hh.location = 'outmigrated'
+                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_households
+                    household.location = 'outmigrated'
                     continue
-                block_group_sample['hh'] = hh.name
+                block_group_sample['household'] = household.name
                 block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 block_group_sample['b'] = 0.4
                 block_group_sample['c'] = 0.2
@@ -113,10 +123,10 @@ class NewAgentLocation(Engine):
                 try:
                     block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
-                    hh.location = 'outmigrated'
+                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_households
+                    household.location = 'outmigrated'
                     continue
-                block_group_append['hh'] = hh.name
+                block_group_append['household'] = household.name
                 block_group_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
                 block_group_append['b'] = 0.4
                 block_group_append['c'] = 0.2
@@ -149,7 +159,7 @@ class NewAgentLocation(Engine):
                 (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
                 (1 * self.target.housing_block_group_df['residuals'])
 
-        self.target.hh_utilities_df = block_group_sample[['GEOID', 'hh', 'utility']]
+        self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]
 
 
     def run_old_version(self):
@@ -169,19 +179,19 @@ class NewAgentLocation(Engine):
         for a in range(int(no_of_new_agents)):
             block_group = random.choice(block_group_dev_allowed)
             name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)
-            self.target.add_component(HHAgent(name=name, location=block_group.name, no_hhs_per_agent=self.no_hhs_per_agent,
-                                               hh_size=self.hh_size, year_of_residence=self.timestep.year))  # add household agent to pynsim network
-            block_group.hh_agents[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to associated block group node
-            self.target.get_institution('all_hh_agents').add_component(self.target.components[-1])  # add pynsim household agent to all hh agents institution
+            self.target.add_component(HouseholdAgent(name=name, location=block_group.name, no_households_per_agent=self.no_households_per_agent,
+                                               household_size=self.household_size, year_of_residence=self.timestep.year))  # add household agent to pynsim network
+            block_group.household_agents[self.target.components[-1].name] = self.target.components[-1]  # add pynsim household agent to associated block group node
+            self.target.get_institution('all_household_agents').add_component(self.target.components[-1])  # add pynsim household agent to all household agents institution
             count += 1
 
         # make agent relocation decisions (currently assumes that 10% of randomly selected agents move to a random block group)
-        no_agents_moving = int(len(self.target.get_institution('all_hh_agents').components) * .10)
-        agent_move_list = random.sample(self.target.get_institution('all_hh_agents').components, no_agents_moving)
+        no_agents_moving = int(len(self.target.get_institution('all_household_agents').components) * .10)
+        agent_move_list = random.sample(self.target.get_institution('all_household_agents').components, no_agents_moving)
         for a in agent_move_list:
             block_group_old_location = self.target.get_node(a.location)
             block_group_new_location = random.choice(block_group_dev_allowed)
-            del block_group_old_location.hh_agents[a.name]
-            block_group_new_location.hh_agents[a.name] = a
+            del block_group_old_location.household_agents[a.name]
+            block_group_new_location.household_agents[a.name] = a
             a.location = block_group_new_location.name
 

@@ -61,7 +61,7 @@ def cli(verbose: bool, quiet: bool):
               help='Number of years to simulate')
 @click.option('--agent-housing-aggregation', type=int, default=10,
               help='Number of households represented by each agent')
-@click.option('--hh-size', type=float, default=2.7,
+@click.option('--household-size', type=float, default=2.7,
               help='Average household size')
 @click.option('--initial-vacancy', type=float, default=0.20,
               help='Initial vacancy rate in the housing market')
@@ -102,7 +102,7 @@ def run(config: Optional[str], output_dir: str, **kwargs):
     start_year = kwargs.get('start_year', 2018)
     n_years = kwargs.get('n_years', 2)
     agent_housing_aggregation = kwargs.get('agent_housing_aggregation', 10)
-    hh_size = kwargs.get('hh_size', 2.7)
+    household_size = kwargs.get('household_size', 2.7)
     initial_vacancy = kwargs.get('initial_vacancy', 0.20)
     pop_growth_mode = kwargs.get('pop_growth_mode', 'perc')
     pop_growth_perc = kwargs.get('pop_growth_perc', 0.01)
@@ -156,7 +156,7 @@ def run(config: Optional[str], output_dir: str, **kwargs):
             start_year=start_year,
             n_years=n_years,
             agent_housing_aggregation=agent_housing_aggregation,
-            hh_size=hh_size,
+            household_size=household_size,
             initial_vacancy=initial_vacancy,
             pop_growth_mode=pop_growth_mode,
             pop_growth_perc=pop_growth_perc,
