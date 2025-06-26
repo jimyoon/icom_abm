@@ -18,14 +18,18 @@ class Zoning(Engine):
             target.determine_zoning() method.
     """
     
-    def __init__(self, target, **kwargs) -> None:
+    def __init__(self, target, zoning_mode: str = 'simple_perc', zoning_perc: float = 0.05, **kwargs) -> None:
         """Initialize the Zoning engine.
         
         Args:
             target: The simulation network target containing block group nodes.
+            zoning_mode: Mode for zoning calculations (default: 'simple_perc').
+            zoning_perc: Percentage for zoning calculations (default: 0.05).
             **kwargs: Additional keyword arguments passed to the parent class.
         """
         super(Zoning, self).__init__(target, **kwargs)
+        self.zoning_mode = zoning_mode
+        self.zoning_perc = zoning_perc
 
     def run(self) -> None:
         """Execute the zoning determination process.
