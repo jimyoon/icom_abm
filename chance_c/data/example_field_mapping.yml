@@ -1,0 +1,52 @@
+# Example field mapping configuration for input files
+# This file shows how to map your custom column names to the required field names used by the model
+# Copy this file and modify the values on the right to match your data file column names
+
+# Geographic file field mappings
+geo_file_mapping:
+  # Map your column names to the required field names used by the model
+  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
+  GEOID: "CENSUS_ID"             # Your column name for census identifier
+  COUNTYFP: "COUNTY_CODE"        # Your column name for county code
+  TRACTCE: "TRACT_CODE"          # Your column name for tract code
+  BLKGRPCE: "BLOCK_GROUP_CODE"   # Your column name for block group code
+  ALAND: "LAND_AREA"             # Your column name for land area
+  geometry: "geom"               # Your column name for geometry
+
+# Population file field mappings
+pop_file_mapping:
+  # Map your column names to the required field names used by the model
+  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
+  AJWME001: "POPULATION_2018"    # Your column name for population count
+
+# Flood file field mappings
+flood_file_mapping:
+  # Map your column names to the required field names used by the model
+  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
+  Shape_Area: "FLOOD_AREA"       # Your column name for flood area
+  fld_area: "FLOODED_AREA"       # Your column name for flooded area
+  perc_fld_area: "FLOOD_PERCENT" # Your column name for flood percentage
+
+# Housing file field mappings
+housing_file_mapping:
+  # Map your column names to the required field names used by the model
+  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
+  pop1990: "POP_1990"            # Your column name for 1990 population
+  mhi1990: "MEDIAN_INCOME_1990"  # Your column name for 1990 median household income
+  hhsize1990: "HH_SIZE_1990"     # Your column name for 1990 household size
+  coastdist: "DIST_TO_COAST"     # Your column name for distance to coast
+  cbddist: "DIST_TO_CBD"         # Your column name for distance to CBD
+  hhtrans1993: "HH_COUNT_1993"   # Your column name for 1993 household count
+  salesprice1993: "SALES_PRICE_1993"  # Your column name for 1993 sales price
+  salespricesf1993: "SALES_PRICE_SF_1993"  # Your column name for 1993 sales price per sq ft
+
+# Hedonic file field mappings
+hedonic_file_mapping:
+  # Map your column names to the required field names used by the model
+  GISJOIN: "BLOCK_GROUP_ID"      # Your column name for unique block group identifier
+  N_MeanSqfeet: "NORM_SQFT"      # Your column name for normalized square feet
+  N_MeanAge: "NORM_AGE"          # Your column name for normalized age
+  N_MeanNoOfStories: "NORM_STORIES"  # Your column name for normalized stories
+  N_MeanFullBathNumber: "NORM_BATHS"  # Your column name for normalized bathrooms
+  N_perc_area_flood: "NORM_FLOOD"  # Your column name for normalized flood percentage
+  residuals: "HEDONIC_RESIDUALS"  # Your column name for hedonic residuals 

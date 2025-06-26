@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Optional
 
 import yaml
+from .field_mapper import FieldMapper
 
 
 @dataclass
@@ -46,6 +47,7 @@ class SimulationConfig:
         flood_filename: CSV file containing FEMA 100-year flood data.
         housing_filename: CSV file containing housing characteristics data.
         hedonic_filename: CSV file containing hedonic regression results.
+        field_mapping_file: Optional path to field mapping configuration file.
         block_group_sample_size: Sample size for block groups.
         zoning_mode: Method for zoning.
         zoning_perc: Percentage of zoning.
@@ -103,6 +105,38 @@ class SimulationConfig:
     flood_filename: str = 'block_group_perc_100yr_flood.csv'
     housing_filename: str = 'block_group_housing_1993.csv'
     hedonic_filename: str = 'simple_anova_hedonic_without_flood_block_group0418.csv'
+    field_mapping_file: Optional[str] = None
+    
+    def get_field_mapper(self) -> FieldMapper:
+        """Get a FieldMapper instance configured with the field mapping file.
+        
+        Returns:
+            FieldMapper: Configured field mapper instance.
+        """
+        return FieldMapper(self.field_mapping_file)
+    
+    def validate_field_mapping(self) -> bool:
+        """Validate the field mapping configuration.
+        
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        if self.field_mapping_file:
+            mapper = FieldMapper()
+            return mapper.validate_mapping_file(self.field_mapping_file)
+        return True
+    
+    def get_required_columns(self, file_type: str) -> dict:
+        """Get required columns for a specific file type.
+        
+        Args:
+            file_type: Type of file ('geo', 'pop', 'flood', 'housing', 'hedonic')
+            
+        Returns:
+            dict: Dictionary mapping required field names to descriptions
+        """
+        mapper = self.get_field_mapper()
+        return mapper.get_required_columns(file_type)
     
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'SimulationConfig':
@@ -157,6 +191,7 @@ class SimulationConfig:
             'flood_filename': self.flood_filename,
             'housing_filename': self.housing_filename,
             'hedonic_filename': self.hedonic_filename,
+            'field_mapping_file': self.field_mapping_file,
             'block_group_sample_size': self.block_group_sample_size,
             'zoning_mode': self.zoning_mode,
             'zoning_perc': self.zoning_perc,

@@ -1,0 +1,40 @@
+# Field descriptions for required fields in the input files
+
+geo_file_metadata:
+  GISJOIN: "Unique identifier for each block group"
+  GEOID: "Unique identifier for each block group"
+  COUNTYFP: "County code"
+  TRACTCE: "Tract code"
+  BLKGRPCE: "Block group code"
+  ALAND: "Land area"
+  geometry: "Geometry of the block group"
+
+pop_file_metadata:
+  GISJOIN: "Unique identifier for each block group"
+  AJWME001: "Population count (configurable field name)"
+
+flood_file_metadata:
+  GISJOIN: "Unique identifier for each flood zone"
+  Shape_Area: "Area of the flood zone"
+  fld_area: "Area of the flood zone"
+  perc_fld_area: "Percentage of the flood zone"
+
+housing_file_metadata:
+  GISJOIN: "Unique identifier for each block group"
+  pop1990: "Population in 1990"
+  mhi1990: "Median household income in 1990"
+  hhsize1990: "Average household size in 1990"
+  coastdist: "Distance to the coast"
+  cbddist: "Distance to the CBD"
+  hhtrans1993: "Number of households in 1993"
+  salesprice1993: "Sales price in 1993"
+  salespricesf1993: "Sales price per square foot in 1993"
+
+hedonic_file_metadata:
+  GISJOIN: "Unique identifier for each block group"
+  N_MeanSqfeet: "Normalized mean square feet"
+  N_MeanAge: "Normalized mean age"
+  N_MeanNoOfStories: "Normalized mean number of stories"
+  N_MeanFullBathNumber: "Normalized mean number of full bathrooms"
+  N_perc_area_flood: "Normalized percentage of the block group in the flood zone"
+  residuals: "Residuals from hedonic regression"

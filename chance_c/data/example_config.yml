@@ -1,0 +1,103 @@
+# Example configuration file for CHANCE ABM simulation
+# This file shows how to configure the simulation with field mapping
+
+# Simulation setup
+simulation_name: "ABM_Baltimore_example"
+scenario: "Baseline"
+intervention: "Baseline"
+start_year: 2018
+n_years: 2
+
+# Agent and housing parameters
+agent_housing_aggregation: 10
+household_size: 2.7
+initial_vacancy: 0.20
+
+# Population growth parameters
+pop_growth_mode: "perc"
+pop_growth_perc: 0.01
+
+# Income growth parameters
+inc_growth_mode: "random_agent_replication"
+pop_growth_inc_perc: 0.90
+inc_growth_perc: 0.05
+
+# Building and movement parameters
+bld_growth_perc: 0.01
+perc_move: 0.10
+perc_move_mode: "random"
+
+# Housing choice parameters
+house_budget_mode: "rhea"
+house_choice_mode: "simple_avoidance_utility"
+simple_anova_coefficients: [-121428, 294707, 130553, 128990, 154887, -500000]
+simple_avoidance_perc: 0.95
+budget_reduction_perc: 0.90
+
+# Stock and pricing parameters
+stock_increase_mode: "simple_perc"
+stock_increase_perc: 0.05
+housing_pricing_mode: "simple_perc"
+price_increase_perc: 0.05
+
+# File paths and data sources
+block_group_sample_size: 10
+zoning_mode: "simple_perc"
+zoning_perc: 0.05
+market_mode: "top_candidate"
+landscape_name: "Baltimore"
+
+# Input file paths
+geo_filename: "blck_grp_extract_prj.shp"
+pop_filename: "balt_block_group_population_2018.csv"
+pop_fieldname: "AJWME001"
+flood_filename: "block_group_perc_100yr_flood.csv"
+housing_filename: "block_group_housing_1993.csv"
+hedonic_filename: "simple_anova_hedonic_without_flood_block_group0418.csv"
+
+# Field mapping configuration
+# Set this to the path of your field mapping file if your data files use different column names
+field_mapping_file: "data/example_field_mapping.yml"
+
+# Example with custom field mapping:
+# field_mapping_file: "my_custom_mapping.yml"
+#
+# Where my_custom_mapping.yml might contain:
+# geo_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
+#   GEOID: "CENSUS_ID"             # Your custom column name
+#   COUNTYFP: "COUNTY_CODE"        # Your custom column name
+#   TRACTCE: "TRACT_CODE"          # Your custom column name
+#   BLKGRPCE: "BLOCK_GROUP_CODE"   # Your custom column name
+#   ALAND: "LAND_AREA"             # Your custom column name
+#   geometry: "geom"               # Your custom column name
+#
+# pop_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
+#   AJWME001: "POPULATION_2018"    # Your custom column name
+#
+# flood_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
+#   Shape_Area: "FLOOD_AREA"       # Your custom column name
+#   fld_area: "FLOODED_AREA"       # Your custom column name
+#   perc_fld_area: "FLOOD_PERCENT" # Your custom column name
+#
+# housing_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
+#   pop1990: "POP_1990"            # Your custom column name
+#   mhi1990: "MEDIAN_INCOME_1990"  # Your custom column name
+#   hhsize1990: "HH_SIZE_1990"     # Your custom column name
+#   coastdist: "DIST_TO_COAST"     # Your custom column name
+#   cbddist: "DIST_TO_CBD"         # Your custom column name
+#   hhtrans1993: "HH_COUNT_1993"   # Your custom column name
+#   salesprice1993: "SALES_PRICE_1993"  # Your custom column name
+#   salespricesf1993: "SALES_PRICE_SF_1993"  # Your custom column name
+#
+# hedonic_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # Your custom column name
+#   N_MeanSqfeet: "NORM_SQFT"      # Your custom column name
+#   N_MeanAge: "NORM_AGE"          # Your custom column name
+#   N_MeanNoOfStories: "NORM_STORIES"  # Your custom column name
+#   N_MeanFullBathNumber: "NORM_BATHS"  # Your custom column name
+#   N_perc_area_flood: "NORM_FLOOD"  # Your custom column name
+#   residuals: "HEDONIC_RESIDUALS"  # Your custom column name 
