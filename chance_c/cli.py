@@ -82,7 +82,7 @@ def cli(verbose: bool, quiet: bool):
 @click.option('--landscape-name', default='Baltimore', help='Name of the geographic landscape')
 @click.option('--geo-filename', help='Filename for geographic boundary data (uses default if not specified)')
 @click.option('--pop-filename', help='Filename for population data (uses default if not specified)')
-@click.option('--pop-fieldname', default='AJWME001', help='Field name containing population data')
+
 @click.option('--flood-filename', help='Filename for flood hazard data (uses default if not specified)')
 @click.option('--housing-filename', help='Filename for housing data (uses default if not specified)')
 @click.option('--hedonic-filename', help='Filename for hedonic pricing data (uses default if not specified)')
@@ -125,7 +125,6 @@ def run(config: Optional[str], output_dir: str, **kwargs):
     landscape_name = kwargs.get('landscape_name', 'Baltimore')
     geo_filename = kwargs.get('geo_filename', 'blck_grp_extract_prj.shp')
     pop_filename = kwargs.get('pop_filename', 'balt_block_group_population_2018.csv')
-    pop_fieldname = kwargs.get('pop_fieldname', 'AJWME001')
     flood_filename = kwargs.get('flood_filename', 'block_group_perc_100yr_flood.csv')
     housing_filename = kwargs.get('housing_filename', 'block_group_housing_1993.csv')
     hedonic_filename = kwargs.get('hedonic_filename', 'simple_anova_hedonic_without_flood_block_group0418.csv')
@@ -179,7 +178,6 @@ def run(config: Optional[str], output_dir: str, **kwargs):
             landscape_name=landscape_name,
             geo_filename=geo_filename,
             pop_filename=pop_filename,
-            pop_fieldname=pop_fieldname,
             flood_filename=flood_filename,
             housing_filename=housing_filename,
             hedonic_filename=hedonic_filename,

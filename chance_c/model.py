@@ -85,7 +85,6 @@ class Model:
         landscape_name: str = 'Baltimore',
         geo_filename: str = '',
         pop_filename: str = '',
-        pop_fieldname: str = 'AJWME001',
         flood_filename: str = '',
         housing_filename: str = '',
         hedonic_filename: str = '',
@@ -135,7 +134,6 @@ class Model:
             landscape_name: Name of the geographic landscape.
             geo_filename: Filename for geographic boundary data.
             pop_filename: Filename for population data.
-            pop_fieldname: Field name containing population data.
             flood_filename: Filename for flood hazard data.
             housing_filename: Filename for housing data.
             hedonic_filename: Filename for hedonic pricing data.
@@ -191,7 +189,6 @@ class Model:
                 landscape_name=landscape_name,
                 geo_filename=geo_filename,
                 pop_filename=pop_filename,
-                pop_fieldname=pop_fieldname,
                 flood_filename=flood_filename,
                 housing_filename=housing_filename,
                 hedonic_filename=hedonic_filename,
@@ -257,7 +254,7 @@ class Model:
             landscape_name=self.config.landscape_name, 
             geo_filename=self.config.geo_filename, 
             pop_filename=self.config.pop_filename,
-            pop_fieldname=self.config.pop_fieldname, 
+            pop_fieldname=self.config.get_population_field_name(), 
             flood_filename=self.config.flood_filename,
             housing_filename=self.config.housing_filename, 
             hedonic_filename=self.config.hedonic_filename,

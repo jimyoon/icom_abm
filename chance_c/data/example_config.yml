@@ -52,7 +52,6 @@ landscape_name: "Baltimore"
 # You can override any of these paths to use your own data files
 # geo_filename: "path/to/your/geo_file.shp"
 # pop_filename: "path/to/your/pop_file.csv"
-pop_fieldname: "AJWME001"
 # flood_filename: "path/to/your/flood_file.csv"
 # housing_filename: "path/to/your/housing_file.csv"
 # hedonic_filename: "path/to/your/hedonic_file.csv"

@@ -62,9 +62,8 @@ class SimulationConfig:
         price_increase_perc: Percentage increase for housing prices.
         landscape_name: Geographic area name for the simulation.
         geo_filename: Shapefile containing census geographies.
-        pop_filename: CSV file containing population data.
-        pop_fieldname: Field name for population data in the CSV.
-        flood_filename: CSV file containing FEMA 100-year flood data.
+            pop_filename: CSV file containing population data.
+    flood_filename: CSV file containing FEMA 100-year flood data.
         housing_filename: CSV file containing housing characteristics data.
         hedonic_filename: CSV file containing hedonic regression results.
         field_mapping_file: Optional path to field mapping configuration file.
@@ -121,7 +120,6 @@ class SimulationConfig:
     landscape_name: str = 'Baltimore'
     geo_filename: str = ''  # Will be set in __post_init__
     pop_filename: str = ''  # Will be set in __post_init__
-    pop_fieldname: str = 'AJWME001'
     flood_filename: str = ''  # Will be set in __post_init__
     housing_filename: str = ''  # Will be set in __post_init__
     hedonic_filename: str = ''  # Will be set in __post_init__
@@ -170,6 +168,16 @@ class SimulationConfig:
         """
         mapper = self.get_field_mapper()
         return mapper.get_required_columns(file_type)
+    
+    def get_population_field_name(self) -> str:
+        """Get the population field name from the field mapping.
+        
+        Returns:
+            str: The population field name (always 'AJWME001' after mapping)
+        """
+        # After field mapping, the population field is always named 'AJWME001'
+        # This is the standard field name used internally by the model
+        return 'AJWME001'
     
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'SimulationConfig':
@@ -220,7 +228,6 @@ class SimulationConfig:
             'landscape_name': self.landscape_name,
             'geo_filename': self.geo_filename,
             'pop_filename': self.pop_filename,
-            'pop_fieldname': self.pop_fieldname,
             'flood_filename': self.flood_filename,
             'housing_filename': self.housing_filename,
             'hedonic_filename': self.hedonic_filename,

@@ -19,9 +19,8 @@ pop_file_mapping:
   # Required field mappings for population data
   # Map your column names to the required field names used by the model
   GISJOIN: "GISJOIN"    # Unique identifier for each block group
-  # Population field - this is configurable via pop_fieldname parameter
-  # Default is AJWME001, but can be changed in the model configuration
-  AJWME001: "AJWME001"  # Population count (configurable field name)
+  # Population field - map your custom column name to AJWME001
+  AJWME001: "AJWME001"  # Population count (map from your custom column name)
 
 # Flood file field mappings
 flood_file_mapping:

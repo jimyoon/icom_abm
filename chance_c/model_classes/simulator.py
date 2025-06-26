@@ -162,9 +162,10 @@ class ICOMSimulator(Simulator):
             hedonic = mapper.map_dataframe(hedonic, 'hedonic')
         
         # Enforce specific data types for population file columns
+        # Note: After field mapping, the population field is always named 'AJWME001'
         pop_dtype_specs = {
             'GISJOIN': 'object',
-            'AJWME001': 'int64'  # Note: This is the default field name, but can be changed via pop_fieldname
+            'AJWME001': 'int64'
         }
         
         # Apply data type conversions for population file
@@ -177,13 +178,6 @@ class ICOMSimulator(Simulator):
                         pop[col] = pd.to_numeric(pop[col], errors='coerce').astype('int64')
                 except Exception as e:
                     logging.warning(f"Could not convert population column {col} to {dtype}: {e}")
-        
-        # Also enforce datatype for the configurable population field if it's different from AJWME001
-        if pop_fieldname != 'AJWME001' and pop_fieldname in pop.columns:
-            try:
-                pop[pop_fieldname] = pd.to_numeric(pop[pop_fieldname], errors='coerce').astype('int64')
-            except Exception as e:
-                logging.warning(f"Could not convert population column {pop_fieldname} to int64: {e}")
         
         # Enforce specific data types for flood file columns
         flood_dtype_specs = {
@@ -253,7 +247,8 @@ class ICOMSimulator(Simulator):
                     logging.warning(f"Could not convert hedonic column {col} to {dtype}: {e}")
 
         # join census/population data to block groups
-        block_group = pd.merge(block_group, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
+        # Note: After field mapping, the population field is always named 'AJWME001'
+        block_group = pd.merge(block_group, pop[['GISJOIN', 'AJWME001']], how='left', on='GISJOIN')
         block_group = pd.merge(block_group, flood[['GISJOIN', 'perc_fld_area']], how='left', on='GISJOIN')
         block_group['perc_fld_area'] = block_group['perc_fld_area'].fillna(0)
         block_group = pd.merge(block_group, housing, how='left', on='GISJOIN')
@@ -308,7 +303,7 @@ class ICOMSimulator(Simulator):
                     blkgrpce=row['BLKGRPCE'], 
                     area=row['ALAND'], 
                     geometry=row['geometry'],
-                    init_pop=row[pop_fieldname], 
+                    init_pop=row['AJWME001'], 
                     perc_fld_area=row['perc_fld_area'],
                     pop90=row['pop1990'], 
                     mhi90=row['mhi1990'], 
@@ -339,9 +334,6 @@ class ICOMSimulator(Simulator):
         for col in ['GISJOIN', 'AJWME001']:
             if col in pop.columns:
                 logging.info(f"  {col}: {pop[col].dtype}")
-        # Also log the configurable population field if it's different
-        if pop_fieldname != 'AJWME001' and pop_fieldname in pop.columns:
-            logging.info(f"  {pop_fieldname}: {pop[pop_fieldname].dtype}")
         
         logging.info("Flood data column types after processing:")
         for col in ['GISJOIN', 'Shape_Area', 'fld_area', 'perc_fld_area']:

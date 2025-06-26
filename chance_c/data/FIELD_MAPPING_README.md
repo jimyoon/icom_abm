@@ -21,7 +21,7 @@ The model requires the following field names for each input file type:
 
 ### Population File (pop_file_mapping)
 - `GISJOIN` - Unique identifier for each block group
-- `AJWME001` - Population count (configurable field name)
+- `AJWME001` - Population count (mapped from your custom column name)
 
 ### Flood File (flood_file_mapping)
 - `GISJOIN` - Unique identifier for each flood zone
