@@ -55,6 +55,7 @@ class Model:
     
     def __init__(
         self,   
+        config: SimulationConfig = None,
         config_file_path: Union[str, None] = None,
         simulation_name: str = 'ABM_Baltimore_example',
         scenario: str = 'Baseline',
@@ -103,6 +104,7 @@ class Model:
         """Initialize the Model with configuration parameters.
         
         Args:
+            config: SimulationConfig object. If None, uses default parameters.
             config_file_path: Path to YAML configuration file. If None, uses default parameters.
             simulation_name: Name identifier for the simulation.
             scenario: Scenario name for the simulation run.
@@ -151,10 +153,13 @@ class Model:
         Returns:
             None
         """
-        self.config_file_path = config_file_path
-
-        if self.config_file_path is not None:
-            self.config = SimulationConfig.from_yaml(self.config_file_path)
+        if config is not None and config_file_path is not None:
+            print("Warning: Both config and config_file_path provided. Using config object and ignoring config_file_path.")
+            self.config = config
+        elif config is not None:
+            self.config = config
+        elif config_file_path is not None:
+            self.config = SimulationConfig.from_yaml(config_file_path)
         else:
             self.config = SimulationConfig(
                 simulation_name=simulation_name,
