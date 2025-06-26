@@ -1,382 +1,375 @@
-# CHANCE-C
-The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments. 
+# CHANCE-C: Agent-Based Modeling Framework for Coastal Urban Development
 
-## Quick Start with Default Data
+[![CI](https://github.com/your-org/icom_abm/workflows/CI/badge.svg)](https://github.com/your-org/icom_abm/actions)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-CHANCE-C now includes **example data files** that allow you to start using the package immediately without needing to prepare your own data first!
+CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is a comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments. The framework integrates household decision-making, housing market dynamics, environmental hazards, and policy interventions.
 
-### Instant Setup
+## Features
+
+- **Agent-Based Modeling**: Simulates individual household agents with realistic decision-making
+- **Housing Market Dynamics**: Models supply, demand, pricing, and development
+- **Environmental Hazards**: Integrates flood risk and climate change impacts
+- **Policy Analysis**: Supports scenario testing and intervention evaluation
+- **Geospatial Integration**: Built on robust geospatial data handling
+- **Modular Architecture**: Extensible framework for custom simulations
+- **Comprehensive Testing**: Full test suite with 94+ tests and CI/CD pipeline
+
+## Requirements
+
+- Python 3.11+
+- GDAL/OGR libraries
+- PROJ (Projection library)
+- GEOS (Geometry library)
+
+## Installation
+
+### System Dependencies
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  libgdal-dev \
+  gdal-bin \
+  libproj-dev \
+  proj-data \
+  proj-bin \
+  libgeos-dev \
+  libspatialindex-dev
+```
+
+**macOS:**
+```bash
+brew install gdal proj geos
+```
+
+**Windows:**
+Install GDAL, PROJ, and GEOS through OSGeo4W or conda-forge.
+
+### Python Package
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/icom_abm.git
+cd icom_abm
+
+# Install in development mode
+pip install -e .
+
+# Or install from PyPI (when available)
+pip install chance-c
+```
+
+## Quick Start
+
+### Basic Usage
+
+```python
+from chance_c import Model, SimulationConfig
+
+# Create a model with default settings
+model = Model()
+
+# Run simulation
+model.run_simulation()
+
+# Access results
+print(f"Total population: {model.simulator.network.total_population}")
+```
+
+### Custom Configuration
+
+```python
+from chance_c import Model, SimulationConfig
+
+# Create custom configuration
+config = SimulationConfig(
+    simulation_name="my_simulation",
+    start_year=2020,
+    n_years=5,
+    pop_growth_perc=0.02,
+    landscape_name="Baltimore"
+)
+
+# Create model with custom config
+model = Model(config=config)
+model.run_simulation()
+```
+
+### Using Your Own Data
 
 ```python
 from chance_c import Model
 
-# Create a model with all default settings - no data files needed!
-model = Model()
+# Specify your data files
+model = Model(
+    geo_filename="path/to/geography.shp",
+    pop_filename="path/to/population.csv",
+    flood_filename="path/to/flood_data.csv",
+    housing_filename="path/to/housing_data.csv",
+    hedonic_filename="path/to/hedonic_data.csv"
+)
 
-# Run your first simulation
 model.run_simulation()
-
-# View results
-model.plot_population_change()
 ```
 
-The package includes Baltimore-area example data:
-- Census block group boundaries
-- 2018 population data
-- FEMA 100-year flood zones  
-- 1993 housing characteristics
-- Hedonic regression results
+## Core Components
 
-**You can run CHANCE-C immediately - no data preparation required!**
+### Model Classes
 
-### Using Your Own Data
+- **`ICOMSimulator`**: Main simulation engine
+- **`ABMLandscape`**: Geographic and demographic landscape
+- **`HouseholdAgent`**: Individual household agents
+- **`BlockGroup`**: Census block group nodes
+- **`CountyZoningManager`**: Policy and regulatory agents
+- **`RealEstate`**: Market and development agents
 
-When ready to use your own data, simply specify file paths:
+### Model Engines
+
+- **`NewAgentCreation`**: Population growth and new household formation
+- **`ExistingAgentReloSampler`**: Household relocation decisions
+- **`NewAgentLocation`**: Residential choice for new households
+- **`ExistingAgentLocation`**: Relocation for existing households
+- **`HousingMarket`**: Buyer-seller matching and transactions
+- **`BuildingDevelopment`**: New construction and development
+- **`HousingPricing`**: Price dynamics and market updates
+- **`FloodHazard`**: Environmental risk assessment
+- **`Zoning`**: Regulatory and policy interventions
+- **`LandscapeStatistics`**: Data collection and analysis
+
+### Data Management
+
+- **`SimulationConfig`**: Configuration management
+- **`FieldMapper`**: Data field mapping and transformation
+- **Data Loading**: Support for CSV, Shapefile, and other formats
+
+## Configuration
+
+### Simulation Parameters
 
 ```python
-# Override any or all data files
-model = Model(
-    geo_filename="path/to/your/geography.shp",
-    pop_filename="path/to/your/population.csv",
-    # Other files will use defaults
+config = SimulationConfig(
+    # Basic settings
+    simulation_name="example_simulation",
+    scenario="baseline",
+    intervention="none",
+    start_year=2020,
+    n_years=5,
+    
+    # Agent settings
+    agent_housing_aggregation=10,  # Households per agent
+    household_size=2.7,
+    
+    # Growth settings
+    pop_growth_mode="perc",
+    pop_growth_perc=0.01,
+    inc_growth_mode="random_agent_replication",
+    
+    # Market settings
+    house_choice_mode="simple_avoidance_utility",
+    house_budget_mode="rhea",
+    perc_move=0.10,
+    
+    # Environmental settings
+    simple_avoidance_perc=0.95,
+    budget_reduction_perc=0.90,
+    
+    # Development settings
+    stock_increase_mode="simple_perc",
+    stock_increase_perc=0.05,
+    
+    # Data files
+    geo_filename="geography.shp",
+    pop_filename="population.csv",
+    flood_filename="flood_data.csv",
+    housing_filename="housing_data.csv",
+    hedonic_filename="hedonic_data.csv"
 )
 ```
 
-For data with different column names, use the [field mapping system](chance_c/data/FIELD_MAPPING_README.md).
+### Field Mapping
 
-## CHANCE-C Command Line Interface
-
-The CHANCE-C (Agent-Based Model) provides a comprehensive command-line interface for simulating housing market dynamics, including population growth, agent relocation, housing choice, market pricing, and environmental factors like flood hazards.
-
-### Installation
-
-After installing the package, the CLI will be available as `chance-c`:
-
-```bash
-# Install the package
-pip install -e .
-
-# Verify installation
-chance-c --help
-```
-
-### Quick Start
-
-#### 1. Get Information About the Model
-
-```bash
-chance-c info
-```
-
-#### 2. Create a Configuration File
-
-```bash
-# Create a basic configuration
-chance-c create-config --template basic --output my_config.yaml
-
-# Create a Baltimore-specific configuration
-chance-c create-config --template baltimore --output baltimore_config.yaml
-
-# Create a custom configuration interactively
-chance-c create-config --template custom --output custom_config.yaml
-```
-
-#### 3. Validate Your Configuration
-
-```bash
-chance-c validate-config my_config.yaml
-```
-
-#### 4. Run a Simulation
-
-```bash
-# Run with default parameters
-chance-c run
-
-# Run with a configuration file
-chance-c run --config my_config.yaml
-
-# Run a sensitivity analysis
-chance-c run --sensitivity-run --no-years 1 --output-dir ./sensitivity_results
-
-# Run with custom parameters
-chance-c run \
-    --start-year 2020 \
-    --no-years 5 \
-    --pop-growth-perc 0.02 \
-    --perc-move 0.15 \
-    --output-dir ./my_simulation
-```
-
-### Available Commands
-
-#### `run` - Execute Simulation
-
-Runs the CHANCE-C simulation with specified parameters.
-
-**Options:**
-- `--config, -c`: Path to YAML configuration file
-- `--output-dir, -o`: Output directory for results (default: `./results`)
-- `--simulation-name`: Name identifier for the simulation
-- `--scenario`: Scenario name (default: `Baseline`)
-- `--intervention`: Intervention type (default: `Baseline`)
-- `--start-year`: Starting year (default: `2018`)
-- `--no-years`: Number of years to simulate (default: `2`)
-- `--agent-housing-aggregation`: Households per agent (default: `10`)
-- `--hh-size`: Average household size (default: `2.7`)
-- `--initial-vacancy`: Initial vacancy rate (default: `0.20`)
-- `--pop-growth-perc`: Population growth percentage (default: `0.01`)
-- `--perc-move`: Percentage of agents that move (default: `0.10`)
-- `--sensitivity-run`: Run in sensitivity analysis mode
-- `--record-time`: Record timing information
-- `--progress`: Show progress indicators
-
-**Example:**
-```bash
-chance-c run \
-    --config my_config.yaml \
-    --output-dir ./simulation_results \
-    --start-year 2020 \
-    --no-years 10 \
-    --pop-growth-perc 0.015 \
-    --progress
-```
-
-#### `validate-config` - Validate Configuration
-
-Validates a YAML configuration file and displays the parameters.
-
-**Arguments:**
-- `config_file`: Path to the configuration file to validate
-
-**Options:**
-- `--output, -o`: Output file for validation report
-
-**Example:**
-```bash
-chance-c validate-config my_config.yaml --output validation_report.txt
-```
-
-#### `create-config` - Create Configuration File
-
-Creates a new configuration file from a template.
-
-**Options:**
-- `--template, -t`: Template to use (`basic`, `baltimore`, `custom`)
-- `--output, -o`: Output file path (default: `config.yaml`)
-
-**Example:**
-```bash
-chance-c create-config --template baltimore --output baltimore_simulation.yaml
-```
-
-#### `plot-results` - Generate Visualizations
-
-Generates plots from simulation results.
-
-**Arguments:**
-- `results_dir`: Directory containing simulation results
-
-**Options:**
-- `--output, -o`: Output file path for the plot
-- `--format`: Output format (`png`, `pdf`, `svg`, `jpg`)
-- `--dpi`: DPI for the output image (default: `300`)
-
-**Example:**
-```bash
-chance-c plot-results ./simulation_results --output population_map.png --format png
-```
-
-#### `summarize` - Generate Summary Report
-
-Creates a comprehensive summary of simulation results.
-
-**Arguments:**
-- `results_dir`: Directory containing simulation results
-
-**Options:**
-- `--format`: Output format (`csv`, `json`, `excel`)
-- `--output, -o`: Output file path for the summary
-
-**Example:**
-```bash
-chance-c summarize ./simulation_results --format csv --output summary.csv
-```
-
-#### `info` - Display Model Information
-
-Shows version information, features, and usage instructions.
-
-**Example:**
-```bash
-chance-c info
-```
-
-### Global Options
-
-All commands support these global options:
-
-- `--verbose, -v`: Enable verbose logging
-- `--quiet, -q`: Suppress output except errors
-- `--version`: Show version information
-- `--help`: Show help message
-
-### Configuration Files
-
-Configuration files are in YAML format and contain all simulation parameters. You can create them using the `create-config` command or manually.
-
-**Example configuration structure:**
-```yaml
-simulation_name: "ABM_Baltimore_example"
-scenario: "Baseline"
-intervention: "Baseline"
-start_year: 2018
-n_years: 2
-agent_housing_aggregation: 10
-hh_size: 2.7
-initial_vacancy: 0.20
-pop_growth_mode: "perc"
-pop_growth_perc: 0.01
-# ... additional parameters
-```
-
-### Output Structure
-
-When you run a simulation, the following structure is created:
-
-```
-output_directory/
-├── simulation_config.yaml    # Configuration used for the simulation
-├── logs/                     # Simulation logs (if enabled)
-└── results/                  # Simulation results
-    ├── housing_data.csv      # Housing market data
-    ├── population_data.csv   # Population statistics
-    ├── agent_data.csv        # Agent behavior data
-    └── plots/                # Generated visualizations
-```
-
-### Examples
-
-#### Basic Simulation
-```bash
-# Run a simple 2-year simulation
-chance-c run --output-dir ./basic_simulation
-```
-
-### Sensitivity Analysis
-```bash
-# Run multiple sensitivity scenarios
-for growth_rate in 0.005 0.01 0.015 0.02; do
-    chance-c run \
-        --sensitivity-run \
-        --pop-growth-perc $growth_rate \
-        --output-dir "./sensitivity_${growth_rate}" \
-        --no-years 1
-done
-```
-
-#### Custom Configuration
-```bash
-# Create and use a custom configuration
-chance-c create-config --template custom --output my_simulation.yaml
-# Edit the configuration file as needed
-chance-c run --config my_simulation.yaml --output-dir ./custom_simulation
-```
-
-##3# Batch Processing
-```bash
-# Run multiple scenarios
-scenarios=("baseline" "high_growth" "low_growth")
-for scenario in "${scenarios[@]}"; do
-    chance-c run \
-        --scenario "$scenario" \
-        --output-dir "./results_${scenario}" \
-        --pop-growth-perc 0.01
-done
-```
-
-### Troubleshooting
-
-#### Common Issues
-
-1. **Configuration file not found**
-   ```bash
-   # Make sure the file exists and path is correct
-   ls -la my_config.yaml
-   chance-c validate-config my_config.yaml
-   ```
-
-2. **Permission errors**
-   ```bash
-   # Check write permissions for output directory
-   mkdir -p ./results
-   chmod 755 ./results
-   ```
-
-3. **Memory issues with large simulations**
-   ```bash
-   # Reduce agent aggregation or simulation years
-   chance-c run --agent-housing-aggregation 20 --no-years 1
-   ```
-
-#### Getting Help
-
-```bash
-# General help
-chance-c --help
-
-# Command-specific help
-chance-c run --help
-chance-c validate-config --help
-
-# Verbose output for debugging
-chance-c run --verbose --config my_config.yaml
-```
-
-### Advanced Usage
-
-#### Programmatic CLI Usage
-
-You can also use the CLI programmatically:
+For data with different column names, use the field mapping system:
 
 ```python
-import subprocess
+from chance_c import FieldMapper
 
-# Run a simulation
-result = subprocess.run([
-    'chance-c', 'run',
-    '--config', 'my_config.yaml',
-    '--output-dir', './results'
-], capture_output=True, text=True)
+# Create field mappings
+mappings = {
+    'geo_file_mapping': {
+        'GEOID': 'CENSUS_ID',
+        'COUNTYFP': 'COUNTY_CODE'
+    },
+    'pop_file_mapping': {
+        'AJWME001': 'TOTAL_POPULATION'
+    }
+}
 
-print(result.stdout)
+# Use in configuration
+config = SimulationConfig(
+    field_mappings=mappings,
+    # ... other parameters
+)
 ```
 
-#### Custom Scripts
+## Testing
 
-Create custom scripts that use the CLI:
+The package includes a comprehensive test suite:
 
 ```bash
-#!/bin/bash
-# run_multiple_scenarios.sh
+# Run all tests
+pytest tests/
 
-for year in 2018 2019 2020; do
-    for growth in 0.01 0.02 0.03; do
-        chance-c run \
-            --start-year $year \
-            --pop-growth-perc $growth \
-            --output-dir "./results_${year}_${growth}"
-    done
-done
+# Run specific test categories
+pytest tests/test_config.py
+pytest tests/test_model_classes.py
+pytest tests/test_model_engines.py
+
+# Run with coverage
+pytest tests/ --cov=chance_c --cov-report=html
+
+# Run linting
+flake8 chance_c/ tests/
+black --check chance_c/ tests/
 ```
 
-### Contributing
+## Output and Analysis
 
-To extend the CLI with new commands or options:
+### Accessing Results
 
-1. Edit `chance_c/cli.py`
-2. Add new Click commands as needed
-3. Update this documentation
-4. Test your changes thoroughly
+```python
+# After running simulation
+model = Model()
+model.run_simulation()
 
-For more information about the CHANCE-C model, see the main README.md file. 
+# Access network and components
+network = model.simulator.network
+households = network.get_institution('all_household_agents').components
+block_groups = network.nodes
+
+# Get statistics
+total_population = network.total_population
+avg_income = network.avg_hh_income
+avg_household_size = network.avg_hh_size
+
+# Access housing data
+housing_df = network.housing_block_group_df
+```
+
+### Visualization
+
+```python
+import matplotlib.pyplot as plt
+import geopandas as gpd
+
+# Plot population distribution
+housing_df = model.simulator.network.housing_block_group_df
+gdf = gpd.GeoDataFrame(housing_df, geometry='geometry')
+
+fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+gdf.plot(column='population', ax=ax, legend=True)
+plt.title('Population Distribution')
+plt.show()
+```
+
+## Custom Simulations
+
+### Creating Custom Agents
+
+```python
+from chance_c.model_classes.urban_agents import HouseholdAgent
+
+class CustomHouseholdAgent(HouseholdAgent):
+    def __init__(self, name, location, income, **kwargs):
+        super().__init__(name, location, income, **kwargs)
+        self.custom_attribute = "custom_value"
+    
+    def custom_decision_method(self):
+        # Implement custom decision logic
+        pass
+```
+
+### Creating Custom Engines
+
+```python
+from chance_c.model_engines.base import BaseEngine
+
+class CustomEngine(BaseEngine):
+    def __init__(self, target):
+        super().__init__(target)
+    
+    def run(self):
+        # Implement custom simulation logic
+        pass
+```
+
+### Using Custom Components
+
+```python
+from chance_c import Model
+
+# Create model with custom components
+model = Model()
+
+# Add custom engine
+custom_engine = CustomEngine(model.simulator.network)
+model.simulator.add_engine(custom_engine)
+
+# Run simulation
+model.run_simulation()
+```
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/your-org/icom_abm.git
+cd icom_abm
+pip install -e .
+
+# Install development dependencies
+pip install pytest pytest-cov flake8 black isort mypy
+
+# Run tests
+pytest tests/
+
+# Format code
+black chance_c/ tests/
+isort chance_c/ tests/
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Documentation
+
+- [API Documentation](docs/api.md)
+- [Tutorial: Custom Simulations](notebooks/tutorial_custom_simulations.ipynb)
+- [Field Mapping Guide](docs/field_mapping.md)
+- [Configuration Reference](docs/configuration.md)
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/your-org/icom_abm/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/icom_abm/discussions)
+- **Email**: support@chance-c.org
+
+## Acknowledgments
+
+- Built on the [pynsim](https://github.com/pynsim/pynsim) framework
+- Uses [geopandas](https://geopandas.org/) for geospatial data handling
+- Integrates with [FEMA flood data](https://www.fema.gov/flood-maps)
+- Developed with support from [funding organization]
+
+---
+
+**CHANCE-C** - Coastal Hazards And Neighborhood Change - Computational
+
+*Empowering coastal communities through computational modeling*
