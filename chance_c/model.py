@@ -258,7 +258,8 @@ class Model:
             pop_fieldname=self.config.pop_fieldname, 
             flood_filename=self.config.flood_filename,
             housing_filename=self.config.housing_filename, 
-            hedonic_filename=self.config.hedonic_filename
+            hedonic_filename=self.config.hedonic_filename,
+            field_mapping_file=self.config.field_mapping_file
         )
         
         if self.config.sensitivity_run is False:

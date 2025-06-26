@@ -88,6 +88,7 @@ class ICOMSimulator(Simulator):
             flood_filename: str, 
             housing_filename: str, 
             hedonic_filename: str,
+            field_mapping_file: str = None,
             **kwargs
     ) -> None:
         """Create landscape based on census geographies and data.
@@ -104,15 +105,152 @@ class ICOMSimulator(Simulator):
             flood_filename: Path to flood data file.
             housing_filename: Path to housing data file.
             hedonic_filename: Path to hedonic regression data file.
+            field_mapping_file: Optional path to field mapping file.
         """
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
 
+        # Import FieldMapper here to avoid circular imports
+        try:
+            from ..field_mapper import FieldMapper
+        except ImportError:
+            FieldMapper = None
+            
+        # Initialize field mapper if mapping file is provided
+        mapper = FieldMapper(field_mapping_file) if field_mapping_file and FieldMapper else None
+
+        # Load geographic data
         block_group = gpd.read_file(geo_filename)
+        
+        # Apply field mapping for geo file if mapper is available
+        if mapper:
+            block_group = mapper.map_dataframe(block_group, 'geo')
+        
+        # Enforce specific data types for geo_file columns
+        geo_dtype_specs = {
+            'GISJOIN': 'object',
+            'GEOID': 'object', 
+            'COUNTYFP': 'object',
+            'TRACTCE': 'object',
+            'BLKGRPCE': 'object',
+            'ALAND': 'float64'
+            # geometry column is already handled by geopandas
+        }
+        
+        # Apply data type conversions
+        for col, dtype in geo_dtype_specs.items():
+            if col in block_group.columns:
+                try:
+                    if dtype == 'object':
+                        block_group[col] = block_group[col].astype(str)
+                    elif dtype == 'float64':
+                        block_group[col] = pd.to_numeric(block_group[col], errors='coerce').astype('float64')
+                except Exception as e:
+                    logging.warning(f"Could not convert column {col} to {dtype}: {e}")
+        
+        # Load other data files
         pop = pd.read_csv(pop_filename)
         flood = pd.read_csv(flood_filename)
         housing = pd.read_csv(housing_filename)
         hedonic = pd.read_csv(hedonic_filename)
+        
+        # Apply field mapping for other files if mapper is available
+        if mapper:
+            pop = mapper.map_dataframe(pop, 'pop')
+            flood = mapper.map_dataframe(flood, 'flood')
+            housing = mapper.map_dataframe(housing, 'housing')
+            hedonic = mapper.map_dataframe(hedonic, 'hedonic')
+        
+        # Enforce specific data types for population file columns
+        pop_dtype_specs = {
+            'GISJOIN': 'object',
+            'AJWME001': 'int64'  # Note: This is the default field name, but can be changed via pop_fieldname
+        }
+        
+        # Apply data type conversions for population file
+        for col, dtype in pop_dtype_specs.items():
+            if col in pop.columns:
+                try:
+                    if dtype == 'object':
+                        pop[col] = pop[col].astype(str)
+                    elif dtype == 'int64':
+                        pop[col] = pd.to_numeric(pop[col], errors='coerce').astype('int64')
+                except Exception as e:
+                    logging.warning(f"Could not convert population column {col} to {dtype}: {e}")
+        
+        # Also enforce datatype for the configurable population field if it's different from AJWME001
+        if pop_fieldname != 'AJWME001' and pop_fieldname in pop.columns:
+            try:
+                pop[pop_fieldname] = pd.to_numeric(pop[pop_fieldname], errors='coerce').astype('int64')
+            except Exception as e:
+                logging.warning(f"Could not convert population column {pop_fieldname} to int64: {e}")
+        
+        # Enforce specific data types for flood file columns
+        flood_dtype_specs = {
+            'GISJOIN': 'object',
+            'Shape_Area': 'float64',
+            'fld_area': 'float64',
+            'perc_fld_area': 'float64'
+        }
+        
+        # Apply data type conversions for flood file
+        for col, dtype in flood_dtype_specs.items():
+            if col in flood.columns:
+                try:
+                    if dtype == 'object':
+                        flood[col] = flood[col].astype(str)
+                    elif dtype == 'float64':
+                        flood[col] = pd.to_numeric(flood[col], errors='coerce').astype('float64')
+                except Exception as e:
+                    logging.warning(f"Could not convert flood column {col} to {dtype}: {e}")
+        
+        # Enforce specific data types for housing file columns
+        housing_dtype_specs = {
+            'GISJOIN': 'object',
+            'pop1990': 'int64',
+            'mhi1990': 'int64',
+            'hhsize1990': 'float64',
+            'coastdist': 'float64',
+            'cbddist': 'float64',
+            'hhtrans1993': 'float64',
+            'salesprice1993': 'float64',
+            'salespricesf1993': 'float64'
+        }
+        
+        # Apply data type conversions for housing file
+        for col, dtype in housing_dtype_specs.items():
+            if col in housing.columns:
+                try:
+                    if dtype == 'object':
+                        housing[col] = housing[col].astype(str)
+                    elif dtype == 'int64':
+                        housing[col] = pd.to_numeric(housing[col], errors='coerce').astype('int64')
+                    elif dtype == 'float64':
+                        housing[col] = pd.to_numeric(housing[col], errors='coerce').astype('float64')
+                except Exception as e:
+                    logging.warning(f"Could not convert housing column {col} to {dtype}: {e}")
+        
+        # Enforce specific data types for hedonic file columns
+        hedonic_dtype_specs = {
+            'GISJOIN': 'object',
+            'N_MeanSqfeet': 'float64',
+            'N_MeanAge': 'float64',
+            'N_MeanNoOfStories': 'float64',
+            'N_MeanFullBathNumber': 'float64',
+            'residuals': 'float64',
+            'N_perc_area_flood': 'float64'
+        }
+        
+        # Apply data type conversions for hedonic file
+        for col, dtype in hedonic_dtype_specs.items():
+            if col in hedonic.columns:
+                try:
+                    if dtype == 'object':
+                        hedonic[col] = hedonic[col].astype(str)
+                    elif dtype == 'float64':
+                        hedonic[col] = pd.to_numeric(hedonic[col], errors='coerce').astype('float64')
+                except Exception as e:
+                    logging.warning(f"Could not convert hedonic column {col} to {dtype}: {e}")
 
         # join census/population data to block groups
         block_group = pd.merge(block_group, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
@@ -190,7 +328,35 @@ class ICOMSimulator(Simulator):
 
         self.add_network(landscape)
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
-
+        
+        # Log the final data types for verification
+        logging.info("Geographic data column types after processing:")
+        for col in ['GISJOIN', 'GEOID', 'COUNTYFP', 'TRACTCE', 'BLKGRPCE', 'ALAND', 'geometry']:
+            if col in block_group.columns:
+                logging.info(f"  {col}: {block_group[col].dtype}")
+        
+        logging.info("Population data column types after processing:")
+        for col in ['GISJOIN', 'AJWME001']:
+            if col in pop.columns:
+                logging.info(f"  {col}: {pop[col].dtype}")
+        # Also log the configurable population field if it's different
+        if pop_fieldname != 'AJWME001' and pop_fieldname in pop.columns:
+            logging.info(f"  {pop_fieldname}: {pop[pop_fieldname].dtype}")
+        
+        logging.info("Flood data column types after processing:")
+        for col in ['GISJOIN', 'Shape_Area', 'fld_area', 'perc_fld_area']:
+            if col in flood.columns:
+                logging.info(f"  {col}: {flood[col].dtype}")
+        
+        logging.info("Housing data column types after processing:")
+        for col in ['GISJOIN', 'pop1990', 'mhi1990', 'hhsize1990', 'coastdist', 'cbddist', 'hhtrans1993', 'salesprice1993', 'salespricesf1993']:
+            if col in housing.columns:
+                logging.info(f"  {col}: {housing[col].dtype}")
+        
+        logging.info("Hedonic data column types after processing:")
+        for col in ['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories', 'N_MeanFullBathNumber', 'residuals', 'N_perc_area_flood']:
+            if col in hedonic.columns:
+                logging.info(f"  {col}: {hedonic[col].dtype}")
 
     def convert_initial_population_to_agents(self, no_households_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
