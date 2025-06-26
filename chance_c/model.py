@@ -417,7 +417,7 @@ class Model:
     
     def get_history(self, history_name: str) -> pd.DataFrame:
         """Get history for total population"""
-        return self.    s.network.get_history(history_name)
+        return self.simulator.network.get_history(history_name)
 
     def get_node_history(
             self, 
