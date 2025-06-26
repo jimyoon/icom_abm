@@ -15,7 +15,7 @@ class FloodHazard(Engine):
         **kwargs: Additional keyword arguments passed to the parent class.
     
     Inter-module Outputs/Modifications:
-        bg.flood_hazard_risk (int): Updated flood hazard risk value for each 
+        block_group.flood_hazard_risk (int): Updated flood hazard risk value for each 
             block group node.
     """
     
@@ -37,8 +37,8 @@ class FloodHazard(Engine):
         """
         logging.info("Running the flood hazard engine, year " + str(self.target.current_timestep.year))
         if self.timestep.year == 2020:
-            for bg in self.target.nodes:
-                bg.flood_hazard_risk = 100
+            for block_group in self.target.nodes:
+                block_group.flood_hazard_risk = 100
 
         pass  # to accommodate debugger
 
@@ -56,7 +56,7 @@ class FloodGenerator(Engine):
         **kwargs: Additional keyword arguments passed to the parent class.
     
     Inter-module Outputs/Modifications:
-        bg.flood_hazard_risk (int): Updated flood hazard risk value for each 
+        block_group.flood_hazard_risk (int): Updated flood hazard risk value for each 
             block group node.
     """
     
@@ -77,7 +77,7 @@ class FloodGenerator(Engine):
         year 2020.
         """
         if self.timestep.year == 2020:
-            for bg in self.target.nodes:
-                bg.flood_hazard_risk = 100
+            for block_group in self.target.nodes:
+                block_group.flood_hazard_risk = 100
 
         pass  # to accommodate debugger

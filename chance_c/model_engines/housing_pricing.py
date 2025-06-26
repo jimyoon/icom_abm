@@ -17,8 +17,8 @@ class HousingPricing(Engine):
         **kwargs: Additional keyword arguments passed to the parent class.
     
     Inter-module Outputs/Modifications:
-        bg.new_price (float): Updated housing price for each block group node.
-        target.housing_bg_df (pandas.DataFrame): Updated housing dataframe with 
+        block_group.new_price (float): Updated housing price for each block group node.
+        target.housing_block_group_df (pandas.DataFrame): Updated housing dataframe with 
             new price data.
     """
     
@@ -43,12 +43,12 @@ class HousingPricing(Engine):
         and decreases prices when there has been sustained low demand over the
         previous 5 timesteps.
         """
-        for bg in self.target.nodes:
-            if bg.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
-                bg.new_price = bg.new_price * (1 + self.price_increase_perc)
-                self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_price'] = bg.new_price
+        for block_group in self.target.nodes:
+            if block_group.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
+                block_group.new_price = block_group.new_price * (1 + self.price_increase_perc)
+                self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price
 
             if self.target.current_timestep_idx >= 5:  # JY TEMP for testing
-                if not any(bg.get_history('demand_exceeds_supply')[-5:]):
-                    bg.new_price = bg.new_price * (1 - self.price_increase_perc)
-                    self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_price'] = bg.new_price
+                if not any(block_group.get_history('demand_exceeds_supply')[-5:]):
+                    block_group.new_price = block_group.new_price * (1 - self.price_increase_perc)
+                    self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price

@@ -75,15 +75,70 @@ def cli(verbose: bool, quiet: bool):
               help='Record timing information')
 @click.option('--progress', is_flag=True,
               help='Show progress indicators')
+@click.option('--block-group-sample-size', default=10, help='Number of block groups to sample for residential choice')
+@click.option('--zoning-mode', default='simple_perc', help='Mode for zoning decisions')
+@click.option('--zoning-perc', default=0.05, help='Percentage for zoning calculations')
+@click.option('--market-mode', default='top_candidate', help='Mode for housing market operations')
+@click.option('--landscape-name', default='Baltimore', help='Name of the geographic landscape')
+@click.option('--geo-filename', default='blck_grp_extract_prj.shp', help='Filename for geographic boundary data')
+@click.option('--pop-filename', default='balt_block_group_population_2018.csv', help='Filename for population data')
+@click.option('--pop-fieldname', default='AJWME001', help='Field name containing population data')
+@click.option('--flood-filename', default='block_group_perc_100yr_flood.csv', help='Filename for flood hazard data')
+@click.option('--housing-filename', default='block_group_housing_1993.csv', help='Filename for housing data')
+@click.option('--hedonic-filename', default='simple_anova_hedonic_without_flood_block_group0418.csv', help='Filename for hedonic pricing data')
 def run(config: Optional[str], output_dir: str, **kwargs):
     """
-    Run the CHANCE-C simulation.
+    Run the ICoM ABM simulation with the specified configuration.
     
-    This command executes a complete agent-based model simulation for housing
-    market dynamics. It creates the simulation landscape, populates it with
-    household agents, and runs various engines for agent behavior, market
-    dynamics, and environmental factors.
+    Args:
+        config: Path to configuration YAML file (optional)
+        output_dir: Directory to save simulation outputs
+        **kwargs: Additional configuration parameters
     """
+    # Extract parameters from kwargs
+    simulation_name = kwargs.get('simulation_name', 'ABM_Baltimore_example')
+    scenario = kwargs.get('scenario', 'Baseline')
+    intervention = kwargs.get('intervention', 'Baseline')
+    start_year = kwargs.get('start_year', 2018)
+    n_years = kwargs.get('n_years', 2)
+    agent_housing_aggregation = kwargs.get('agent_housing_aggregation', 10)
+    hh_size = kwargs.get('hh_size', 2.7)
+    initial_vacancy = kwargs.get('initial_vacancy', 0.20)
+    pop_growth_mode = kwargs.get('pop_growth_mode', 'perc')
+    pop_growth_perc = kwargs.get('pop_growth_perc', 0.01)
+    inc_growth_mode = kwargs.get('inc_growth_mode', 'random_agent_replication')
+    pop_growth_inc_perc = kwargs.get('pop_growth_inc_perc', 0.90)
+    inc_growth_perc = kwargs.get('inc_growth_perc', 0.05)
+    bld_growth_perc = kwargs.get('bld_growth_perc', 0.01)
+    perc_move = kwargs.get('perc_move', 0.10)
+    perc_move_mode = kwargs.get('perc_move_mode', 'random')
+    house_budget_mode = kwargs.get('house_budget_mode', 'rhea')
+    house_choice_mode = kwargs.get('house_choice_mode', 'simple_avoidance_utility')
+    simple_anova_coefficients = kwargs.get('simple_anova_coefficients', (-121428, 294707, 130553, 128990, 154887, -500000))
+    simple_avoidance_perc = kwargs.get('simple_avoidance_perc', 0.95)
+    budget_reduction_perc = kwargs.get('budget_reduction_perc', 0.90)
+    stock_increase_mode = kwargs.get('stock_increase_mode', 'simple_perc')
+    stock_increase_perc = kwargs.get('stock_increase_perc', 0.05)
+    housing_pricing_mode = kwargs.get('housing_pricing_mode', 'simple_perc')
+    price_increase_perc = kwargs.get('price_increase_perc', 0.05)
+    landscape_name = kwargs.get('landscape_name', 'Baltimore')
+    geo_filename = kwargs.get('geo_filename', 'blck_grp_extract_prj.shp')
+    pop_filename = kwargs.get('pop_filename', 'balt_block_group_population_2018.csv')
+    pop_fieldname = kwargs.get('pop_fieldname', 'AJWME001')
+    flood_filename = kwargs.get('flood_filename', 'block_group_perc_100yr_flood.csv')
+    housing_filename = kwargs.get('housing_filename', 'block_group_housing_1993.csv')
+    hedonic_filename = kwargs.get('hedonic_filename', 'simple_anova_hedonic_without_flood_block_group0418.csv')
+    record_time = kwargs.get('record_time', False)
+    progress = kwargs.get('progress', False)
+    max_iterations = kwargs.get('max_iterations', 1)
+    name = kwargs.get('name', 'ABM_Baltimore_example')
+    sensitivity_run = kwargs.get('sensitivity_run', False)
+    county_agent_id = kwargs.get('county_agent_id', '005')
+    block_group_sample_size = kwargs.get('block_group_sample_size', 10)
+    zoning_mode = kwargs.get('zoning_mode', 'simple_perc')
+    zoning_perc = kwargs.get('zoning_perc', 0.05)
+    market_mode = kwargs.get('market_mode', 'top_candidate')
+    
     try:
         # Create output directory if it doesn't exist
         output_path = Path(output_dir)
@@ -92,8 +147,52 @@ def run(config: Optional[str], output_dir: str, **kwargs):
         click.echo(f"Starting CHANCE-C simulation...")
         click.echo(f"Output directory: {output_path.absolute()}")
         
-        # Initialize the model
-        model = Model(config_file_path=config, **kwargs)
+        # Create and run the model
+        model = Model(
+            config_file_path=config,
+            simulation_name=simulation_name,
+            scenario=scenario,
+            intervention=intervention,
+            start_year=start_year,
+            n_years=n_years,
+            agent_housing_aggregation=agent_housing_aggregation,
+            hh_size=hh_size,
+            initial_vacancy=initial_vacancy,
+            pop_growth_mode=pop_growth_mode,
+            pop_growth_perc=pop_growth_perc,
+            inc_growth_mode=inc_growth_mode,
+            pop_growth_inc_perc=pop_growth_inc_perc,
+            inc_growth_perc=inc_growth_perc,
+            bld_growth_perc=bld_growth_perc,
+            perc_move=perc_move,
+            perc_move_mode=perc_move_mode,
+            house_budget_mode=house_budget_mode,
+            house_choice_mode=house_choice_mode,
+            simple_anova_coefficients=simple_anova_coefficients,
+            simple_avoidance_perc=simple_avoidance_perc,
+            budget_reduction_perc=budget_reduction_perc,
+            stock_increase_mode=stock_increase_mode,
+            stock_increase_perc=stock_increase_perc,
+            housing_pricing_mode=housing_pricing_mode,
+            price_increase_perc=price_increase_perc,
+            landscape_name=landscape_name,
+            geo_filename=geo_filename,
+            pop_filename=pop_filename,
+            pop_fieldname=pop_fieldname,
+            flood_filename=flood_filename,
+            housing_filename=housing_filename,
+            hedonic_filename=hedonic_filename,
+            record_time=record_time,
+            progress=progress,
+            max_iterations=max_iterations,
+            name=name,
+            sensitivity_run=sensitivity_run,
+            county_agent_id=county_agent_id,
+            block_group_sample_size=block_group_sample_size,
+            zoning_mode=zoning_mode,
+            zoning_perc=zoning_perc,
+            market_mode=market_mode,
+        )
         
         # Run the simulation
         model.run_simulation()
@@ -138,7 +237,7 @@ def validate_config(config_file: str, output: Optional[str]):
         click.echo(f"Scenario: {config.scenario}")
         click.echo(f"Intervention: {config.intervention}")
         click.echo(f"Start Year: {config.start_year}")
-        click.echo(f"Number of Years: {config.no_years}")
+        click.echo(f"Number of Years: {config.n_years}")
         click.echo(f"Agent Housing Aggregation: {config.agent_housing_aggregation}")
         click.echo(f"Household Size: {config.hh_size}")
         click.echo(f"Initial Vacancy: {config.initial_vacancy}")
@@ -227,16 +326,16 @@ def create_config(template: str, output: str):
         if template == 'baltimore':
             config.landscape_name = 'Baltimore'
             config.geo_filename = 'blck_grp_extract_prj.shp'
-            config.pop_filename = 'balt_bg_population_2018.csv'
-            config.flood_filename = 'bg_perc_100yr_flood.csv'
-            config.housing_filename = 'bg_housing_1993.csv'
-            config.hedonic_filename = 'simple_anova_hedonic_without_flood_bg0418.csv'
+            config.pop_filename = 'balt_block_group_population_2018.csv'
+            config.flood_filename = 'block_group_perc_100yr_flood.csv'
+            config.housing_filename = 'block_group_housing_1993.csv'
+            config.hedonic_filename = 'simple_anova_hedonic_without_flood_block_group0418.csv'
         elif template == 'custom':
             # Interactive configuration creation
             config.simulation_name = click.prompt("Simulation name", default="ABM_Custom")
             config.scenario = click.prompt("Scenario", default="Baseline")
             config.start_year = click.prompt("Start year", type=int, default=2018)
-            config.no_years = click.prompt("Number of years", type=int, default=2)
+            config.n_years = click.prompt("Number of years", type=int, default=2)
             config.landscape_name = click.prompt("Landscape name", default="Custom")
         
         # Save configuration

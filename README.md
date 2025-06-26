@@ -189,7 +189,7 @@ simulation_name: "ABM_Baltimore_example"
 scenario: "Baseline"
 intervention: "Baseline"
 start_year: 2018
-no_years: 2
+n_years: 2
 agent_housing_aggregation: 10
 hh_size: 2.7
 initial_vacancy: 0.20

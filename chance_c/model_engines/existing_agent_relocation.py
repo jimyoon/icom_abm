@@ -47,10 +47,10 @@ class ExistingAgentReloSampler(Engine):
         """
         logging.info("Running the existing agent sampler engine, year " + str(self.target.current_timestep.year))
 
-        for bg in self.target.nodes:
-            no_of_agents = len(bg.hh_agents)  # number of representative household agents
-            no_of_agents_moving = round(self.perc_move * no_of_agents)  # number of representative household agents that are moving
-            agents_moving = random.sample(list(bg.hh_agents), no_of_agents_moving)  # randomly sample agents that will move
+        for block_group in self.target.nodes:
+            no_of_agents = len(block_group.hh_agents)  # number of representative household agents
+            no_of_agents_moving = round(no_of_agents * self.perc_move)
+            agents_moving = random.sample(list(block_group.hh_agents), no_of_agents_moving)  # randomly sample agents that will move
             for hh in agents_moving:
                 self.target.relocating_hhs[hh] = self.target.get_institution('all_hh_agents')._component_map[hh]  # add agent to unassigned hh list (is there a better way in pynsim rather than accessing _components_map)
                 bg_old_location = self.target.get_node(self.target.get_institution('all_hh_agents')._component_map[hh].location)
@@ -71,7 +71,7 @@ class ExistingAgentLocation(Engine):
 
     Args:
         target: The simulation network target.
-        bg_sample_size (int, optional): Sample size for new agent's housing search. 
+        block_group_sample_size (int, optional): Sample size for new agent's housing search. 
             Defaults to 10.
         house_choice_mode (str, optional): Mode for house choice utility calculation. 
             Defaults to 'simple_anova_utility'.
@@ -85,105 +85,92 @@ class ExistingAgentLocation(Engine):
         target.hh_utilities_df (pandas.DataFrame): DataFrame containing household utilities.
     """
 
-    def __init__(self, target, bg_sample_size: int = 10, 
-                 house_choice_mode: str = 'simple_anova_utility', 
-                 simple_anova_coefficients: list = None, 
-                 budget_reduction_perc: float = 0.10, **kwargs) -> None:
+    def __init__(
+        self, 
+        target, 
+        block_group_sample_size: int = 10, 
+        house_choice_mode: str = 'simple_anova_utility', 
+        simple_anova_coefficients: list = None, 
+        **kwargs
+    ) -> None:
         """Initialize the ExistingAgentLocation engine.
-
+        
         Args:
             target: The simulation network target.
-            bg_sample_size: Sample size for new agent's housing search.
-            house_choice_mode: Mode for house choice utility calculation.
-            simple_anova_coefficients: Coefficients for simple ANOVA utility calculation.
-            budget_reduction_perc: Budget reduction percentage.
-            **kwargs: Additional keyword arguments passed to the parent class.
+            block_group_sample_size: Number of block groups to sample for each agent.
+            house_choice_mode: Method for calculating housing utility.
+            simple_anova_coefficients: Coefficients for ANOVA-based utility.
+            **kwargs: Additional keyword arguments.
         """
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
-        self.bg_sample_size = bg_sample_size
+        self.block_group_sample_size = block_group_sample_size
         self.house_choice_mode = house_choice_mode
         self.simple_anova_coefficients = simple_anova_coefficients or []
-        self.budget_reduction_perc = budget_reduction_perc
 
     def run(self) -> None:
-        """Execute the existing agent location process.
-
-        The target of this engine are all existing household agents waiting in the 
-        re-location queue. For each agent in the re-location queue, the engine randomly 
-        samples from the available homes list, calculating an agent utility for each home.
+        """Run the ExistingAgentLocation engine.
+        
+        Processes all relocating household agents waiting in the location queue.
+        For each agent, samples from available homes and calculates utility
+        scores based on the specified house choice mode. Agents that cannot
+        afford any homes are marked as outmigrated.
         """
-        logging.info("Running the existing agent relocation engine, year " + str(self.target.current_timestep.year))
+        logging.info("Running the existing agent location engine, year " + str(self.target.current_timestep.year))
 
         first = True
+        to_delete_relocating_hhs = []
         for hh in self.target.relocating_hhs.values():
-            bg_all = self.target.housing_bg_df
-            # JY restart here
-            if self.house_choice_mode == 'simple_avoidance_utility':
-                if hh.avoidance == True:
-                    # bg_budget = bg_all[(bg_all.perc_fld_area <= bg_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
-                    bg_budget = bg_all[(bg_all.perc_fld_area <= .10)]
-                else:
-                    bg_budget = bg_all
-                bg_budget = bg_budget[(bg_budget.new_price <= hh.house_budget)]
-            elif self.house_choice_mode == 'budget_reduction':
-                bg_all['house_budget'] = hh.house_budget
-                bg_all.loc[(bg_all.perc_fld_area >= .10), 'house_budget'] = hh.house_budget * (1.0 - self.budget_reduction_perc)
-                bg_budget = bg_all[(bg_all.new_price <= bg_all.house_budget)]
-            else:
-                bg_budget = bg_all[(bg_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
+            block_group_all = self.target.housing_block_group_df
+            block_group_budget = block_group_all[(block_group_all.new_price <= hh.house_budget)]  # JY revise to pin to dynamic prices
             if first:
                 try:
-                    bg_sample = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
+                    block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
+                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_hhs
                     hh.location = 'outmigrated'
                     continue
-                bg_sample['hh'] = hh.name
-                bg_sample['a'] = 0.4
-                bg_sample['b'] = 0.4
-                bg_sample['c'] = 0.2
+                block_group_sample['hh'] = hh.name
+                block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
+                block_group_sample['b'] = 0.4
+                block_group_sample['c'] = 0.2
             else:
                 try:
-                    bg_append = bg_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
+                    block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
-                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_hhs
+                    logging.info(hh.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_hhs
                     hh.location = 'outmigrated'
                     continue
-                bg_append['hh'] = hh.name
-                bg_append['a'] = 0.4
-                bg_append['b'] = 0.4
-                bg_append['c'] = 0.2
-                bg_sample = pd.concat([bg_sample, bg_append], ignore_index=True)
+                block_group_append['hh'] = hh.name
+                block_group_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
+                block_group_append['b'] = 0.4
+                block_group_append['c'] = 0.2
+                block_group_sample = pd.concat([block_group_sample, block_group_append], ignore_index=True)
 
             first = False
 
         if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
 
             def cobb_douglas_utility(row):
-                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (row['flood_risk_norm'] ** row['c'])
+                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (
+                            row['flood_risk_norm'] ** row['c'])
 
-            bg_sample['utility'] = bg_sample.apply(cobb_douglas_utility, axis=1)
+            block_group_sample['utility'] = block_group_sample.apply(cobb_douglas_utility, axis=1)
 
         elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + \
-                (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + \
-                (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) + \
-                (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + \
-                (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber']) + \
-                (self.simple_anova_coefficients[5] * self.target.housing_bg_df['N_perc_area_flood']) + \
-                (1 * self.target.housing_bg_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+            block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
+                (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
+                (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \
+                (self.simple_anova_coefficients[3] * self.target.housing_block_group_df['N_MeanNoOfStories']) + \
+                (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
+                (self.simple_anova_coefficients[5] * self.target.housing_block_group_df['N_perc_area_flood']) + \
+                (1 * self.target.housing_block_group_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
 
         elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            bg_sample['utility'] = (self.simple_anova_coefficients[0]) + \
-                (self.simple_anova_coefficients[1] * self.target.housing_bg_df['N_MeanSqfeet']) + \
-                (self.simple_anova_coefficients[2] * self.target.housing_bg_df['N_MeanAge']) + \
-                (self.simple_anova_coefficients[3] * self.target.housing_bg_df['N_MeanNoOfStories']) + \
-                (self.simple_anova_coefficients[4] * self.target.housing_bg_df['N_MeanFullBathNumber']) + \
-                (1 * self.target.housing_bg_df['residuals'])
+            block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
+                (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
+                (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \
+                (self.simple_anova_coefficients[3] * self.target.housing_block_group_df['N_MeanNoOfStories']) + \
+                (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
+                (1 * self.target.housing_block_group_df['residuals'])
 
-        try:
-            self.target.hh_utilities_df = self.target.hh_utilities_df.append(bg_sample[['GEOID', 'hh', 'utility']])
-        except AttributeError: # Added to accommodate turning off new agent engines
-            self.target.hh_utilities_df = bg_sample[['GEOID', 'hh', 'utility']]
-
-        pass  # to accommodate debugger
+        self.target.hh_utilities_df = block_group_sample[['GEOID', 'hh', 'utility']]

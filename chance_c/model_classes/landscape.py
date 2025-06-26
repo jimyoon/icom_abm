@@ -26,10 +26,18 @@ class ABMLandscape(Network):
         avg_hh_income: Average household income across the landscape.
         avg_hh_size: Average household size across the landscape.
         total_population: Total population across all block groups.
-        housing_bg_df: DataFrame containing block group housing data.
+        housing_block_group_df: DataFrame containing block group housing data.
     """
     
-    def __init__(self, name: str, **kwargs) -> None:
+    def __init__(
+            self, 
+            name: str, 
+            avg_hh_income: float = 0,
+            avg_hh_size: float = 0,
+            total_population: int = 0,
+            housing_block_group_df: pd.DataFrame = None,
+            **kwargs
+    ) -> None:
         """Initialize the ABMLandscape.
         
         Args:
@@ -41,21 +49,23 @@ class ABMLandscape(Network):
         self.unassigned_hhs = {}  # dictionary of unassigned new hh agents keyed on hh name (long dict, do not include as property to save memory)
         self.relocating_hhs = {}  # dictionary of existing hh agents that are relocating keyed on hh name (long dict, do not include as property to save memory)
         self.available_units_list = []  # list of available units (long list, do not include as property to save memory)
-        self.avg_hh_income = 0
-        self.avg_hh_size = 0
+        self.avg_hh_income = avg_hh_income
+        self.avg_hh_size = avg_hh_size
+        self.total_population = total_population
+        self.housing_block_group_df = housing_block_group_df
 
     _properties = {
         'total_population': 0,
         'avg_hh_income': 0,
         'avg_hh_size': 0,
-        'housing_bg_df': None,  # Currently stores bg dataframe, note history record will correspond to bg status at the beginning of the time period/year
+        'housing_block_group_df': None,  # Currently stores block_group dataframe, note history record will correspond to block_group status at the beginning of the time period/year
     }
 
     def setup(self, timestep: int) -> None:
         """Set up the landscape for a given timestep.
         
         Resets various queues and lists, and for the first timestep, loads 
-        housing_bg_df based upon initial agent population.
+        housing_block_group_df based upon initial agent population.
         
         Args:
             timestep: The current timestep for setup operations.
@@ -66,7 +76,7 @@ class ABMLandscape(Network):
         self.relocating_hhs = {}
         self.available_units_list = []
 
-        if self.current_timestep_idx == 0:  # For first timestep, load housing_bg_df based upon initial agent population
+        if self.current_timestep_idx == 0:  # For first timestep, load housing_block_group_df based upon initial agent population
             # reset population sums
             self.total_population = 0
 
@@ -76,57 +86,57 @@ class ABMLandscape(Network):
 
             # update master block group pandas dataframe (JY Add engine so this takes place at end of timestep rather than at beginning of next timestep)
             rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
-            for bg in self.nodes:
-                bg_dict = {}
-                bg_dict['name'] = bg.name
-                bg_dict['no_hh_agents'] = len(bg.hh_agents)
+            for block_group in self.nodes:
+                block_group_dict = {}
+                block_group_dict['name'] = block_group.name
+                block_group_dict['no_hh_agents'] = len(block_group.hh_agents)
 
                 # calculate various statistics (block level) from hh agents
-                bg.population = 0
-                incomes_bg = []
-                hh_size_bg = []
-                bg.no_of_hhs = len(bg.hh_agents)
+                block_group.population = 0
+                incomes_block_group = []
+                hh_size_block_group = []
+                block_group.no_of_hhs = len(block_group.hh_agents)
 
 
-                for name, a in bg.hh_agents.items():
+                for name, a in block_group.hh_agents.items():
                     if np.isfinite(a.hh_size) or a.hh_size == 0:  # accounts for 0 or nan hh_size values
                         self.total_population += a.no_hhs_per_agent * a.hh_size
                     else:  # use mean
-                        self.total_population += a.no_hhs_per_agent * self.housing_bg_df.hhsize1990.mean()
-                    bg.population += a.no_hhs_per_agent * a.hh_size
-                    incomes_bg.append(a.income)
+                        self.total_population += a.no_hhs_per_agent * self.housing_block_group_df.hhsize1990.mean()
+                    block_group.population += a.no_hhs_per_agent * a.hh_size
+                    incomes_block_group.append(a.income)
                     incomes_landscape.append(a.income)
-                    hh_size_bg.append(a.hh_size)
+                    hh_size_block_group.append(a.hh_size)
                     hh_size_landscape.append(a.hh_size)
 
-                bg_dict['population'] = bg.population
-                if not incomes_bg:  # i.e. no households reside in block group
-                    bg_dict['average_income'] = nan
-                    bg.mean_hh_income = nan  # update attribute on block group
+                block_group_dict['population'] = block_group.population
+                if not incomes_block_group:  # i.e. no households reside in block group
+                    block_group_dict['average_income'] = nan
+                    block_group.mean_hh_income = nan  # update attribute on block group
                 else:
-                    bg_dict['average_income'] = statistics.mean(incomes_bg)
-                    bg.avg_hh_income = statistics.mean(incomes_bg)  # update attribute on block group
-                if not hh_size_bg:
-                    bg_dict['avg_hh_size'] = nan
-                    bg.avg_hh_size = nan  # update attribute on block group
+                    block_group_dict['average_income'] = statistics.mean(incomes_block_group)
+                    block_group.avg_hh_income = statistics.mean(incomes_block_group)  # update attribute on block group
+                if not hh_size_block_group:
+                    block_group_dict['avg_hh_size'] = nan
+                    block_group.avg_hh_size = nan  # update attribute on block group
                 else:
-                    bg_dict['avg_hh_size'] = statistics.mean(hh_size_bg)
-                    bg.avg_hh_size = statistics.mean(hh_size_bg)  # update attribute on block group
+                    block_group_dict['avg_hh_size'] = statistics.mean(hh_size_block_group)
+                    block_group.avg_hh_size = statistics.mean(hh_size_block_group)  # update attribute on block group
 
                 # pop density calc
-                bg_dict['pop_density'] = bg.population / bg.area
-                bg.pop_density = bg.population / bg.area
+                block_group_dict['pop_density'] = block_group.population / block_group.area
+                block_group.pop_density = block_group.population / block_group.area
 
                 #  occupied units calc
-                bg_dict['occupied_units'] = bg.occupied_units
+                block_group_dict['occupied_units'] = block_group.occupied_units
 
                 # available units calc
-                bg_dict['available_units'] = bg.available_units
+                block_group_dict['available_units'] = block_group.available_units
 
                 # supply exceeds demand
-                bg_dict['demand_exceeds_supply'] = bg.demand_exceeds_supply
+                block_group_dict['demand_exceeds_supply'] = block_group.demand_exceeds_supply
 
-                rows_list.append(bg_dict)
+                rows_list.append(block_group_dict)
 
             housing_current_df = pd.DataFrame(rows_list)
             self.avg_hh_income = statistics.mean(incomes_landscape)
@@ -135,9 +145,9 @@ class ABMLandscape(Network):
             # calculate normalized statistics for block groups
             housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
 
-            # merge with housing_bg_df to retain geometry features
-            cols_to_use = self.housing_bg_df.columns.difference(housing_current_df.columns)
-            self.housing_bg_df = pd.merge(self.housing_bg_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
+            # merge with housing_block_group_df to retain geometry features
+            cols_to_use = self.housing_block_group_df.columns.difference(housing_current_df.columns)
+            self.housing_block_group_df = pd.merge(self.housing_block_group_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
 
             pass  # added to allow for debugger
 
@@ -187,11 +197,28 @@ class BlockGroup(Node):
         avg_hh_income (float): Average household income of residents ($).
     """
     
-    def __init__(self, name: str, x: float, y: float, county: str, tract: str, 
-                 blkgrpce: str, geometry, area: float, init_pop: int, 
-                 perc_fld_area: float, pop90: int, mhi90: float, hhsize90: float,
-                 coastdist: float, cbddist: float, hhtrans93: float, 
-                 salesprice93: float, salespricesf93: float, **kwargs) -> None:
+    def __init__(
+            self, 
+            name: str, 
+            x: float, 
+            y: float, 
+            county: str, 
+            tract: str, 
+            blkgrpce: str, 
+            geometry, 
+            area: float, 
+            init_pop: int, 
+            perc_fld_area: float, 
+            pop90: int, 
+            mhi90: float, 
+            hhsize90: float, 
+            coastdist: float, 
+            cbddist: float, 
+            hhtrans93: float, 
+            salesprice93: float, 
+            salespricesf93: float, 
+            **kwargs
+    ) -> None:
         """Initialize the BlockGroup node.
         
         Args:
@@ -216,6 +243,7 @@ class BlockGroup(Node):
             **kwargs: Additional keyword arguments passed to the parent class.
         """
         super(BlockGroup, self).__init__(name, x, y, **kwargs)
+        
         # fixed attributes
         self.name = name
         self.county = county

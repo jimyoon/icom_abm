@@ -73,7 +73,7 @@ class NewAgentCreation(Engine):
             if self.inc_growth_mode == 'normal_distribution':
                 # create gaussian distribution for household income of new population
                 lower, upper = 5000, 300000  # truncate distribution to avoid unrealistic incomes
-                mu, sigma = self.target.housing_bg_df.average_income.mean() * (1 + self.inc_growth_perc), self.target.housing_bg_df.average_income.std()
+                mu, sigma = self.target.housing_block_group_df.average_income.mean() * (1 + self.inc_growth_perc), self.target.housing_block_group_df.average_income.std()
                 X = stats.truncnorm(
                     (lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
 
@@ -89,7 +89,7 @@ class NewAgentCreation(Engine):
                     count += 1
             elif self.inc_growth_mode == 'percentile_based':
                 # JY ADD CODE HERE
-                hh_income = self.target.housing_bg_df.average_income.quantile(q=self.pop_growth_inc_perc) ### UPDATE WITH LIVE INCOMES!
+                hh_income = self.target.housing_block_group_df.average_income.quantile(q=self.pop_growth_inc_perc) ### UPDATE WITH LIVE INCOMES!
                 count = 1
                 for a in range(int(no_of_new_agents)):
                     name = 'hh_agent_' + str(self.timestep.year) + '_' + str(count)

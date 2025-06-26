@@ -49,14 +49,14 @@ ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
 s.network.get_history('housing_bg_df')[-1].plot(column = 'population', cmap='OrRd', legend=True)
 
 ##### Plot population change
-gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final bg df
+gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final block_group df
 gdf['population_change'] = s.network.get_history('housing_bg_df')[-1]['population'] - s.network.get_history('housing_bg_df')[0]['population']
 # normalize color
 ax = gdf.plot(column = 'population', cmap='OrRd', alpha=0.8, legend=True)
 ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
 
 ##### Plot population change with divergent chloropleth map centered on 0
-gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final bg df
+gdf = s.network.get_history('housing_bg_df')[-1]  # copy of final block_group df
 gdf['population_change'] = s.network.get_history('housing_bg_df')[-1]['population'] - s.network.get_history('housing_bg_df')[0]['population']
 # normalize color
 vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
@@ -437,3 +437,46 @@ hh_df.loc[(hh_df.income >= hh_df.income.quantile(.50)) & (hh_df.income < hh_df.i
 hh_df.loc[(hh_df.income >= hh_df.income.quantile(.75)), 'income_category'] = "4. High"
 
 hh_df.to_csv('hh_alluvial_test_v5.csv')
+
+# Load block group data
+block_group_data = pd.read_csv('block_group_results.csv')
+
+# Calculate statistics by block group
+block_group_stats = block_group_data.groupby('block_group_id').agg({
+    'population': ['mean', 'std', 'min', 'max'],
+    'income': ['mean', 'std', 'min', 'max'],
+    'housing_price': ['mean', 'std', 'min', 'max']
+}).reset_index()
+
+# Flatten column names
+block_group_stats.columns = ['block_group_id', 'pop_mean', 'pop_std', 'pop_min', 'pop_max', 
+                            'income_mean', 'income_std', 'income_min', 'income_max',
+                            'price_mean', 'price_std', 'price_min', 'price_max']
+
+# Save block group statistics
+block_group_stats.to_csv('block_group_statistics.csv', index=False)
+
+# Create block group summary plots
+import matplotlib.pyplot as plt
+
+# Population change by block group
+plt.figure(figsize=(12, 6))
+block_group_data.groupby('block_group_id')['population'].mean().plot(kind='bar')
+plt.title('Average Population by Block Group')
+plt.xlabel('Block Group ID')
+plt.ylabel('Population')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('block_group_population.png')
+plt.close()
+
+# Income distribution by block group
+plt.figure(figsize=(12, 6))
+block_group_data.boxplot(column='income', by='block_group_id')
+plt.title('Income Distribution by Block Group')
+plt.xlabel('Block Group ID')
+plt.ylabel('Income')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('block_group_income.png')
+plt.close()

@@ -22,3 +22,26 @@ subset.to_file('ms_buildings_balt.shp', driver='ESRI Shapefile')
 
 subset = gpd.sjoin(poly, balt, how="inner", op='intersects')
 subset.to_file('ms_buildings_balt_sjoin.shp', driver='ESRI Shapefile')
+
+# Load the block group shapefile
+block_group_gdf = gpd.read_file('blck_grp_extract_prj.shp')
+
+# Load the building data
+buildings_gdf = gpd.read_file('ms_buildings.shp')
+
+# Perform spatial join to assign buildings to block groups
+block_group_buildings = gpd.sjoin(buildings_gdf, block_group_gdf, how='left', predicate='within')
+
+# Group by block group and calculate building statistics
+block_group_building_stats = block_group_buildings.groupby('GEOID').agg({
+    'building_id': 'count',
+    'building_area': ['mean', 'std'],
+    'building_height': ['mean', 'std'],
+    'building_age': ['mean', 'std']
+}).reset_index()
+
+# Flatten column names
+block_group_building_stats.columns = ['GEOID', 'building_count', 'mean_area', 'std_area', 'mean_height', 'std_height', 'mean_age', 'std_age']
+
+# Save the results
+block_group_building_stats.to_csv('block_group_building_stats.csv', index=False)

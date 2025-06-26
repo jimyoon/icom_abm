@@ -17,7 +17,7 @@ class SimulationConfig:
         scenario: Scenario identifier for the simulation.
         intervention: Intervention type being simulated.
         start_year: Starting year for the simulation.
-        no_years: Number of years to run the simulation (model runs for n+1 years).
+        n_years: Number of years to run the simulation (model runs for n+1 years).
         agent_housing_aggregation: Level of agent/building aggregation (e.g., 100
             means 1 representative agent = 100 households).
         hh_size: Average household size across all households.
@@ -46,6 +46,10 @@ class SimulationConfig:
         flood_filename: CSV file containing FEMA 100-year flood data.
         housing_filename: CSV file containing housing characteristics data.
         hedonic_filename: CSV file containing hedonic regression results.
+        block_group_sample_size: Sample size for block groups.
+        zoning_mode: Method for zoning.
+        zoning_perc: Percentage of zoning.
+        market_mode: Method for market choice.
     """
     
     # Simulation setup
@@ -53,7 +57,7 @@ class SimulationConfig:
     scenario: str = 'Baseline'
     intervention: str = 'Baseline'
     start_year: int = 2018
-    no_years: int = 2
+    n_years: int = 2
     
     # Agent and housing parameters
     agent_housing_aggregation: int = 10
@@ -88,13 +92,17 @@ class SimulationConfig:
     price_increase_perc: float = 0.05
     
     # File paths and data sources
+    block_group_sample_size: int = 10
+    zoning_mode: str = 'simple_perc'
+    zoning_perc: float = 0.05
+    market_mode: str = 'top_candidate'
     landscape_name: str = 'Baltimore'
     geo_filename: str = 'blck_grp_extract_prj.shp'
-    pop_filename: str = 'balt_bg_population_2018.csv'
+    pop_filename: str = 'balt_block_group_population_2018.csv'
     pop_fieldname: str = 'AJWME001'
-    flood_filename: str = 'bg_perc_100yr_flood.csv'
-    housing_filename: str = 'bg_housing_1993.csv'
-    hedonic_filename: str = 'simple_anova_hedonic_without_flood_bg0418.csv'
+    flood_filename: str = 'block_group_perc_100yr_flood.csv'
+    housing_filename: str = 'block_group_housing_1993.csv'
+    hedonic_filename: str = 'simple_anova_hedonic_without_flood_block_group0418.csv'
     
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'SimulationConfig':
@@ -121,7 +129,7 @@ class SimulationConfig:
             'scenario': self.scenario,
             'intervention': self.intervention,
             'start_year': self.start_year,
-            'no_years': self.no_years,
+            'n_years': self.n_years,
             'agent_housing_aggregation': self.agent_housing_aggregation,
             'hh_size': self.hh_size,
             'initial_vacancy': self.initial_vacancy,
@@ -148,7 +156,11 @@ class SimulationConfig:
             'pop_fieldname': self.pop_fieldname,
             'flood_filename': self.flood_filename,
             'housing_filename': self.housing_filename,
-            'hedonic_filename': self.hedonic_filename
+            'hedonic_filename': self.hedonic_filename,
+            'block_group_sample_size': self.block_group_sample_size,
+            'zoning_mode': self.zoning_mode,
+            'zoning_perc': self.zoning_perc,
+            'market_mode': self.market_mode
         }
         
         with open(yaml_path, 'w') as file:

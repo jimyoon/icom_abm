@@ -18,9 +18,9 @@ class BuildingDevelopment(Engine):
         **kwargs: Additional keyword arguments passed to the parent class.
     
     Inter-module Outputs/Modifications:
-        bg.new_units_constructed (int): Number of new units constructed in block group.
-        bg.available_units (int): Updated available units in block group.
-        target.housing_bg_df (pandas.DataFrame): Updated housing dataframe with 
+        block_group.new_units_constructed (int): Number of new units constructed in block group.
+        block_group.available_units (int): Updated available units in block group.
+        target.housing_block_group_df (pandas.DataFrame): Updated housing dataframe with 
             new construction and available units data.
     """
     
@@ -44,12 +44,12 @@ class BuildingDevelopment(Engine):
         where demand exceeds supply. Updates both node attributes and the housing
         dataframe with new construction data.
         """
-        for bg in self.target.nodes:
-            if bg.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
-                bg.new_units_constructed = round(bg.occupied_units * self.stock_increase_perc)
-                bg.available_units += bg.new_units_constructed
-                bg.available_units = int(bg.available_units)
-                self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'new_units_constructed'] = bg.new_units_constructed
-                self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == bg.name, 'available_units'] = bg.available_units
+        for block_group in self.target.nodes:
+            if block_group.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
+                block_group.new_units_constructed = round(block_group.occupied_units * self.stock_increase_perc)
+                block_group.available_units += block_group.new_units_constructed
+                block_group.available_units = int(block_group.available_units)
+                self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_units_constructed'] = block_group.new_units_constructed
+                self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'available_units'] = block_group.available_units
             else:
-                bg.new_units_constructed = 0
+                block_group.new_units_constructed = 0

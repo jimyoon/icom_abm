@@ -23,12 +23,12 @@ flood.to_csv('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_a
 flood = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\rift_flood_6in_epsg4326_20220404_v2.shp')
 build = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\ms_buildings_balt_sjoin.shp')
 # bg = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\PyProjects\\icom_abm\\data_inputs\\blck_grp_extract_epsg4326.shp')
-bg = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\GIS\\ICoM\\shapefiles\\admin\\baltimore_blck_epsg4326.shp')
+block_group = gpd.read_file('C:\\Users\\yoon644\\OneDrive - PNNL\\Documents\\GIS\\ICoM\\shapefiles\\admin\\baltimore_blck_epsg4326.shp')
 
 # Convert to a Cartesian system
 flood = flood.to_crs({'init': 'epsg:6487'})
 build = build.to_crs({'init': 'epsg:6487'})
-bg = bg.to_crs({'init': 'epsg:6487'})
+block_group = block_group.to_crs({'init': 'epsg:6487'})
 
 # Assign each building unique ID
 build["id"] = build.index
@@ -40,12 +40,12 @@ build["area"] = build['geometry'].area
 build = build[['geometry','area', 'id']]
 
 # Calculate total building footprint per block group
-build_all_bg = gpd.sjoin(build, bg, how='inner',op='within')
+build_all_bg = gpd.sjoin(build, block_group, how='inner',op='within')
 aggregation_functions = {'area': 'sum'}
 bg_build_area_all = build_all_bg.groupby(['GISJOIN'], as_index=False).aggregate(aggregation_functions)
 
 # Calculate number of buildings per block group
-build_all_bg = gpd.sjoin(build, bg, how='inner',op='within')
+build_all_bg = gpd.sjoin(build, block_group, how='inner',op='within')
 aggregation_functions = {'area': 'count'}
 bg_build_area_count = build_all_bg.groupby(['GISJOIN'], as_index=False).aggregate(aggregation_functions)
 bg_build_area_count = bg_build_area_count.rename(columns={'area': 'count'})
@@ -61,7 +61,7 @@ build_flood = build_flood.drop_duplicates(subset='id', keep='first')  # drop dup
 build_flood = build_flood[['geometry','area']]
 
 # Calculate flooded footprint per block group
-build_flood_bg = gpd.sjoin(build_flood, bg, how='inner',op='within')
+build_flood_bg = gpd.sjoin(build_flood, block_group, how='inner',op='within')
 aggregation_functions = {'area': 'sum'}
 bg_build_area_flood = build_flood_bg.groupby(['GISJOIN'], as_index=False).aggregate(aggregation_functions)
 bg_build_area_flood['area_flood'] = bg_build_area_flood['area']
@@ -71,3 +71,30 @@ bg_percent_flood = pd.merge(bg_build_area_all, bg_build_area_flood[['GISJOIN','a
 bg_percent_flood = bg_percent_flood.fillna(0)
 bg_percent_flood['perc_area_flood'] = bg_percent_flood['area_flood'] / bg_percent_flood['area']
 bg_percent_flood.to_csv('perc_build_area_flood_corr_20220404_blocklevel.csv')
+
+# Load the block group shapefile
+block_group = gpd.read_file('blck_grp_extract_prj.shp')
+
+# Load the flood data
+flood = gpd.read_file('fema_100yr_flood_zone.shp')
+
+# Perform spatial join to calculate percentage of each block group in flood zone
+block_group_flood = gpd.sjoin(block_group, flood, how='left', predicate='intersects')
+
+# Calculate area of intersection for each block group
+block_group_flood['intersection_area'] = block_group_flood.geometry.area
+
+# Group by block group and calculate total intersection area
+block_group_flood_summary = block_group_flood.groupby('GEOID')['intersection_area'].sum().reset_index()
+
+# Merge back with original block group data
+block_group = block_group.merge(block_group_flood_summary, on='GEOID', how='left')
+
+# Calculate percentage of block group in flood zone
+block_group['perc_fld_area'] = (block_group['intersection_area'] / block_group['ALAND']) * 100
+
+# Fill NaN values with 0 (block groups with no flood risk)
+block_group['perc_fld_area'] = block_group['perc_fld_area'].fillna(0)
+
+# Save the results
+block_group[['GEOID', 'perc_fld_area']].to_csv('block_group_perc_100yr_flood.csv', index=False)

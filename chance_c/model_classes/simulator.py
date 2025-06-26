@@ -26,12 +26,21 @@ class ICOMSimulator(Simulator):
         scenario (str): Scenario identifier for the simulation.
         intervention (str): Intervention type for the simulation.
         start_year (int): Starting year for the simulation.
-        no_of_years (int): Number of years to simulate.
+        n_years (int): Number of years to simulate.
     """
     
-    def __init__(self, network, record_time: bool, progress: bool, 
-                 max_iterations: int, name: str, scenario: str, 
-                 intervention: str, start_year: int, no_of_years: int) -> None:
+    def __init__(
+            self, 
+            network, 
+            record_time: bool = False, 
+            progress: bool = False, 
+            max_iterations: int = 100, 
+            name: str = 'chance-c', 
+            scenario: str = 'default', 
+            intervention: str = 'default', 
+            start_year: int = 1990, 
+            n_years: int = 1
+    ) -> None:
         """Initialize the ICOM Simulator.
         
         Args:
@@ -43,7 +52,7 @@ class ICOMSimulator(Simulator):
             scenario: Scenario identifier for the simulation.
             intervention: Intervention type for the simulation.
             start_year: Starting year for the simulation.
-            no_of_years: Number of years to simulate.
+            n_years: Number of years to simulate.
         """
         super(ICOMSimulator, self).__init__(network, record_time, progress, max_iterations)
         # set simulator characteristics
@@ -53,7 +62,7 @@ class ICOMSimulator(Simulator):
 
         # set timestep information
         self.start_year = start_year
-        self.no_of_years = no_of_years
+        self.n_years = n_years
 
     def set_timestep_information(self) -> None:
         """Set up timestep information for the simulation.
@@ -63,16 +72,24 @@ class ICOMSimulator(Simulator):
         """
         logging.info("Setting up timestep information")
         timesteps = [datetime.datetime.strptime(str(self.start_year), '%Y')]
-        for y in range(self.no_of_years):
+        for y in range(self.n_years):
             new_year = timesteps[-1].year + 1
             timesteps.append(datetime.datetime.strptime(str(new_year), '%Y'))
         self.set_timesteps(timesteps)
         logging.info("The first timestep is " + str(self.timesteps[0]))
         logging.info("The last timestep is " + str(self.timesteps[-1]))
 
-    def set_landscape(self, landscape_name: str, geo_filename: str, 
-                     pop_filename: str, pop_fieldname: str, flood_filename: str, 
-                     housing_filename: str, hedonic_filename: str) -> None:
+    def set_landscape(
+            self, 
+            landscape_name: str, 
+            geo_filename: str, 
+            pop_filename: str, 
+            pop_fieldname: str, 
+            flood_filename: str, 
+            housing_filename: str, 
+            hedonic_filename: str,
+            **kwargs
+    ) -> None:
         """Create landscape based on census geographies and data.
         
         Assumes data structure follows IPUMS/NHGIS format. Loads and processes
@@ -91,56 +108,56 @@ class ICOMSimulator(Simulator):
         logging.info("Setting up model landscape")
         landscape = ABMLandscape(name=landscape_name)
 
-        bg = gpd.read_file(geo_filename)
+        block_group = gpd.read_file(geo_filename)
         pop = pd.read_csv(pop_filename)
         flood = pd.read_csv(flood_filename)
         housing = pd.read_csv(housing_filename)
         hedonic = pd.read_csv(hedonic_filename)
 
         # join census/population data to block groups
-        bg = pd.merge(bg, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
-        bg = pd.merge(bg, flood[['GISJOIN', 'perc_fld_area']], how='left', on='GISJOIN')
-        bg['perc_fld_area'] = bg['perc_fld_area'].fillna(0)
-        bg = pd.merge(bg, housing, how='left', on='GISJOIN')
+        block_group = pd.merge(block_group, pop[['GISJOIN', pop_fieldname]], how='left', on='GISJOIN')
+        block_group = pd.merge(block_group, flood[['GISJOIN', 'perc_fld_area']], how='left', on='GISJOIN')
+        block_group['perc_fld_area'] = block_group['perc_fld_area'].fillna(0)
+        block_group = pd.merge(block_group, housing, how='left', on='GISJOIN')
 
         # load table with hedonic regression information for utility function
-        bg = pd.merge(bg, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
+        block_group = pd.merge(block_group, hedonic[['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories','N_MeanFullBathNumber','N_perc_area_flood','residuals']], how='left', on='GISJOIN')
 
         # determine relative cbd proximity and relative flood risk for input to hh utility calcs (JY consider moving into an if statement so only loads with specified utility formulation)
-        bg['rel_prox_cbd'] = bg['cbddist'].max() + 1 - bg['cbddist']
-        bg['rel_flood_risk'] = bg['perc_fld_area'].max() + 1 - bg['perc_fld_area']
+        block_group['rel_prox_cbd'] = block_group['cbddist'].max() + 1 - block_group['cbddist']
+        block_group['rel_flood_risk'] = block_group['perc_fld_area'].max() + 1 - block_group['perc_fld_area']
 
         # calculate normalized values for cbd proximity and flood risk
-        bg['prox_cbd_norm'] = bg['rel_prox_cbd'] / bg['rel_prox_cbd'].max()
-        bg['flood_risk_norm'] = bg['rel_flood_risk'] / bg['rel_flood_risk'].max()
+        block_group['prox_cbd_norm'] = block_group['rel_prox_cbd'] / block_group['rel_prox_cbd'].max()
+        block_group['flood_risk_norm'] = block_group['rel_flood_risk'] / block_group['rel_flood_risk'].max()
 
         # calculate housing budget based on 1990-1993 data
-        bg['housing_budget_perc'] = bg['mhi1990'] / bg['salesprice1993']
+        block_group['housing_budget_perc'] = block_group['mhi1990'] / block_group['salesprice1993']
 
         # replace 0 mhi1990 values with non-zero minimum
-        non_zero_min = bg[(bg.mhi1990 > 0)].mhi1990.min()
-        bg.loc[bg['mhi1990'] == 0, 'mhi1990'] = non_zero_min
+        non_zero_min = block_group[(block_group.mhi1990 > 0)].mhi1990.min()
+        block_group.loc[block_group['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
-        for index, row in bg.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
+        for index, row in block_group.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
             if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
                 location = row['geometry']
-                bg_subset = bg[(bg.GEOID != row['GEOID']) & (np.isfinite(bg.salesprice1993)) & (np.isfinite(bg.N_MeanSqfeet))]
-                polygon_index = bg_subset.distance(location).sort_values().index[0]
-                bg.at[index, 'salesprice1993'] = bg_subset.loc[polygon_index, 'salesprice1993']
-                bg.at[index, 'N_MeanSqfeet'] = bg_subset.loc[polygon_index, 'N_MeanSqfeet']
-                bg.at[index, 'N_MeanAge'] = bg_subset.loc[polygon_index, 'N_MeanAge']
-                bg.at[index, 'N_MeanNoOfStories'] = bg_subset.loc[polygon_index, 'N_MeanNoOfStories']
-                bg.at[index, 'N_MeanFullBathNumber'] = bg_subset.loc[polygon_index, 'N_MeanFullBathNumber']
-                bg.at[index, 'N_perc_area_flood'] = bg_subset.loc[polygon_index, 'N_perc_area_flood']
-                bg.at[index, 'residuals'] = bg_subset.loc[polygon_index, 'residuals']
-                bg.at[index, 'salespricesf1993'] = bg_subset.loc[polygon_index, 'salespricesf1993']
+                block_group_subset = block_group[(block_group.GEOID != row['GEOID']) & (np.isfinite(block_group.salesprice1993)) & (np.isfinite(block_group.N_MeanSqfeet))]
+                polygon_index = block_group_subset.distance(location).sort_values().index[0]
+                block_group.at[index, 'salesprice1993'] = block_group_subset.loc[polygon_index, 'salesprice1993']
+                block_group.at[index, 'N_MeanSqfeet'] = block_group_subset.loc[polygon_index, 'N_MeanSqfeet']
+                block_group.at[index, 'N_MeanAge'] = block_group_subset.loc[polygon_index, 'N_MeanAge']
+                block_group.at[index, 'N_MeanNoOfStories'] = block_group_subset.loc[polygon_index, 'N_MeanNoOfStories']
+                block_group.at[index, 'N_MeanFullBathNumber'] = block_group_subset.loc[polygon_index, 'N_MeanFullBathNumber']
+                block_group.at[index, 'N_perc_area_flood'] = block_group_subset.loc[polygon_index, 'N_perc_area_flood']
+                block_group.at[index, 'residuals'] = block_group_subset.loc[polygon_index, 'residuals']
+                block_group.at[index, 'salespricesf1993'] = block_group_subset.loc[polygon_index, 'salespricesf1993']
 
         # initialize new price for updating
-        bg['new_price'] = bg['salesprice1993']
+        block_group['new_price'] = block_group['salesprice1993']
 
         # for each entry in census table, create pysnim-based block group cell/node
         cells = []
-        for index, row in bg.iterrows():
+        for index, row in block_group.iterrows():
             x = row['geometry'].centroid.x  # gets x-coord of centroid on polygon from shapely geometric object
             y = row['geometry'].centroid.y  # gets x-coord of centroid on polygon from shapely geometric object
             cells.append(BlockGroup(name=row['GEOID'], x=x, y=y, county=row['COUNTYFP'], tract=row['TRACTCE'],
@@ -150,8 +167,8 @@ class ICOMSimulator(Simulator):
                                     coastdist=row['coastdist'], cbddist=row['cbddist'], hhtrans93=row['hhtrans1993'],
                                     salesprice93=row['salesprice1993'], salespricesf93=row['salespricesf1993']))
 
-        # store the bg pandas dataframe on the network object as a reference
-        landscape.housing_bg_df = bg
+        # store the block_group pandas dataframe on the network object as a reference
+        landscape.housing_block_group_df = block_group
 
         landscape.add_nodes(*cells)
 
@@ -162,19 +179,19 @@ class ICOMSimulator(Simulator):
     def convert_initial_population_to_agents(self, no_hhs_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
         count = 1
-        for bg in self.network.nodes:
-            if bg.hhsize90 != 0 and np.isfinite(bg.hhsize90):
-                no_of_hhs = round(bg.pop90 / bg.hhsize90)
+        for block_group in self.network.nodes:
+            if block_group.hhsize90 != 0 and np.isfinite(block_group.hhsize90):
+                no_of_hhs = round(block_group.pop90 / block_group.hhsize90)
             else:  # if hh size is 0 or nan (i.e., data error) using median household size for population
-                no_of_hhs = round(bg.pop90 / self.network.housing_bg_df.hhsize1990.median())
+                no_of_hhs = round(block_group.pop90 / self.network.housing_block_group_df.hhsize1990.median())
             no_of_agents = (no_of_hhs + no_hhs_per_agent // 2) // no_hhs_per_agent  # division with rounding to nearest integer
             for a in range(no_of_agents):
                 name = 'hh_agent_initial_' + str(count)
-                self.network.add_component(HHAgent(name=name, location=bg.name, no_hhs_per_agent=no_hhs_per_agent,
-                                                   hh_size=bg.hhsize90, income=bg.mhi90, house_budget_mode='rhea',
+                self.network.add_component(HHAgent(name=name, location=block_group.name, no_hhs_per_agent=no_hhs_per_agent,
+                                                   hh_size=block_group.hhsize90, income=block_group.mhi90, house_budget_mode='rhea',
                                                    year_of_residence=self.start_year, simple_avoidance_perc=simple_avoidance_perc))  # add household agent to pynsim network
-                bg.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
-                bg.occupied_units += 1  # add occupied unit to associated block group node
+                block_group.hh_agents[self.network.components[-1].name] = self.network.components[-1]  # add pynsim household agent to associated block group node
+                block_group.occupied_units += 1  # add occupied unit to associated block group node
                 self.network.get_institution('all_hh_agents').add_component(self.network.components[-1])  # add pynsim household agent to all hh agents institution
                 count += 1
         logging.info(str(count) + " initial agents added to the simulation")
@@ -182,5 +199,5 @@ class ICOMSimulator(Simulator):
     def initialize_available_building_units(self, initial_vacancy=.20):
         # currently assume a fixed initial vacancy rate across all block groups at the initial_vacancy percentage
         logging.info("Converting initial population to building availability")
-        for bg in self.network.nodes:
-            bg.available_units = round((initial_vacancy * bg.occupied_units) / (1 - initial_vacancy))
+        for block_group in self.network.nodes:
+            block_group.available_units = round((initial_vacancy * block_group.occupied_units) / (1 - initial_vacancy))

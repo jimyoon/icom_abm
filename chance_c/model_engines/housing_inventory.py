@@ -39,11 +39,11 @@ class HousingInventoryOld(Engine):  # JY: deprecated; housing inventory tracked 
         available units list based on the number of available units in each
         block group.
         """
-        for bg in self.target.nodes:
-            if bg.available_units == 0:
-                logging.info('no more units available for block group: ' + bg.name)
-            for unit in range(bg.available_units):
-                self.target.available_units_list.append(bg.name)
+        for block_group in self.target.nodes:
+            if block_group.available_units == 0:
+                logging.info('no more units available for block group: ' + block_group.name)
+            for unit in range(block_group.available_units):
+                self.target.available_units_list.append(block_group.name)
 
     def run_old(self) -> None:
         """Execute the legacy housing inventory identification process.
@@ -52,8 +52,8 @@ class HousingInventoryOld(Engine):  # JY: deprecated; housing inventory tracked 
         on a fixed number of residences per block group, then adds block group
         names to the available units list.
         """
-        for bg in self.target.nodes:
-            bg.available_residences = 10000  # temporarily assume 10,000 residences always available
-            bg.available_units = (bg.available_residences + self.residences_per_unit // 2) // self.residences_per_unit  # division with rounding to nearest integer
-            for unit in range(bg.available_units):
-                self.target.available_units_list.append(bg.name)
+        for block_group in self.target.nodes:
+            block_group.available_residences = 10000  # temporarily assume 10,000 residences always available
+            block_group.available_units = (block_group.available_residences + self.residences_per_unit // 2) // self.residences_per_unit  # division with rounding to nearest integer
+            for unit in range(block_group.available_units):
+                self.target.available_units_list.append(block_group.name)

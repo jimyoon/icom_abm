@@ -59,7 +59,7 @@ class Model:
         scenario: str = 'Baseline',
         intervention: str = 'Baseline',
         start_year: int = 2018,
-        no_years: int = 2,
+        n_years: int = 2,
         agent_housing_aggregation: int = 10,
         hh_size: float = 2.7,
         initial_vacancy: float = 0.20,
@@ -82,11 +82,11 @@ class Model:
         price_increase_perc: float = 0.05,
         landscape_name: str = 'Baltimore',
         geo_filename: str = 'blck_grp_extract_prj.shp',
-        pop_filename: str = 'balt_bg_population_2018.csv',
+        pop_filename: str = 'balt_block_group_population_2018.csv',
         pop_fieldname: str = 'AJWME001',
-        flood_filename: str = 'bg_perc_100yr_flood.csv',
-        housing_filename: str = 'bg_housing_1993.csv',
-        hedonic_filename: str = 'simple_anova_hedonic_without_flood_bg0418.csv',
+        flood_filename: str = 'block_group_perc_100yr_flood.csv',
+        housing_filename: str = 'block_group_housing_1993.csv',
+        hedonic_filename: str = 'simple_anova_hedonic_without_flood_block_group0418.csv',
         record_time: bool = False,
         progress: bool = False,
         max_iterations: int = 1,
@@ -94,7 +94,7 @@ class Model:
         network: Network = None, 
         sensitivity_run: bool = False,
         county_agent_id: str = '005',
-        bg_sample_size: int = 10, # the number of homes that a new agent samples for residential choice
+        block_group_sample_size: int = 10, # the number of homes that a new agent samples for residential choice
         zoning_mode: str = 'simple_perc',
         zoning_perc: float = 0.05,
         market_mode: str = 'top_candidate',
@@ -107,7 +107,7 @@ class Model:
             scenario: Scenario name for the simulation run.
             intervention: Intervention type being simulated.
             start_year: Starting year for the simulation.
-            no_years: Number of years to simulate.
+            n_years: Number of years to simulate.
             agent_housing_aggregation: Number of households represented by each agent.
             hh_size: Average household size.
             initial_vacancy: Initial vacancy rate in the housing market.
@@ -142,7 +142,7 @@ class Model:
             network: Network object (if None, will be created).
             sensitivity_run: Whether this is a sensitivity analysis run.
             county_agent_id: County identifier for zoning decisions.
-            bg_sample_size: Number of block groups to sample for residential choice.
+            block_group_sample_size: Number of block groups to sample for residential choice.
             zoning_mode: Mode for zoning decisions.
             zoning_perc: Percentage for zoning calculations.
             market_mode: Mode for housing market operations.
@@ -160,7 +160,7 @@ class Model:
                 scenario=scenario,
                 intervention=intervention,
                 start_year=start_year,
-                no_years=no_years,
+                n_years=n_years,
                 agent_housing_aggregation=agent_housing_aggregation,
                 hh_size=hh_size,
                 initial_vacancy=initial_vacancy,
@@ -195,7 +195,7 @@ class Model:
         self.config.max_iterations = max_iterations
         self.config.name = name
         self.config.sensitivity_run = sensitivity_run
-        self.config.bg_sample_size = bg_sample_size
+        self.config.block_group_sample_size = block_group_sample_size
         self.config.market_mode = market_mode
         self.network = network
 
@@ -229,7 +229,7 @@ class Model:
         self.start_time = time.time()
 
         # Create pynsim simulation object and set timesteps, landscape on simulation
-        self.s = ICOMSimulator(
+        self.simulator = ICOMSimulator(
             network=self.network, 
             record_time=self.config.record_time, 
             progress=self.config.progress, 
@@ -238,10 +238,10 @@ class Model:
             scenario=self.config.scenario, 
             intervention=self.config.intervention, 
             start_year=self.config.start_year, 
-            no_of_years=self.config.no_years
+            n_years=self.config.n_years
         )
 
-        # sets up timestep information based on model options (start_year, no_years)
+        # sets up timestep information based on model options (start_year, n_years)
         self.simulator.set_timestep_information() 
 
         # Load geography/landscape information to simulation object
@@ -258,9 +258,9 @@ class Model:
         if self.config.sensitivity_run is False:
             # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
             self.simulator.network.add_institution(CountyZoningManager(name=f'zoning_manager_{self.config.county_agent_id}'))
-            for bg in self.simulator.network.nodes:
-                if bg.county == self.config.county_agent_id:
-                    self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}').add_node(bg)
+            for block_group in self.simulator.network.nodes:
+                if block_group.county == self.config.county_agent_id:
+                    self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}').add_node(block_group)
 
         if self.config.sensitivity_run is False:
             # Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices (DEACTIVATE for sensitivity experiments)
@@ -307,7 +307,7 @@ class Model:
         self.simulator.add_engine(
             NewAgentLocation(
                 target, 
-                self.config.bg_sample_size, 
+                self.config.block_group_sample_size, 
                 house_choice_mode=self.config.house_choice_mode, 
                 simple_anova_coefficients=self.config.simple_anova_coefficients, 
                 budget_reduction_perc=self.config.budget_reduction_perc
@@ -319,7 +319,7 @@ class Model:
         self.simulator.add_engine(
             ExistingAgentLocation(
                 target, 
-                bg_sample_size=self.config.bg_sample_size, 
+                block_group_sample_size=self.config.block_group_sample_size, 
                 house_choice_mode=self.config.house_choice_mode, 
                 simple_anova_coefficients=self.config.simple_anova_coefficients
             )
@@ -331,7 +331,7 @@ class Model:
             HousingMarket(
                 target, 
                 market_mode=self.config.market_mode, 
-                bg_sample_size=self.config.bg_sample_size
+                block_group_sample_size=self.config.block_group_sample_size
             )
         )
 
@@ -463,7 +463,7 @@ class Model:
             filename: The output filename (default: "result_test.shp")
             driver: The file format driver (default: 'ESRI Shapefile')
         """
-        self.simulator.network.get_history('housing_bg_df')[-1].to_file(driver=driver, filename=filename)
+        self.simulator.network.get_history('housing_block_group_df')[-1].to_file(driver=driver, filename=filename)
 
     def plot_initial_population(
             self, 
@@ -478,7 +478,7 @@ class Model:
             cmap: The colormap to use (default: 'OrRd')
             legend: Whether to show legend (default: True)
         """
-        self.simulator.network.get_history('housing_bg_df')[0].plot(column=column, cmap=cmap, legend=legend)
+        self.simulator.network.get_history('housing_block_group_df')[0].plot(column=column, cmap=cmap, legend=legend)
 
     def plot_initial_population_with_basemap(
             self, 
@@ -497,7 +497,7 @@ class Model:
             legend: Whether to show legend (default: True)
             basemap_source: The basemap source to use (default: ctx.providers.CartoDB.Positron)
         """
-        df = self.simulator.network.get_history('housing_bg_df')[0]
+        df = self.simulator.network.get_history('housing_block_group_df')[0]
         ax = df.plot(column=column, cmap=cmap, alpha=alpha, legend=legend)
         ctx.add_basemap(ax, source=basemap_source)
 
@@ -518,7 +518,7 @@ class Model:
             legend: Whether to show legend (default: True)
             basemap_source: The basemap source to use (default: ctx.providers.CartoDB.Positron)
         """
-        df = self.simulator.network.housing_bg_df
+        df = self.simulator.network.housing_block_group_df
         ax = df.plot(column=column, cmap=cmap, alpha=alpha, legend=legend)
         ctx.add_basemap(ax, source=basemap_source)
 
@@ -535,7 +535,7 @@ class Model:
             cmap: The colormap to use (default: 'OrRd')
             legend: Whether to show legend (default: True)
         """
-        self.simulator.network.get_history('housing_bg_df')[-1].plot(column=column, cmap=cmap, legend=legend)
+        self.simulator.network.get_history('housing_block_group_df')[-1].plot(column=column, cmap=cmap, legend=legend)
 
     def plot_population_change(
             self, 
@@ -554,8 +554,8 @@ class Model:
             legend: Whether to show legend (default: True)
             basemap_source: The basemap source to use (default: ctx.providers.CartoDB.Positron)
         """
-        gdf = self.simulator.network.get_history('housing_bg_df')[-1]  # copy of final bg df
-        gdf['population_change'] = self.simulator.network.get_history('housing_bg_df')[-1]['population'] - self.simulator.network.get_history('housing_bg_df')[0]['population']
+        gdf = self.simulator.network.get_history('housing_block_group_df')[-1]  # copy of final block_group df
+        gdf['population_change'] = self.simulator.network.get_history('housing_block_group_df')[-1]['population'] - self.simulator.network.get_history('housing_block_group_df')[0]['population']
         ax = gdf.plot(column=column, cmap=cmap, alpha=alpha, legend=legend)
         ctx.add_basemap(ax, source=basemap_source)
 
@@ -574,8 +574,8 @@ class Model:
             legend: Whether to show legend (default: True)
             basemap_source: The basemap source to use (default: ctx.providers.CartoDB.Positron)
         """
-        gdf = self.simulator.network.get_history('housing_bg_df')[-1]  # copy of final bg df
-        gdf['population_change'] = self.simulator.network.get_history('housing_bg_df')[-1]['population'] - self.simulator.network.get_history('housing_bg_df')[0]['population']
+        gdf = self.simulator.network.get_history('housing_block_group_df')[-1]  # copy of final block_group df
+        gdf['population_change'] = self.simulator.network.get_history('housing_block_group_df')[-1]['population'] - self.simulator.network.get_history('housing_block_group_df')[0]['population']
         # normalize color
         vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
         norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
@@ -601,147 +601,122 @@ class Model:
             legend: Whether to show legend (default: True)
         """
         # Get min, max, average for color scale
-        vmin = min(self.simulator.network.get_history('housing_bg_df')[0][column].min(), 
-                  self.simulator.network.get_history('housing_bg_df')[-1][column].min())
-        vmax = min(self.simulator.network.get_history('housing_bg_df')[0][column].max(), 
-                  self.simulator.network.get_history('housing_bg_df')[-1][column].max())
+        vmin = min(self.simulator.network.get_history('housing_block_group_df')[0][column].min(), 
+                  self.simulator.network.get_history('housing_block_group_df')[-1][column].min())
+        vmax = min(self.simulator.network.get_history('housing_block_group_df')[0][column].max(), 
+                  self.simulator.network.get_history('housing_block_group_df')[-1][column].max())
         vcenter = np.mean([vmin, vmax])
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
-        self.simulator.network.get_history('housing_bg_df')[0].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax1, legend=legend)
-        self.simulator.network.get_history('housing_bg_df')[-1].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax2, legend=legend)
+        self.simulator.network.get_history('housing_block_group_df')[0].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax1, legend=legend)
+        self.simulator.network.get_history('housing_block_group_df')[-1].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax2, legend=legend)
 
-def plot_population_side_by_side_consistent_scale(
-        self, 
-        column: str = 'population', 
-        cmap: str = 'OrRd', 
-        figsize: tuple = (15, 7), 
-        legend: bool = True
-) -> None:
-    """Plot initial and final population side-by-side with consistent scale
-    
-    Args:
-        column: The column to plot (default: 'population')
-        cmap: The colormap to use (default: 'OrRd')
-        figsize: The figure size (default: (15, 7))
-        legend: Whether to show legend (default: True)
-    """
-    # Get min, max, average for color scale
-    vmin = min(self.simulator.network.get_history('housing_bg_df')[0][column].min(), 
-              self.simulator.network.get_history('housing_bg_df')[-1][column].min())
-    vmax = min(self.simulator.network.get_history('housing_bg_df')[0][column].max(), 
-              self.simulator.network.get_history('housing_bg_df')[-1][column].max())
-    vcenter = np.mean([vmin, vmax])
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
-    self.simulator.network.get_history('housing_bg_df')[0].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax1, legend=legend)
-    self.simulator.network.get_history('housing_bg_df')[-1].plot(column=column, vmin=vmin, vmax=vmax, cmap=cmap, ax=ax2, legend=legend)
+    def plot_population_change_vs_sales_price(self, style: str = 'o') -> None:
+        """Create a scatterplot of population change vs sales price
+        
+        Args:
+            style: The plot style (default: 'o')
+        """
+        df = pd.DataFrame(self.simulator.network.housing_block_group_df)
+        df['population_change'] = df['population'] - df['pop1990']
+        df.plot(x='salesprice1993', y='population_change', style=style)
 
-def plot_population_change_vs_sales_price(self, style: str = 'o') -> None:
-    """Create a scatterplot of population change vs sales price
-    
-    Args:
-        style: The plot style (default: 'o')
-    """
-    df = pd.DataFrame(self.simulator.network.housing_bg_df)
-    df['population_change'] = df['population'] - df['pop1990']
-    df.plot(x='salesprice1993', y='population_change', style=style)
+    def plot_population_change_vs_sales_price_with_hue(self, aspect: float = 1.61) -> None:
+        """Create a scatterplot of population change vs sales price with average income as hue
+        
+        Args:
+            aspect: The aspect ratio of the plot (default: 1.61)
+        """
+        import seaborn
+        df = pd.DataFrame(self.simulator.network.housing_block_group_df)
+        df['population_change'] = df['population'] - df['pop1990']
+        seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
 
-def plot_population_change_vs_sales_price_with_hue(self, aspect: float = 1.61) -> None:
-    """Create a scatterplot of population change vs sales price with average income as hue
-    
-    Args:
-        aspect: The aspect ratio of the plot (default: 1.61)
-    """
-    import seaborn
-    df = pd.DataFrame(self.simulator.network.housing_bg_df)
-    df['population_change'] = df['population'] - df['pop1990']
-    seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
+    def plot_population_change_percentage_vs_flood_area_with_hue(
+            self,
+            aspect: float = 1.61
+    ) -> None:
+        """Create a scatterplot of population change percentage vs flood area with average income as hue
+        
+        Args:
+            aspect: The aspect ratio of the plot (default: 1.61)
+        """
+        import seaborn
+        df = pd.DataFrame(self.simulator.network.housing_block_group_df)
+        df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
+        seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
 
-def plot_population_change_percentage_vs_flood_area_with_hue(
-        self,
-        aspect: float = 1.61
-) -> None:
-    """Create a scatterplot of population change percentage vs flood area with average income as hue
-    
-    Args:
-        aspect: The aspect ratio of the plot (default: 1.61)
-    """
-    import seaborn
-    df = pd.DataFrame(self.simulator.network.housing_bg_df)
-    df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
-    seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
+    def plot_price_change_vs_flood_area_with_hue(self, aspect: float = 1.61) -> None:
+        """Create a scatterplot of price change vs flood area with average income as hue
+        
+        Args:
+            aspect: The aspect ratio of the plot (default: 1.61)
+        """
+        import seaborn
+        df = pd.DataFrame(self.simulator.network.housing_block_group_df)
+        df['price_change'] = df['new_price'] - df['salesprice1993']
+        seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
 
-def plot_price_change_vs_flood_area_with_hue(self, aspect: float = 1.61) -> None:
-    """Create a scatterplot of price change vs flood area with average income as hue
-    
-    Args:
-        aspect: The aspect ratio of the plot (default: 1.61)
-    """
-    import seaborn
-    df = pd.DataFrame(self.simulator.network.housing_bg_df)
-    df['price_change'] = df['new_price'] - df['salesprice1993']
-    seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
+    def plot_flood_zone_metric_over_time(
+            self, 
+            flood_coefficient: float = -1000000, 
+            csv_file: str = 'temp_flood.csv'
+    ) -> None:
+        """Plot metric in flood zone threshold over time
+        
+        Args:
+            flood_coefficient: The flood coefficient value (default: -1000000)
+            csv_file: Path to CSV file with additional data (default: 'temp_flood.csv')
+        """
+        import seaborn as sns
+        
+        years = []
+        pop_perc_change = []
+        fld_coeff_list = []
+        
+        for t in range(self.simulator.network.current_timestep_idx):
+            df = self.simulator.network.get_history('housing_block_group_df')[t]
+            df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
+            pop_perc_change_fld = (df_fld.average_income.sum() - df_fld.mhi1990.sum()) / df_fld.mhi1990.sum()
+            years.append(t+1)
+            pop_perc_change.append(pop_perc_change_fld)
+            fld_coeff_list.append(flood_coefficient)
+        
+        data_dict = {
+            'Model Year': years,
+            'Pop Perc Change Flood Zone': pop_perc_change,
+            'Flood Coefficient': fld_coeff_list
+        }
+        df = pd.DataFrame(data_dict)
+        
+        # Load additional data from CSV if file exists
+        try:
+            df_append = pd.read_csv(csv_file, index_col=False)
+            df = pd.concat([df, df_append], join='inner')
+        except FileNotFoundError:
+            pass  # Continue without additional data if file doesn't exist
+        
+        sns.lineplot(x='Model Year',
+                     y='Pop Perc Change Flood Zone',
+                     hue='Flood Coefficient',
+                     data=df)
 
-def plot_flood_zone_metric_over_time(
-        self, 
-        flood_coefficient: float = -1000000, 
-        csv_file: str = 'temp_flood.csv'
-) -> None:
-    """Plot metric in flood zone threshold over time
-    
-    Args:
-        flood_coefficient: The flood coefficient value (default: -1000000)
-        csv_file: Path to CSV file with additional data (default: 'temp_flood.csv')
-    """
-    import seaborn as sns
-    
-    years = []
-    pop_perc_change = []
-    fld_coeff_list = []
-    
-    for t in range(self.simulator.network.current_timestep_idx):
-        df = self.simulator.network.get_history('housing_bg_df')[t]
-        df_fld = df[(df.perc_fld_area >= df.perc_fld_area.quantile(.9))]
-        pop_perc_change_fld = (df_fld.average_income.sum() - df_fld.mhi1990.sum()) / df_fld.mhi1990.sum()
-        years.append(t+1)
-        pop_perc_change.append(pop_perc_change_fld)
-        fld_coeff_list.append(flood_coefficient)
-    
-    data_dict = {
-        'Model Year': years,
-        'Pop Perc Change Flood Zone': pop_perc_change,
-        'Flood Coefficient': fld_coeff_list
-    }
-    df = pd.DataFrame(data_dict)
-    
-    # Load additional data from CSV if file exists
-    try:
-        df_append = pd.read_csv(csv_file, index_col=False)
-        df = pd.concat([df, df_append], join='inner')
-    except FileNotFoundError:
-        pass  # Continue without additional data if file doesn't exist
-    
-    sns.lineplot(x='Model Year',
-                 y='Pop Perc Change Flood Zone',
-                 hue='Flood Coefficient',
-                 data=df)
-
-def combine_housing_dataframes(self) -> pd.DataFrame:
-    """Combine relevant housing dataframes from each model run year into a single dataframe
-    
-    Returns:
-        pd.DataFrame: Combined dataframe with housing data from all timesteps
-    """
-    first = True
-    for t in range(self.simulator.network.current_timestep_idx):
-        df = self.simulator.network.get_history('housing_bg_df')[t]
-        df = df[['GEOID','GISJOIN','new_price','population','occupied_units','available_units','demand_exceeds_supply',
-               'perc_fld_area','mhi1990','salesprice1993','pop1990', 'average_income']]
-        df['model_year'] = t+1
-        if first:
-            df_combined = df
-            first = False
-        else:
-            df_combined = pd.concat([df_combined,df])
-    
-    return df_combined
+    def combine_housing_dataframes(self) -> pd.DataFrame:
+        """Combine relevant housing dataframes from each model run year into a single dataframe
+        
+        Returns:
+            pd.DataFrame: Combined dataframe with housing data from all timesteps
+        """
+        first = True
+        for t in range(self.simulator.network.current_timestep_idx):
+            df = self.simulator.network.get_history('housing_block_group_df')[t]
+            df = df[['GEOID','GISJOIN','new_price','population','occupied_units','available_units','demand_exceeds_supply',
+                   'perc_fld_area','mhi1990','salesprice1993','pop1990', 'average_income']]
+            df['model_year'] = t+1
+            if first:
+                df_combined = df
+                first = False
+            else:
+                df_combined = pd.concat([df_combined,df])
+        
+        return df_combined
 
