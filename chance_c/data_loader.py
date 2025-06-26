@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import os
-import pkg_resources
+import importlib.resources as pkg_resources
 
 import yaml
 from .field_mapper import FieldMapper
