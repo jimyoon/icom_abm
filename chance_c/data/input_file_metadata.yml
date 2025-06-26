@@ -26,7 +26,7 @@ housing_file_metadata:
   hhsize1990: "Average household size in 1990"
   coastdist: "Distance to the coast"
   cbddist: "Distance to the CBD"
-  hhtrans1993: "Number of households in 1993"
+  hhtrans1993: "Number of house transactions in 1993"
   salesprice1993: "Sales price in 1993"
   salespricesf1993: "Sales price per square foot in 1993"
 

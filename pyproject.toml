@@ -58,5 +58,8 @@ Repository = "https://github.com/jimyoon/icom_abm"
 chance-c = "chance_c.cli:cli"
 
 [tool.hatch.build]
-packages = ["chance_c"]  # set importable package name to "cerf"
-include = ["chance_c"]
+packages = ["chance_c"]  # set importable package name to "chance_c"
+include = [
+    "chance_c",
+    "chance_c/data/**/*",
+]

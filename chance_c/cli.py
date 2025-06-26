@@ -80,12 +80,13 @@ def cli(verbose: bool, quiet: bool):
 @click.option('--zoning-perc', default=0.05, help='Percentage for zoning calculations')
 @click.option('--market-mode', default='top_candidate', help='Mode for housing market operations')
 @click.option('--landscape-name', default='Baltimore', help='Name of the geographic landscape')
-@click.option('--geo-filename', default='blck_grp_extract_prj.shp', help='Filename for geographic boundary data')
-@click.option('--pop-filename', default='balt_block_group_population_2018.csv', help='Filename for population data')
+@click.option('--geo-filename', help='Filename for geographic boundary data (uses default if not specified)')
+@click.option('--pop-filename', help='Filename for population data (uses default if not specified)')
 @click.option('--pop-fieldname', default='AJWME001', help='Field name containing population data')
-@click.option('--flood-filename', default='block_group_perc_100yr_flood.csv', help='Filename for flood hazard data')
-@click.option('--housing-filename', default='block_group_housing_1993.csv', help='Filename for housing data')
-@click.option('--hedonic-filename', default='simple_anova_hedonic_without_flood_block_group0418.csv', help='Filename for hedonic pricing data')
+@click.option('--flood-filename', help='Filename for flood hazard data (uses default if not specified)')
+@click.option('--housing-filename', help='Filename for housing data (uses default if not specified)')
+@click.option('--hedonic-filename', help='Filename for hedonic pricing data (uses default if not specified)')
+@click.option('--field-mapping-file', help='Path to field mapping configuration file')
 def run(config: Optional[str], output_dir: str, **kwargs):
     """
     Run the ICoM ABM simulation with the specified configuration.
@@ -325,11 +326,7 @@ def create_config(template: str, output: str):
         # Apply template-specific settings
         if template == 'baltimore':
             config.landscape_name = 'Baltimore'
-            config.geo_filename = 'blck_grp_extract_prj.shp'
-            config.pop_filename = 'balt_block_group_population_2018.csv'
-            config.flood_filename = 'block_group_perc_100yr_flood.csv'
-            config.housing_filename = 'block_group_housing_1993.csv'
-            config.hedonic_filename = 'simple_anova_hedonic_without_flood_block_group0418.csv'
+            # Note: File paths will use defaults automatically
         elif template == 'custom':
             # Interactive configuration creation
             config.simulation_name = click.prompt("Simulation name", default="ABM_Custom")
@@ -398,6 +395,37 @@ def info():
     """
     click.echo("CHANCE-C - Agent-Based Model for Housing Market Dynamics")
     click.echo("=" * 60)
+    click.echo("")
+    click.echo("📊 Features:")
+    click.echo("  • Agent-based modeling of housing market dynamics")
+    click.echo("  • Flood risk and extreme weather integration")
+    click.echo("  • Spatial analysis with geographic data")
+    click.echo("  • Policy simulation and intervention testing")
+    click.echo("  • Built-in visualization and analysis tools")
+    click.echo("")
+    click.echo("🚀 Quick Start:")
+    click.echo("  # Run with default example data (no setup needed!)")
+    click.echo("  chance-c run")
+    click.echo("")
+    click.echo("  # Run with custom configuration")
+    click.echo("  chance-c create-config --template baltimore -o my_config.yaml")
+    click.echo("  chance-c run --config my_config.yaml")
+    click.echo("")
+    click.echo("📁 Default Data:")
+    click.echo("  CHANCE-C includes Baltimore-area example data files:")
+    click.echo("  • Census block group boundaries")
+    click.echo("  • 2018 population data")
+    click.echo("  • FEMA 100-year flood zones")
+    click.echo("  • 1993 housing characteristics")
+    click.echo("  • Hedonic regression results")
+    click.echo("")
+    click.echo("  You can override any data file by specifying custom paths.")
+    click.echo("")
+    click.echo("📖 For more information:")
+    click.echo("  • Documentation: See README.md")
+    click.echo("  • Field mapping: See chance_c/data/FIELD_MAPPING_README.md")
+    click.echo("  • Example notebook: See notebooks/quickstarter.ipynb")
+    click.echo("")
     click.echo("Version: 0.1.0")
     click.echo("Author: Jim Yoon (jim.yoon@pnnl.gov)")
     click.echo("Repository: https://github.com/jimyoon/icom_abm")

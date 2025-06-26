@@ -1,6 +1,48 @@
 # CHANCE-C
 The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments. 
 
+## Quick Start with Default Data
+
+CHANCE-C now includes **example data files** that allow you to start using the package immediately without needing to prepare your own data first!
+
+### Instant Setup
+
+```python
+from chance_c import Model
+
+# Create a model with all default settings - no data files needed!
+model = Model()
+
+# Run your first simulation
+model.run_simulation()
+
+# View results
+model.plot_population_change()
+```
+
+The package includes Baltimore-area example data:
+- Census block group boundaries
+- 2018 population data
+- FEMA 100-year flood zones  
+- 1993 housing characteristics
+- Hedonic regression results
+
+**You can run CHANCE-C immediately - no data preparation required!**
+
+### Using Your Own Data
+
+When ready to use your own data, simply specify file paths:
+
+```python
+# Override any or all data files
+model = Model(
+    geo_filename="path/to/your/geography.shp",
+    pop_filename="path/to/your/population.csv",
+    # Other files will use defaults
+)
+```
+
+For data with different column names, use the [field mapping system](chance_c/data/FIELD_MAPPING_README.md).
 
 ## CHANCE-C Command Line Interface
 

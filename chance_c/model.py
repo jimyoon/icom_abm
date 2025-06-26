@@ -83,12 +83,13 @@ class Model:
         housing_pricing_mode: str = 'simple_perc',
         price_increase_perc: float = 0.05,
         landscape_name: str = 'Baltimore',
-        geo_filename: str = 'blck_grp_extract_prj.shp',
-        pop_filename: str = 'balt_block_group_population_2018.csv',
+        geo_filename: str = '',
+        pop_filename: str = '',
         pop_fieldname: str = 'AJWME001',
-        flood_filename: str = 'block_group_perc_100yr_flood.csv',
-        housing_filename: str = 'block_group_housing_1993.csv',
-        hedonic_filename: str = 'simple_anova_hedonic_without_flood_block_group0418.csv',
+        flood_filename: str = '',
+        housing_filename: str = '',
+        hedonic_filename: str = '',
+        field_mapping_file: str = None,
         record_time: bool = False,
         progress: bool = False,
         max_iterations: int = 1,
@@ -194,6 +195,7 @@ class Model:
                 flood_filename=flood_filename,
                 housing_filename=housing_filename,
                 hedonic_filename=hedonic_filename,
+                field_mapping_file=field_mapping_file,
             )
         
         self.config.record_time = record_time
@@ -370,8 +372,13 @@ class Model:
         if self.config.sensitivity_run is False: 
             # Load Zoning engine to simulation object (DEACTIVATED for sensitivity run)
             target = self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}')
-            self.simulator.add_engine(Zoning(target, zoning_mode=self.config.zoning_mode, zoning_perc=self.config.zoning_perc))
-
+            self.simulator.add_engine(
+                Zoning(
+                    target, 
+                    zoning_mode=self.config.zoning_mode, 
+                    zoning_perc=self.config.zoning_perc
+                    )
+            )
 
         # Load landscape statistics engine to simulation object  # JY to complete
         target = self.simulator.network
@@ -717,7 +724,7 @@ class Model:
         for t in range(self.simulator.network.current_timestep_idx):
             df = self.simulator.network.get_history('housing_block_group_df')[t]
             df = df[['GEOID','GISJOIN','new_price','population','occupied_units','available_units','demand_exceeds_supply',
-                   'perc_fld_area','mhi1990','salesprice1993','pop1990', 'average_income']]
+                   'perc_fld_area','mhi1990','salesprice1993','pop1990', 'average_income']].copy()
             df['model_year'] = t+1
             if first:
                 df_combined = df

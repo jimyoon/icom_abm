@@ -1,8 +1,28 @@
 from dataclasses import dataclass
 from typing import Tuple, Optional
+import os
+import pkg_resources
 
 import yaml
 from .field_mapper import FieldMapper
+
+
+def get_default_data_path(filename: str) -> str:
+    """Get the path to a default data file in the package.
+    
+    Args:
+        filename: Name of the data file
+        
+    Returns:
+        str: Full path to the data file
+    """
+    try:
+        # Try to get the path from the installed package
+        return pkg_resources.resource_filename('chance_c', f'data/example_input_data/{filename}')
+    except:
+        # Fallback for development/local installation
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(current_dir, 'data', 'example_input_data', filename)
 
 
 @dataclass
@@ -99,13 +119,26 @@ class SimulationConfig:
     zoning_perc: float = 0.05
     market_mode: str = 'top_candidate'
     landscape_name: str = 'Baltimore'
-    geo_filename: str = 'blck_grp_extract_prj.shp'
-    pop_filename: str = 'balt_block_group_population_2018.csv'
+    geo_filename: str = ''  # Will be set in __post_init__
+    pop_filename: str = ''  # Will be set in __post_init__
     pop_fieldname: str = 'AJWME001'
-    flood_filename: str = 'block_group_perc_100yr_flood.csv'
-    housing_filename: str = 'block_group_housing_1993.csv'
-    hedonic_filename: str = 'simple_anova_hedonic_without_flood_block_group0418.csv'
+    flood_filename: str = ''  # Will be set in __post_init__
+    housing_filename: str = ''  # Will be set in __post_init__
+    hedonic_filename: str = ''  # Will be set in __post_init__
     field_mapping_file: Optional[str] = None
+    
+    def __post_init__(self):
+        """Set default file paths if not provided."""
+        if not self.geo_filename:
+            self.geo_filename = get_default_data_path('block_group_extract.shp')
+        if not self.pop_filename:
+            self.pop_filename = get_default_data_path('block_group_population_2018.csv')
+        if not self.flood_filename:
+            self.flood_filename = get_default_data_path('block_group_percent_100yr_flood.csv')
+        if not self.housing_filename:
+            self.housing_filename = get_default_data_path('block_group_housing_1993.csv')
+        if not self.hedonic_filename:
+            self.hedonic_filename = get_default_data_path('simple_anova_hedonic_without_flood_bg0418.csv')
     
     def get_field_mapper(self) -> FieldMapper:
         """Get a FieldMapper instance configured with the field mapping file.

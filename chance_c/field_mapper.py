@@ -147,8 +147,20 @@ class FieldMapper:
         
         # Load metadata to get descriptions
         try:
-            with open('data/input_file_metadata.yml', 'r') as file:
+            import os
+            import pkg_resources
+            
+            # Try to get the path from the installed package
+            try:
+                metadata_path = pkg_resources.resource_filename('chance_c', 'data/input_file_metadata.yml')
+            except:
+                # Fallback for development/local installation
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                metadata_path = os.path.join(current_dir, 'data', 'input_file_metadata.yml')
+            
+            with open(metadata_path, 'r') as file:
                 metadata = yaml.safe_load(file)
+                
         except FileNotFoundError:
             # Return basic info if metadata file not found
             return {field: f"Required field: {field}" for field in self.mappings[mapping_key].keys()}
