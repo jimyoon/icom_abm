@@ -8,12 +8,14 @@ version = "0.1.0"
 license = {file = "LICENSE"}
 authors = [
     {name = "Jim Yoon", email = "jim.yoon@pnnl.gov"},
+    {name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov"},
 ]
 description = "The CHANCE-C model is a generalized, agent-based modeling framework designed to simulate urban development in flood-prone coastal environments."
 readme = "README.md"
 requires-python = ">=3.11" # Adjusted based on PyMuPDF and asyncio features
 maintainers = [
     {name = "Jim Yoon", email = "jim.yoon@pnnl.gov"},
+    {name = "Chris R. Vernon", email = "chris.vernon@pnnl.gov"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3.13",
@@ -40,12 +42,18 @@ dev = [
     "trio>=0.30.0",
 ]
 docs = [
-    "setuptools>=57.0.0",
-    "build>=0.5.1",
-    "ipykernel>=6.15.1",
-    "autodoc>=0.5.0",
-    "nbsphinx~=0.8.6",
     "sphinx~=7.2.6",
+    "sphinx-book-theme>=1.1.0",
+    "myst-parser~=2.0.0",
+    "sphinx-autodoc-typehints~=1.25.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-tabs>=3.4.0",
+    "sphinxcontrib-applehelp>=1.0.4",
+    "sphinxcontrib-devhelp>=1.0.2",
+    "sphinxcontrib-htmlhelp>=2.0.1",
+    "sphinxcontrib-jsmath>=1.0.1",
+    "sphinxcontrib-qthelp>=1.0.3",
+    "sphinxcontrib-serializinghtml>=1.1.5",
 ]
 deploy = [
     "twine>=4.0.1",
