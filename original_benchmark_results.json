@@ -1,0 +1,106 @@
+{
+  "sensitivity_2yr": {
+    "config": {
+      "name": "sensitivity_2yr",
+      "sensitivity_run": true,
+      "n_years": 2,
+      "record_time": false,
+      "progress": false
+    },
+    "iterations": 3,
+    "times": [
+      97.38369488716125,
+      97.31313467025757,
+      96.3196280002594
+    ],
+    "avg_time": 97.0054858525594,
+    "min_time": 96.3196280002594,
+    "max_time": 97.38369488716125,
+    "std_time": 0.5950171688477222,
+    "memory_usage": [
+      792.734375,
+      901.609375,
+      974.265625
+    ],
+    "avg_memory": 889.5364583333334,
+    "max_memory": 974.265625
+  },
+  "sensitivity_5yr": {
+    "config": {
+      "name": "sensitivity_5yr",
+      "sensitivity_run": true,
+      "n_years": 5,
+      "record_time": false,
+      "progress": false
+    },
+    "iterations": 3,
+    "times": [
+      184.91909098625183,
+      185.58892393112183,
+      184.41149497032166
+    ],
+    "avg_time": 184.9731699625651,
+    "min_time": 184.41149497032166,
+    "max_time": 185.58892393112183,
+    "std_time": 0.5905744163033658,
+    "memory_usage": [
+      1033.015625,
+      1051.75,
+      1078.9375
+    ],
+    "avg_memory": 1054.5677083333333,
+    "max_memory": 1078.9375
+  },
+  "full_2yr": {
+    "config": {
+      "name": "full_2yr",
+      "sensitivity_run": false,
+      "n_years": 2,
+      "record_time": false,
+      "progress": false
+    },
+    "iterations": 3,
+    "times": [
+      95.74892711639404,
+      95.59251403808594,
+      96.22759985923767
+    ],
+    "avg_time": 95.85634700457256,
+    "min_time": 95.59251403808594,
+    "max_time": 96.22759985923767,
+    "std_time": 0.33088936873100827,
+    "memory_usage": [
+      1093.765625,
+      1106.703125,
+      1122.515625
+    ],
+    "avg_memory": 1107.6614583333333,
+    "max_memory": 1122.515625
+  },
+  "full_5yr": {
+    "config": {
+      "name": "full_5yr",
+      "sensitivity_run": false,
+      "n_years": 5,
+      "record_time": false,
+      "progress": false
+    },
+    "iterations": 3,
+    "times": [
+      191.32295179367065,
+      183.28946685791016,
+      183.70135021209717
+    ],
+    "avg_time": 186.10458962122598,
+    "min_time": 183.28946685791016,
+    "max_time": 191.32295179367065,
+    "std_time": 4.52392415900898,
+    "memory_usage": [
+      1145.59375,
+      1157.265625,
+      1164.765625
+    ],
+    "avg_memory": 1155.875,
+    "max_memory": 1164.765625
+  }
+}

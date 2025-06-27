@@ -1,6 +1,8 @@
 import random
 import logging
 import pandas as pd
+import numpy as np
+from typing import List, Dict, Any
 
 from pynsim import Engine
 
@@ -106,9 +108,122 @@ class ExistingAgentLocation(Engine):
         self.block_group_sample_size = block_group_sample_size
         self.house_choice_mode = house_choice_mode
         self.simple_anova_coefficients = simple_anova_coefficients or []
+        
+        # Cache for performance optimization
+        self._cached_block_group_data = None
+        self._cached_utility_functions = {}
+
+    def _get_affordable_block_groups(self, household_budget: float) -> pd.DataFrame:
+        """Get block groups that are affordable for a given household budget.
+        
+        Args:
+            household_budget: The household's budget.
+            
+        Returns:
+            DataFrame of affordable block groups.
+        """
+        if self._cached_block_group_data is None:
+            self._cached_block_group_data = self.target.housing_block_group_df.copy()
+        
+        return self._cached_block_group_data[
+            self._cached_block_group_data['new_price'] <= household_budget
+        ]
+
+    def _sample_block_groups(self, block_group_budget: pd.DataFrame, household_name: str) -> pd.DataFrame:
+        """Sample block groups for a household with optimized sampling.
+        
+        Args:
+            block_group_budget: DataFrame of affordable block groups.
+            household_name: Name of the household.
+            
+        Returns:
+            DataFrame of sampled block groups with household info.
+        """
+        if len(block_group_budget) == 0:
+            return pd.DataFrame()
+        
+        # Use weights if available_units column exists, otherwise uniform sampling
+        if 'available_units' in block_group_budget.columns:
+            weights = block_group_budget['available_units'].values
+            # Handle zero weights
+            if weights.sum() == 0:
+                weights = None
+        else:
+            weights = None
+        
+        try:
+            if weights is not None:
+                sampled_indices = np.random.choice(
+                    len(block_group_budget), 
+                    size=min(self.block_group_sample_size, len(block_group_budget)), 
+                    replace=True, 
+                    p=weights/weights.sum()
+                )
+            else:
+                sampled_indices = np.random.choice(
+                    len(block_group_budget), 
+                    size=min(self.block_group_sample_size, len(block_group_budget)), 
+                    replace=True
+                )
+            
+            sampled_data = block_group_budget.iloc[sampled_indices].copy()
+            sampled_data['household'] = household_name
+            sampled_data['a'] = 0.4
+            sampled_data['b'] = 0.4
+            sampled_data['c'] = 0.2
+            
+            return sampled_data
+            
+        except ValueError:
+            logging.info(f'{household_name} cannot afford any available homes!')
+            return pd.DataFrame()
+
+    def _calculate_utility_vectorized(self, block_group_sample: pd.DataFrame) -> pd.Series:
+        """Calculate utility scores using vectorized operations.
+        
+        Args:
+            block_group_sample: DataFrame with block group data.
+            
+        Returns:
+            Series of utility scores.
+        """
+        if self.house_choice_mode == 'cobb_douglas_utility':
+            return (
+                block_group_sample['average_income_norm'] ** block_group_sample['a']
+            ) * (
+                block_group_sample['prox_cbd_norm'] ** block_group_sample['b']
+            ) * (
+                block_group_sample['flood_risk_norm'] ** block_group_sample['c']
+            )
+        
+        elif self.house_choice_mode in ['simple_flood_utility', 'simple_avoidance_utility', 'budget_reduction']:
+            # Pre-calculate coefficients for vectorized operations
+            coef = self.simple_anova_coefficients
+            
+            # Get the housing data for the sampled block groups
+            housing_data = self.target.housing_block_group_df.loc[block_group_sample.index]
+            
+            utility = (
+                coef[0] +
+                coef[1] * housing_data['N_MeanSqfeet'] +
+                coef[2] * housing_data['N_MeanAge'] +
+                coef[3] * housing_data['N_MeanNoOfStories'] +
+                coef[4] * housing_data['N_MeanFullBathNumber'] +
+                housing_data['residuals']
+            )
+            
+            # Add flood risk component for simple_flood_utility
+            if self.house_choice_mode == 'simple_flood_utility':
+                utility += housing_data['N_perc_area_flood']
+            
+            return utility
+        
+        else:
+            # Default to zero utility for unknown modes
+            return pd.Series(0, index=block_group_sample.index)
 
     def run(self) -> None:
-        """Run the ExistingAgentLocation engine.
+        """Run the optimized ExistingAgentLocation engine.
         
         Processes all relocating household agents waiting in the location queue.
         For each agent, samples from available homes and calculates utility
@@ -117,60 +232,42 @@ class ExistingAgentLocation(Engine):
         """
         logging.info("Running the existing agent location engine, year " + str(self.target.current_timestep.year))
 
-        first = True
-        to_delete_relocating_households = []
+        # Pre-allocate list for results to avoid DataFrame concatenation
+        all_results = []
+        outmigrated_households = []
+
+        # Process each relocating household
         for household in self.target.relocating_households.values():
-            block_group_all = self.target.housing_block_group_df
-            block_group_budget = block_group_all[(block_group_all.new_price <= household.house_budget)]  # JY revise to pin to dynamic prices
-            if first:
-                try:
-                    block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
-                except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
-                    household.location = 'outmigrated'
-                    continue
-                block_group_sample['household'] = household.name
-                block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
-                block_group_sample['b'] = 0.4
-                block_group_sample['c'] = 0.2
-            else:
-                try:
-                    block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
-                except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
-                    household.location = 'outmigrated'
-                    continue
-                block_group_append['household'] = household.name
-                block_group_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
-                block_group_append['b'] = 0.4
-                block_group_append['c'] = 0.2
-                block_group_sample = pd.concat([block_group_sample, block_group_append], ignore_index=True)
+            # Get affordable block groups
+            block_group_budget = self._get_affordable_block_groups(household.house_budget)
+            
+            if len(block_group_budget) == 0:
+                logging.info(f'{household.name} cannot afford any available homes!')
+                household.location = 'outmigrated'
+                outmigrated_households.append(household)
+                continue
+            
+            # Sample block groups
+            block_group_sample = self._sample_block_groups(block_group_budget, household.name)
+            
+            if len(block_group_sample) == 0:
+                household.location = 'outmigrated'
+                outmigrated_households.append(household)
+                continue
+            
+            # Calculate utility scores
+            block_group_sample['utility'] = self._calculate_utility_vectorized(block_group_sample)
+            
+            # Store results
+            all_results.append(block_group_sample[['GEOID', 'household', 'utility']])
 
-            first = False
-
-        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
-
-            def cobb_douglas_utility(row):
-                return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (
-                            row['flood_risk_norm'] ** row['c'])
-
-            block_group_sample['utility'] = block_group_sample.apply(cobb_douglas_utility, axis=1)
-
-        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
-                (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
-                (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \
-                (self.simple_anova_coefficients[3] * self.target.housing_block_group_df['N_MeanNoOfStories']) + \
-                (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
-                (self.simple_anova_coefficients[5] * self.target.housing_block_group_df['N_perc_area_flood']) + \
-                (1 * self.target.housing_block_group_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
-
-        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
-                (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
-                (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \
-                (self.simple_anova_coefficients[3] * self.target.housing_block_group_df['N_MeanNoOfStories']) + \
-                (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
-                (1 * self.target.housing_block_group_df['residuals'])
-
-        self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]
+        # Combine all results at once
+        if all_results:
+            self.target.hh_utilities_df = pd.concat(all_results, ignore_index=True)
+        else:
+            self.target.hh_utilities_df = pd.DataFrame(columns=['GEOID', 'household', 'utility'])
+        
+        # Remove outmigrated households from relocating queue
+        for household in outmigrated_households:
+            if household in self.target.relocating_households:
+                del self.target.relocating_households[household]

@@ -1,0 +1,20 @@
+CHANCE-C Component Profiling Results
+==================================================
+
+landscape_setup: 8.3042s
+agent_creation: 0.2367s
+housing_init: 0.0003s
+
+ENGINES:
+--------------------
+  RealEstatePrices: 0.0000s
+  NewAgentCreation: 0.0000s
+  ExistingAgentReloSampler: 0.0046s
+  NewAgentLocation: 0.0000s
+  ExistingAgentLocation: 14.9237s
+  HousingMarket: 10.2981s
+  BuildingDevelopment: 0.0415s
+  HousingPricing: 0.0204s
+  FloodHazard: 0.0000s
+  Zoning: 0.0000s
+  LandscapeStatistics: 0.0000s

@@ -48,6 +48,10 @@ class LandscapeStatistics(Engine):
         and the housing dataframe with current values. Handles edge cases such as
         empty block groups and invalid household size values.
         """
+        # Guard: Check if target is a network (has nodes and housing_block_group_df)
+        if not hasattr(self.target, 'nodes') or not hasattr(self.target, 'housing_block_group_df'):
+            return
+        
         # reset population sums
         self.target.total_population = 0
 

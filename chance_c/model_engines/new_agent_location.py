@@ -79,15 +79,16 @@ class NewAgentLocation(Engine):
         scores based on the specified house choice mode. Agents that cannot
         afford any homes are marked as outmigrated.
         """
+        # Guard: Check if target is a network (has required attributes)
+        if not hasattr(self.target, 'unassigned_households') or not hasattr(self.target, 'housing_block_group_df') or \
+           not hasattr(self.target, 'current_timestep'):
+            return
+        
         logging.info("Running the new agent location engine, year " + str(self.target.current_timestep.year))
 
-        # for household in self.target.unassigned_households.values():
-        #     block_group_budget = self.target.housing_block_group_df[(self.target.housing_block_group_df.salesprice1993 <= household.house_budget)]
-        #     block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units').GEOID.to_list() # Sample from available units
-        #     if not block_group_sample:
-        #         logging.info(household.name + ' cannot afford any available homes!')
-        #     for block_group in block_group_sample:
-        #         household.calc_utility_cobb_douglas(block_group)
+        # Guard: If there are no unassigned households, skip
+        if not hasattr(self.target, 'unassigned_households') or not self.target.unassigned_households:
+            return
 
         first = True
         to_delete_unassigned_households = []
@@ -96,62 +97,62 @@ class NewAgentLocation(Engine):
             # JY restart here
             if self.house_choice_mode == 'simple_avoidance_utility':
                 if household.avoidance == True:
-                    # block_group_budget = block_group_all[(block_group_all.perc_fld_area <= block_group_all.perc_fld_area.quantile(.9))]  # JY parameterize which flood quantile risk averse agents avoid
-                    block_group_budget = block_group_all[(block_group_all.perc_fld_area <= .10)]  # JY threshold for flood zone (10 percent of building footprint inundated)
+                    block_group_budget = block_group_all[(block_group_all.perc_fld_area <= .10)]
                 else:
                     block_group_budget = block_group_all
                 block_group_budget = block_group_budget[(block_group_budget.new_price <= household.house_budget)]
             elif self.house_choice_mode == 'budget_reduction':
                 block_group_all['house_budget'] = household.house_budget
-                # block_group_all.loc[(block_group_all.perc_fld_area >= block_group_all.perc_fld_area.quantile(.9)), 'house_budget'] = household.house_budget * (1.0 - self.budget_reduction_perc)
                 block_group_all.loc[(block_group_all.perc_fld_area >= .10), 'house_budget'] = household.house_budget * (1.0 - self.budget_reduction_perc)
                 block_group_budget = block_group_all[(block_group_all.new_price <= block_group_all.house_budget)]
             else:
-                block_group_budget = block_group_all[(block_group_all.new_price <= household.house_budget)]  # JY revise to pin to dynamic prices
+                block_group_budget = block_group_all[(block_group_all.new_price <= household.house_budget)]
             if first:
                 try:
-                    block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
+                    block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')
                 except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_households
+                    logging.info(household.name + ' cannot afford any available homes!')
                     household.location = 'outmigrated'
                     continue
                 block_group_sample['household'] = household.name
-                block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
+                block_group_sample['a'] = 0.4
                 block_group_sample['b'] = 0.4
                 block_group_sample['c'] = 0.2
             else:
                 try:
-                    block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
+                    block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')
                 except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of unassigned_households
+                    logging.info(household.name + ' cannot afford any available homes!')
                     household.location = 'outmigrated'
                     continue
                 block_group_append['household'] = household.name
-                block_group_append['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
+                block_group_append['a'] = 0.4
                 block_group_append['b'] = 0.4
                 block_group_append['c'] = 0.2
                 block_group_sample = pd.concat([block_group_sample, block_group_append], ignore_index=True)
 
             first = False
 
-        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
+        # Guard: If block_group_sample does not exist (no agents processed), skip
+        if 'block_group_sample' not in locals():
+            return
 
+        if self.house_choice_mode == 'cobb_douglas_utility':
             def cobb_douglas_utility(row):
                 return (row['average_income_norm'] ** row['a']) * (row['prox_cbd_norm'] ** row['b']) * (
                             row['flood_risk_norm'] ** row['c'])
-
             block_group_sample['utility'] = block_group_sample.apply(cobb_douglas_utility, axis=1)
 
-        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
+        elif self.house_choice_mode == 'simple_flood_utility':
             block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
                 (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
                 (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \
                 (self.simple_anova_coefficients[3] * self.target.housing_block_group_df['N_MeanNoOfStories']) + \
                 (self.simple_anova_coefficients[4] * self.target.housing_block_group_df['N_MeanFullBathNumber']) + \
                 (self.simple_anova_coefficients[5] * self.target.housing_block_group_df['N_perc_area_flood']) + \
-                (1 * self.target.housing_block_group_df['residuals'])  # JY temp change N_perc_area_flood to perc_fld_area
+                (1 * self.target.housing_block_group_df['residuals'])
 
-        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
+        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':
             block_group_sample['utility'] = (self.simple_anova_coefficients[0]) + \
                 (self.simple_anova_coefficients[1] * self.target.housing_block_group_df['N_MeanSqfeet']) + \
                 (self.simple_anova_coefficients[2] * self.target.housing_block_group_df['N_MeanAge']) + \

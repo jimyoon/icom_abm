@@ -43,12 +43,16 @@ class HousingPricing(Engine):
         and decreases prices when there has been sustained low demand over the
         previous 5 timesteps.
         """
+        # Guard: Check if target is a network (has nodes and housing_block_group_df)
+        if not hasattr(self.target, 'nodes') or not hasattr(self.target, 'housing_block_group_df'):
+            return
+        
         for block_group in self.target.nodes:
             if block_group.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
                 block_group.new_price = block_group.new_price * (1 + self.price_increase_perc)
                 self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price
 
-            if self.target.current_timestep_idx >= 5:  # JY TEMP for testing
+            if self.target.current_timestep_idx is not None and self.target.current_timestep_idx >= 5:  # JY TEMP for testing
                 if not any(block_group.get_history('demand_exceeds_supply')[-5:]):
                     block_group.new_price = block_group.new_price * (1 - self.price_increase_perc)
                     self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price

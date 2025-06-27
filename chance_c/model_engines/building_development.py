@@ -44,6 +44,10 @@ class BuildingDevelopment(Engine):
         where demand exceeds supply. Updates both node attributes and the housing
         dataframe with new construction data.
         """
+        # Guard: Check if target is a network (has nodes and housing_block_group_df)
+        if not hasattr(self.target, 'nodes') or not hasattr(self.target, 'housing_block_group_df'):
+            return
+        
         for block_group in self.target.nodes:
             if block_group.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
                 block_group.new_units_constructed = round(block_group.occupied_units * self.stock_increase_perc)

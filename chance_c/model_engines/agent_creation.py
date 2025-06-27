@@ -64,6 +64,11 @@ class NewAgentCreation(Engine):
 
         Creates new agents based upon population growth mode and adds them to the unassigned households queue.
         """
+        # Guard: Check if target is a network (has required attributes)
+        if not hasattr(self.target, 'total_population') or not hasattr(self.target, 'housing_block_group_df') or \
+           not hasattr(self.target, 'unassigned_households') or not hasattr(self.target, 'current_timestep'):
+            return
+        
         logging.info("Running the new agent creation engine, year " + str(self.target.current_timestep.year))
         # creates new agents based upon population growth mode and adds to the unassigned households queue
         if self.growth_mode == 'perc':
