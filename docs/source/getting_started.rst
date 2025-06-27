@@ -1,39 +1,81 @@
 Getting Started
-==============
+===============
 
-This guide will help you get up and running with CHANCE-C quickly.
+Welcome to CHANCE-C! This guide will help you get up and running with the CHANCE-C agent-based modeling framework for coastal urban development simulations.
+
+What is CHANCE-C?
+-----------------
+
+CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is a comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments. The framework integrates:
+
+- **Household Decision-Making**: Individual agents making housing choices
+- **Housing Market Dynamics**: Supply, demand, pricing, and development
+- **Environmental Hazards**: Flood risk and extreme weather impacts
+- **Policy Interventions**: Zoning, regulations, and adaptation strategies
+
+System Requirements
+------------------
+
+Before installing CHANCE-C, ensure your system meets these requirements:
+
+- **Python**: 3.11 or higher
+- **Operating System**: Windows, macOS, or Linux
+- **Memory**: At least 4GB RAM (8GB+ recommended for larger simulations)
+- **Storage**: 1GB+ available disk space
+
+**System Dependencies**:
+
+- GDAL/OGR libraries
+- PROJ (Projection library)
+- GEOS (Geometry library)
+
+Setting Up a Virtual Environment
+---------------------------------
+
+We strongly recommend using a virtual environment to isolate CHANCE-C dependencies:
+
+Using venv
+~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Create a virtual environment
+   python -m venv chance_c_env
+
+   # Activate the virtual environment
+   # On macOS/Linux:
+   source chance_c_env/bin/activate
+
+   # On Windows:
+   chance_c_env\Scripts\activate
+
+   # Verify activation (you should see chance_c_env in your prompt)
+   which python
+
+Using conda
+~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   # Create a conda environment
+   conda create -n chance_c_env python=3.11
+
+   # Activate the environment
+   conda activate chance_c_env
+
+   # Verify activation
+   conda info --envs
 
 Installation
------------
+------------
 
-System Dependencies
-^^^^^^^^^^^^^^^^^^
+Once your virtual environment is activated, install CHANCE-C:
 
-Before installing CHANCE-C, you need to install system-level geospatial libraries.
-
-**Ubuntu/Debian:**
 .. code-block:: bash
 
-   sudo apt-get update
-   sudo apt-get install -y \
-     libgdal-dev \
-     gdal-bin \
-     libproj-dev \
-     proj-data \
-     proj-bin \
-     libgeos-dev \
-     libspatialindex-dev
+   pip install chance_c
 
-**macOS:**
-.. code-block:: bash
-
-   brew install gdal proj geos
-
-**Windows:**
-Install GDAL, PROJ, and GEOS through OSGeo4W or conda-forge.
-
-Python Package Installation
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+For development installation:
 
 .. code-block:: bash
 
@@ -44,293 +86,155 @@ Python Package Installation
    # Install in development mode
    pip install -e .
 
-   # Or install from PyPI (when available)
-   pip install chance-c
+   # Install development dependencies
+   pip install -e .[dev,docs]
 
-Verifying Installation
-^^^^^^^^^^^^^^^^^^^^^
+Verify Installation
+------------------
+
+Test your installation by running:
 
 .. code-block:: python
 
    import chance_c
    print(f"CHANCE-C version: {chance_c.__version__}")
 
-   # Test basic functionality
+   # Create a simple model to verify everything works
    from chance_c import Model
    model = Model()
-   print("Installation successful!")
+   print("✓ CHANCE-C installed successfully!")
 
-Basic Usage
-----------
+Your First Simulation
+---------------------
 
-Creating Your First Simulation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Let's run your first CHANCE-C simulation using the included example data:
 
 .. code-block:: python
 
-   from chance_c import Model, SimulationConfig
+   from chance_c import Model
 
-   # Create a basic configuration
-   config = SimulationConfig(
-       simulation_name="my_first_simulation",
-       start_year=2020,
-       n_years=5,
-       landscape_name="Baltimore"
-   )
+   # Create a model with default settings
+   model = Model()
 
-   # Create and run the model
-   model = Model(config=config)
+   # Run a short simulation
    model.run_simulation()
 
-   # Access results
+   # Check results
    network = model.simulator.network
    print(f"Total population: {network.total_population}")
-   print(f"Average household income: {network.avg_hh_income}")
+   print(f"Average household income: ${network.avg_hh_income:,.2f}")
+   print(f"Average household size: {network.avg_hh_size:.2f}")
 
-Using Your Own Data
-^^^^^^^^^^^^^^^^^
+This simulation uses Baltimore-area example data included with CHANCE-C and runs for 2 years starting from 2018.
 
-.. code-block:: python
+Understanding the Output
+-------------------------
 
-   from chance_c import Model
+After running a simulation, you can access various results:
 
-   # Specify your data files
-   model = Model(
-       geo_filename="path/to/geography.shp",
-       pop_filename="path/to/population.csv",
-       flood_filename="path/to/flood_data.csv",
-       housing_filename="path/to/housing_data.csv",
-       hedonic_filename="path/to/hedonic_data.csv"
-   )
-
-   model.run_simulation()
-
-Data Requirements
-----------------
-
-CHANCE-C requires several data files to run simulations:
-
-Geography Data (Shapefile)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* **Format**: ESRI Shapefile (.shp)
-* **Required Fields**:
-  * `GEOID`: Unique geographic identifier
-  * `COUNTYFP`: County FIPS code
-  * `geometry`: Polygon geometries for block groups
-
-Population Data (CSV)
-^^^^^^^^^^^^^^^^^^^^
-
-* **Format**: Comma-separated values (.csv)
-* **Required Fields**:
-  * `GEOID`: Geographic identifier (matches shapefile)
-  * `TOTAL_POPULATION`: Total population count
-  * `HOUSEHOLD_COUNT`: Number of households
-
-Flood Data (CSV)
-^^^^^^^^^^^^^^^
-
-* **Format**: Comma-separated values (.csv)
-* **Required Fields**:
-  * `GEOID`: Geographic identifier
-  * `FLOOD_RISK`: Flood risk percentage (0-100)
-
-Housing Data (CSV)
-^^^^^^^^^^^^^^^^^
-
-* **Format**: Comma-separated values (.csv)
-* **Required Fields**:
-  * `GEOID`: Geographic identifier
-  * `HOUSING_UNITS`: Number of housing units
-  * `MEDIAN_HOME_VALUE`: Median home value
-
-Hedonic Data (CSV)
-^^^^^^^^^^^^^^^^^
-
-* **Format**: Comma-separated values (.csv)
-* **Required Fields**:
-  * `GEOID`: Geographic identifier
-  * Various housing characteristics for pricing models
-
-Configuration
--------------
-
-Basic Configuration
-^^^^^^^^^^^^^^^^^
+**Network-Level Statistics**:
 
 .. code-block:: python
 
-   config = SimulationConfig(
-       # Basic settings
-       simulation_name="example_simulation",
-       scenario="baseline",
-       intervention="none",
-       start_year=2020,
-       n_years=5,
-       
-       # Agent settings
-       agent_housing_aggregation=10,  # Households per agent
-       household_size=2.7,
-       
-       # Growth settings
-       pop_growth_mode="perc",
-       pop_growth_perc=0.01,
-       
-       # Market settings
-       house_choice_mode="simple_avoidance_utility",
-       house_budget_mode="rhea",
-       perc_move=0.10,
-   )
-
-Advanced Configuration
-^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   config = SimulationConfig(
-       # Environmental settings
-       simple_avoidance_perc=0.95,
-       budget_reduction_perc=0.90,
-       
-       # Development settings
-       stock_increase_mode="simple_perc",
-       stock_increase_perc=0.05,
-       
-       # Income growth
-       inc_growth_mode="random_agent_replication",
-       
-       # Field mappings for custom data
-       field_mappings={
-           'geo_file_mapping': {
-               'GEOID': 'CENSUS_ID',
-               'COUNTYFP': 'COUNTY_CODE'
-           },
-           'pop_file_mapping': {
-               'AJWME001': 'TOTAL_POPULATION'
-           }
-       }
-   )
-
-Field Mapping
--------------
-
-If your data uses different column names, you can map them using the field mapping system:
-
-.. code-block:: python
-
-   field_mappings = {
-       'geo_file_mapping': {
-           'GEOID': 'CENSUS_ID',
-           'COUNTYFP': 'COUNTY_CODE'
-       },
-       'pop_file_mapping': {
-           'AJWME001': 'TOTAL_POPULATION',
-           'AJWNE002': 'HOUSEHOLD_COUNT'
-       },
-       'flood_file_mapping': {
-           'FLOOD_PCT': 'FLOOD_RISK'
-       },
-       'housing_file_mapping': {
-           'UNITS': 'HOUSING_UNITS',
-           'MEDIAN_VALUE': 'MEDIAN_HOME_VALUE'
-       }
-   }
-
-   config = SimulationConfig(
-       field_mappings=field_mappings,
-       # ... other parameters
-   )
-
-Running Simulations
-------------------
-
-Basic Simulation
-^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from chance_c import Model
-
-   # Create model
-   model = Model()
+   network = model.simulator.network
    
-   # Run simulation
-   model.run_simulation()
+   # Population metrics
+   print(f"Total population: {network.total_population}")
+   print(f"Total households: {len(network.get_institution('all_household_agents').components)}")
    
-   # Access results
-   results = model.get_results()
+   # Housing metrics
+   housing_df = network.housing_block_group_df
+   print(f"Total housing units: {housing_df['housing_units'].sum()}")
+   print(f"Average vacancy rate: {housing_df['vacancy_rate'].mean():.2%}")
 
-Parallel Simulations
-^^^^^^^^^^^^^^^^^^^
+**Agent-Level Data**:
 
 .. code-block:: python
 
-   from chance_c import Model
-   import multiprocessing as mp
+   # Get all household agents
+   households = network.get_institution('all_household_agents').components
+   
+   # Analyze agent characteristics
+   incomes = [agent.income for agent in households]
+   locations = [agent.location for agent in households]
+   
+   print(f"Number of agents: {len(households)}")
+   print(f"Income range: ${min(incomes):,.0f} - ${max(incomes):,.0f}")
 
-   def run_simulation(config):
-       model = Model(config=config)
-       model.run_simulation()
-       return model.get_results()
+**Spatial Data**:
 
-   # Create multiple configurations
-   configs = [
-       SimulationConfig(simulation_name=f"sim_{i}", start_year=2020, n_years=5)
-       for i in range(10)
-   ]
-
-   # Run in parallel
-   with mp.Pool() as pool:
-       results = pool.map(run_simulation, configs)
-
-Troubleshooting
---------------
-
-Common Issues
-^^^^^^^^^^^^
-
-**Import Errors**
 .. code-block:: python
 
-   # If you get import errors for geospatial libraries
-   # Make sure system dependencies are installed
-   # On Ubuntu/Debian:
-   sudo apt-get install libgdal-dev gdal-bin
-
-**Data Loading Errors**
-.. code-block:: python
-
-   # Check your data files exist and have correct formats
-   import pandas as pd
+   # Access geographic data
    import geopandas as gpd
    
-   # Test loading your data
-   geo_data = gpd.read_file("path/to/geography.shp")
-   pop_data = pd.read_csv("path/to/population.csv")
+   gdf = gpd.GeoDataFrame(housing_df, geometry='geometry')
    
-   print("Data files loaded successfully")
-
-**Memory Issues**
-.. code-block:: python
-
-   # For large datasets, consider reducing agent aggregation
-   config = SimulationConfig(
-       agent_housing_aggregation=20,  # Increase this number
-       # ... other parameters
-   )
-
-Getting Help
------------
-
-* **Documentation**: This documentation site
-* **Issues**: `GitHub Issues <https://github.com/jimyoon/icom_abm/issues>`_
-* **Discussions**: `GitHub Discussions <https://github.com/jimyoon/icom_abm/discussions>`_
+   # Plot population distribution
+   ax = gdf.plot(column='population', legend=True, figsize=(10, 8))
+   ax.set_title('Population Distribution by Block Group')
 
 Next Steps
 ----------
 
-* Read the :doc:`user_guide` for detailed usage instructions
-* Explore the :doc:`api/index` for complete API documentation
-* Check out :doc:`tutorials/index` for step-by-step tutorials
-* See :doc:`examples/index` for practical examples 
+Now that you have CHANCE-C installed and running, explore these resources:
+
+1. **Quick Start Tutorial**: :doc:`quickstart` - Learn basic usage patterns
+2. **Configuration Guide**: :doc:`configuration` - Understand simulation parameters
+3. **Data Requirements**: :doc:`data_requirements` - Learn about input data formats
+4. **Field Mapping**: :doc:`field_mapping` - Use your own data with custom column names
+5. **Tutorials**: :doc:`tutorials/index` - In-depth guides and examples
+
+Common Issues
+-------------
+
+**Import Errors**
+  If you encounter import errors, ensure all dependencies are installed:
+  
+  .. code-block:: bash
+  
+     pip install --upgrade chance_c
+
+**GDAL/Geospatial Issues**
+  On some systems, you may need to install geospatial libraries separately:
+  
+  .. code-block:: bash
+  
+     # On Ubuntu/Debian
+     sudo apt-get install gdal-bin libgdal-dev
+     
+     # On macOS with Homebrew
+     brew install gdal
+     
+     # On Windows, consider using conda
+     conda install gdal
+
+**Memory Issues**
+  For large simulations, consider:
+  
+  - Increasing agent aggregation (fewer, larger agents)
+  - Reducing simulation years or study area
+  - Using a machine with more RAM
+
+Getting Help
+------------
+
+If you encounter issues or have questions:
+
+- **Documentation**: Browse the full documentation for detailed guides
+- **GitHub Issues**: `Report bugs or request features <https://github.com/jimyoon/icom_abm/issues>`_
+- **Discussions**: `Join community discussions <https://github.com/jimyoon/icom_abm/discussions>`_
+- **Examples**: Check the ``examples/`` directory in the repository
+
+Deactivating Your Environment
+------------------------------
+
+When you're done working with CHANCE-C:
+
+.. code-block:: bash
+
+   # For venv:
+   deactivate
+
+   # For conda:
+   conda deactivate 

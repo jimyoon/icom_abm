@@ -1,43 +1,65 @@
-CHANCE-C Documentation
-======================
+.. CHANCE-C documentation master file
 
-**Coastal Hazards And Neighborhood Change - Computational**
+.. image:: _static/chance-c-logo.png
+   :align: center
+   :width: 300px
+   :alt: CHANCE-C Logo
 
-A comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments.
+.. raw:: html
 
-.. image:: https://github.com/jimyoon/icom_abm/actions/workflows/build.yml/badge.svg
+   <div align="center">
+   <h2>An Agent-Based Modeling Framework for Coastal Urban Development</h2>
+   </div>
+
+.. raw:: html
+
+   <div align="center">
+
+|test| |python| |license|
+
+.. raw:: html
+
+   </div>
+
+.. |test| image:: https://github.com/jimyoon/icom_abm/actions/workflows/build.yml/badge.svg
    :target: https://github.com/jimyoon/icom_abm/actions/workflows/build.yml
-   :alt: CI Status
+   :alt: Test Status
 
-.. image:: https://img.shields.io/badge/python-3.11+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.11+-blue.svg
    :target: https://www.python.org/downloads/
-   :alt: Python 3.11+
+   :alt: Python Version
 
-.. image:: https://img.shields.io/badge/license-BSD--2--Clause-green.svg
-   :target: LICENSE
-   :alt: BSD-2-Clause License
+.. |license| image:: https://img.shields.io/badge/license-BSD--2--Clause-green.svg
+   :target: https://github.com/jimyoon/icom_abm/blob/main/LICENSE
+   :alt: License
 
-Overview
+CHANCE-C is a comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments. The framework integrates household decision-making, housing market dynamics, environmental hazards, and policy interventions.
+
+Features
 --------
 
-CHANCE-C integrates household decision-making, housing market dynamics, environmental hazards, and policy interventions to provide a comprehensive framework for understanding coastal urban development patterns.
-
-Key Features
-^^^^^^^^^^^
-
-* **Agent-Based Modeling**: Simulates individual household agents with realistic decision-making
-* **Housing Market Dynamics**: Models supply, demand, pricing, and development
-* **Environmental Hazards**: Integrates flood risk and climate change impacts
-* **Policy Analysis**: Supports scenario testing and intervention evaluation
-* **Geospatial Integration**: Built on robust geospatial data handling
-* **Modular Architecture**: Extensible framework for custom simulations
+- **Agent-Based Modeling**: Simulates individual household agents with realistic decision-making
+- **Housing Market Dynamics**: Models supply, demand, pricing, and development
+- **Environmental Hazards**: Integrates flood risk and extreme weather impacts
+- **Intervention Analysis**: Supports scenario testing and intervention evaluation
+- **Geospatial Integration**: Built on robust geospatial data handling
+- **Modular Architecture**: Extensible framework for custom simulations
+- **Comprehensive Testing**: Full test suite and CI/CD pipeline
 
 Quick Start
 -----------
 
+Install CHANCE-C using pip:
+
+.. code-block:: bash
+
+   pip install chance_c
+
+Create and run your first simulation:
+
 .. code-block:: python
 
-   from chance_c import Model, SimulationConfig
+   from chance_c import Model
 
    # Create a model with default settings
    model = Model()
@@ -48,39 +70,68 @@ Quick Start
    # Access results
    print(f"Total population: {model.simulator.network.total_population}")
 
-Installation
-------------
+For detailed installation instructions and setup, see :doc:`getting_started`.
 
-.. code-block:: bash
-
-   # Clone the repository
-   git clone https://github.com/jimyoon/icom_abm.git
-   cd icom_abm
-
-   # Install in development mode
-   pip install -e .
-
-Requirements
-^^^^^^^^^^^
-
-* Python 3.11+
-* GDAL/OGR libraries
-* PROJ (Projection library)
-* GEOS (Geometry library)
-
-For detailed installation instructions, see :doc:`getting_started`.
+Documentation Structure
+-----------------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
 
    getting_started
+   installation
+   quickstart
+   faq
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+
    user_guide
-   api/index
+   configuration
+   data_requirements
+   field_mapping
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+
    tutorials/index
+   tutorials/quickstarter.ipynb
+   tutorials/configuration.ipynb
+   tutorials/custom_simulations.ipynb
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
    examples/index
+   examples/basic_usage
+   examples/custom_data
+   examples/scenario_analysis
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/index
+   modules
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
    contributing
    changelog
+   license
+
+Support and Community
+----------------------
+
+- **Issues**: `GitHub Issues <https://github.com/jimyoon/icom_abm/issues>`_
+- **Discussions**: `GitHub Discussions <https://github.com/jimyoon/icom_abm/discussions>`_
+- **Source Code**: `GitHub Repository <https://github.com/jimyoon/icom_abm>`_
 
 Indices and tables
 ==================

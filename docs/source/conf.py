@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 project = 'CHANCE-C'
 copyright = '2024, Battelle Memorial Institute'
-author = 'CHANCE-C Development Team'
+author = 'Jim Yoon, Chris R. Vernon'
 release = '0.1.0'
 
 # The full version, including alpha/beta/rc tags
@@ -39,8 +39,10 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
-    'sphinx_book_theme',
+    'sphinx.ext.autosummary',
+    'pydata_sphinx_theme',
     'myst_parser',
+    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,23 +63,30 @@ source_suffix = {
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_book_theme'
+html_theme = 'pydata_sphinx_theme'
 
-# Theme options for sphinx-book-theme
+# Theme options for pydata-sphinx-theme
 html_theme_options = {
-    "repository_url": "https://github.com/jimyoon/icom_abm",
-    "use_repository_button": True,
-    "use_issues_button": True,
-    "use_download_button": True,
-    "use_fullscreen_button": True,
-    "use_edit_page_button": True,
-    "path_to_docs": "docs/source",
-    "home_page_in_toc": True,
-    "show_navbar_depth": 2,
+    "github_url": "https://github.com/jimyoon/icom_abm",
     "show_toc_level": 2,
-    "logo_only": False,
-    "show_prev_next": True,
-    "extra_navbar": "<a href='https://chance-c.org'>CHANCE-C Home</a>",
+    "logo": {
+        "image_light": "_static/chance-c-logo.png",
+        "image_dark": "_static/chance-c-logo.png",
+        "text": "CHANCE-C",
+    },
+    "navbar_align": "left",
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/jimyoon/icom_abm",
+            "icon": "fab fa-github-square",
+        },
+    ],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page", "sourcelink"],
+    "announcement": "🚀 CHANCE-C v0.1.0 is now available! Check out the tutorials to get started.",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -95,6 +104,15 @@ html_sidebars = {
         'searchbox.html',
     ]
 }
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/chance-c-logo.png"
+
+# The name of an image file (within the static path) to use as favicon of the
+# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+# html_favicon = "_static/favicon.ico"
 
 # -- Options for autodoc ----------------------------------------------------
 
@@ -246,4 +264,64 @@ autodoc_mock_imports = [
     'pyproj',
     'rtree',
     'pynsim',
-] 
+    'geopandas',
+    'geopandas.geoseries',
+    'geopandas.base',
+    'geopandas._compat',
+    'geopandas._config',
+    'packaging.version',
+]
+
+# Suppress warnings for failed imports
+autodoc_docstring_signature = True
+autodoc_preserve_defaults = True
+
+# Skip modules that cause import errors
+# autodoc_skip_member = lambda app, what, name, obj, skip, options: skip or name.startswith('_')
+
+# (Removed setup(app) function that added autodoc_mock_imports)
+
+autosummary_generate = True  # Automatically generate autosummary stub pages
+
+# -- Options for nbsphinx ---------------------------------------------------
+
+# Execute notebooks when building docs
+# Options: 'always', 'never', 'auto'
+# 'auto' will execute notebooks that don't have outputs
+nbsphinx_execute = 'never'  # Set to 'always' to execute notebooks during build
+
+# Allow errors in notebook execution
+nbsphinx_allow_errors = True
+
+# Timeout for notebook execution (in seconds)
+nbsphinx_timeout = 300
+
+# Kernel to use for notebook execution
+nbsphinx_kernel_name = 'python3'
+
+# Custom CSS for better notebook formatting
+nbsphinx_codecell_lexer = 'ipython3'
+
+# Exclude input/output prompts from notebooks
+nbsphinx_prolog = """
+{% set docname = env.doc2path(env.docname, base=None) %}
+{% set notebook_name = docname.split('/')[-1] %}
+{% if notebook_name == "custom_simulations.ipynb" %}
+    {% set actual_notebook = "custom.ipynb" %}
+{% else %}
+    {% set actual_notebook = notebook_name %}
+{% endif %}
+
+.. note::
+
+   This page was generated from a Jupyter notebook.
+   Interactive online version: 
+   :download:`Download notebook <../../../notebooks/{{ actual_notebook }}>`
+"""
+
+# Epilog for notebooks
+nbsphinx_epilog = """
+----
+
+**Note:** This tutorial is also available as an interactive Jupyter notebook in the ``notebooks/`` directory of the CHANCE-C repository.
+""" 

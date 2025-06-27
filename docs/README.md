@@ -9,7 +9,14 @@ This directory contains the Sphinx documentation for the CHANCE-C package.
 Install the documentation dependencies:
 
 ```bash
-pip install -e .[docs]
+pip install -e ".[docs]"
+```
+
+### Building the API from the package docstrings
+
+```bash
+cd docs
+sphinx-apidoc -f -o source/ ../chance_c/
 ```
 
 ### Building HTML Documentation

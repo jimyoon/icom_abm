@@ -2,7 +2,7 @@
   <img src="img/chance-c-logo-whitebkgrnd.png" width="50%" alt="CHANCE-C Logo">
 </div>
 
-# CHANCE-C: Agent-Based Modeling Framework for Coastal Urban Development
+# CHANCE-C: an Agent-Based Modeling Framework for Coastal Urban Development
 
 [![test](https://github.com/jimyoon/icom_abm/actions/workflows/build.yml/badge.svg)](https://github.com/jimyoon/icom_abm/actions/workflows/build.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)

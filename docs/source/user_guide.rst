@@ -1,496 +1,474 @@
 User Guide
 ==========
 
-This guide provides detailed information on using CHANCE-C for agent-based modeling of coastal urban development.
+Welcome to the CHANCE-C User Guide! This guide provides comprehensive information about CHANCE-C's capabilities, concepts, and best practices for urban development modeling.
 
-Core Concepts
-------------
-
-Agent-Based Modeling
-^^^^^^^^^^^^^^^^^^^
-
-CHANCE-C uses agent-based modeling to simulate individual household decision-making in coastal environments. Each agent represents multiple households and makes decisions about:
-
-* Residential location choice
-* Housing preferences
-* Risk perception and avoidance
-* Income and budget constraints
-
-The simulation progresses through annual time steps, with agents interacting with:
-
-* The housing market
-* Environmental hazards (flooding)
-* Policy interventions
-* Other agents
-
-Housing Market Dynamics
-^^^^^^^^^^^^^^^^^^^^^^
-
-The housing market in CHANCE-C includes:
-
-* **Supply**: Existing housing stock and new development
-* **Demand**: Household preferences and budgets
-* **Pricing**: Market-driven price adjustments
-* **Transactions**: Buyer-seller matching
-
-Environmental Hazards
-^^^^^^^^^^^^^^^^^^^^
-
-Flood risk is modeled through:
-
-* **Risk Assessment**: Geographic flood probability
-* **Risk Perception**: Agent awareness and avoidance
-* **Impact Modeling**: Property damage and value changes
-* **Adaptation**: Policy and individual responses
-
-Model Architecture
+What is CHANCE-C?
 -----------------
 
-Simulation Components
-^^^^^^^^^^^^^^^^^^^
+CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is an agent-based modeling framework specifically designed for simulating urban development dynamics in coastal environments subject to flood hazards. It integrates multiple complex systems:
 
-.. code-block:: python
+- **Individual Decision-Making**: Household agents making housing choices
+- **Housing Market Dynamics**: Supply, demand, pricing, and development
+- **Environmental Hazards**: Flood risk and extreme weather impacts
+- **Policy Interventions**: Zoning, regulations, and adaptation strategies
+- **Spatial Interactions**: Geographic relationships and neighborhood effects
 
-   from chance_c import Model
+Core Concepts
+-------------
 
-   model = Model()
+Agent-Based Modeling
+~~~~~~~~~~~~~~~~~~~~
+
+CHANCE-C uses agent-based modeling (ABM) to simulate complex urban systems. In ABM:
+
+- **Agents** are individual entities (households, developers, institutions) that make decisions
+- **Environment** is the spatial and social context in which agents operate
+- **Interactions** between agents and environment create emergent system-level behaviors
+- **Time** progresses in discrete steps, allowing dynamic evolution
+
+**Why Agent-Based Modeling?**
+
+Traditional urban models often use aggregate approaches that may miss important individual behaviors and interactions. ABM allows us to:
+
+- Model heterogeneous agents with different preferences and constraints
+- Capture spatial relationships and neighborhood effects
+- Study emergent phenomena that arise from individual decisions
+- Test policy interventions at the agent level
+
+Spatial Structure
+~~~~~~~~~~~~~~~~
+
+CHANCE-C organizes space using census block groups as the fundamental spatial unit:
+
+- **Block Groups**: Geographic areas containing housing units and population
+- **Networks**: Connections between block groups for agent movement
+- **Attributes**: Each block group has characteristics like flood risk, amenities, and housing stock
+
+Agents and Institutions
+~~~~~~~~~~~~~~~~~~~~~~
+
+**Household Agents**
+  Individual households that make housing decisions based on:
+  
+  - Income and budget constraints
+  - Preferences for location attributes
+  - Risk tolerance for flood hazards
+  - Household size and composition
+
+**Institutional Agents**
+  Organizations that make collective decisions:
+  
+  - **Real Estate**: Manages housing development and sales
+  - **Zoning Managers**: Implement land use regulations
+  - **Government Agencies**: Coordinate policy interventions
+
+Simulation Engines
+~~~~~~~~~~~~~~~~~
+
+CHANCE-C uses modular engines that execute specific behaviors each time step:
+
+**Population Dynamics**
+  - New agent creation (population growth)
+  - Agent lifecycle and demographic changes
+
+**Housing Decisions**
+  - Existing agent relocation decisions
+  - New agent location choices
+  - Housing market transactions
+
+**Market Dynamics**
+  - Housing supply and demand
+  - Price adjustments
+  - New construction and development
+
+**Environmental Impacts**
+  - Flood hazard assessment
+  - Risk perception and adaptation
+  - Climate change effects
+
+**Policy Implementation**
+  - Zoning and land use regulations
+  - Intervention scenarios
+  - Regulatory compliance
+
+Key Features
+-----------
+
+Flexible Data Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CHANCE-C supports various data formats and sources:
+
+**Geographic Data**
+  - Shapefiles for spatial boundaries
+  - Census data for demographics
+  - FEMA flood maps for hazard assessment
+
+**Demographic Data**
+  - Population counts and characteristics
+  - Income distributions
+  - Household composition
+
+**Housing Data**
+  - Housing stock characteristics
+  - Price and value information
+  - Vacancy rates and turnover
+
+**Economic Data**
+  - Hedonic pricing models
+  - Market transaction data
+  - Development costs
+
+Field Mapping System
+~~~~~~~~~~~~~~~~~~~
+
+CHANCE-C includes a powerful field mapping system that allows you to use data with different column names without modifying your source files:
+
+.. code-block:: yaml
+
+   geo_file_mapping:
+     GEOID: 'CENSUS_BLOCK_GROUP_ID'
+     COUNTYFP: 'COUNTY_CODE'
    
-   # Core components
-   simulator = model.simulator          # Main simulation engine
-   network = simulator.network         # Geographic network
-   landscape = network.landscape       # Spatial data
-   agents = network.get_institution('all_household_agents')  # Household agents
+   pop_file_mapping:
+     AJWME001: 'TOTAL_POPULATION'
+     AJWNE001: 'TOTAL_HOUSEHOLDS'
 
-Data Flow
-^^^^^^^^^
-
-1. **Input Data**: Geography, population, housing, flood risk
-2. **Initialization**: Create agents, set up network
-3. **Simulation Loop**: Annual iterations
-4. **Output**: Results and statistics
-
-Configuration Management
------------------------
-
-Basic Configuration
-^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from chance_c import SimulationConfig
-
-   config = SimulationConfig(
-       simulation_name="baltimore_study",
-       start_year=2020,
-       n_years=10,
-       landscape_name="Baltimore",
-       pop_growth_perc=0.02,
-       agent_housing_aggregation=10
-   )
-
-Advanced Configuration
-^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   config = SimulationConfig(
-       # Growth parameters
-       pop_growth_mode="perc",
-       pop_growth_perc=0.015,
-       inc_growth_mode="random_agent_replication",
-       
-       # Housing market parameters
-       house_choice_mode="simple_avoidance_utility",
-       house_budget_mode="rhea",
-       perc_move=0.12,
-       
-       # Environmental parameters
-       simple_avoidance_perc=0.95,
-       budget_reduction_perc=0.90,
-       
-       # Development parameters
-       stock_increase_mode="simple_perc",
-       stock_increase_perc=0.03,
-       
-       # Data files
-       geo_filename="baltimore_block_groups.shp",
-       pop_filename="baltimore_population.csv",
-       flood_filename="baltimore_flood_risk.csv",
-       housing_filename="baltimore_housing.csv",
-       hedonic_filename="baltimore_hedonic.csv"
-   )
-
-Data Requirements
-----------------
-
-Input Data Format
-^^^^^^^^^^^^^^^^
-
-**Geography (Shapefile)**
-.. code-block:: python
-
-   import geopandas as gpd
-   
-   # Required columns
-   geo_data = gpd.read_file("geography.shp")
-   print(geo_data.columns)
-   # Should include: GEOID, COUNTYFP, geometry
-
-**Population (CSV)**
-.. code-block:: python
-
-   import pandas as pd
-   
-   # Required columns
-   pop_data = pd.read_csv("population.csv")
-   print(pop_data.columns)
-   # Should include: GEOID, TOTAL_POPULATION, HOUSEHOLD_COUNT
-
-**Flood Risk (CSV)**
-.. code-block:: python
-
-   # Required columns
-   flood_data = pd.read_csv("flood_risk.csv")
-   print(flood_data.columns)
-   # Should include: GEOID, FLOOD_RISK
-
-Data Validation
-^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from chance_c import Model
-   
-   # Model will validate data automatically
-   model = Model(
-       geo_filename="data/geography.shp",
-       pop_filename="data/population.csv",
-       flood_filename="data/flood_risk.csv"
-   )
-   
-   # Check for validation errors
-   if model.validation_errors:
-       print("Data validation errors:", model.validation_errors)
-
-Running Simulations
-------------------
-
-Basic Simulation
-^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from chance_c import Model, SimulationConfig
-   
-   # Create configuration
-   config = SimulationConfig(
-       simulation_name="test_simulation",
-       start_year=2020,
-       n_years=5
-   )
-   
-   # Create and run model
-   model = Model(config=config)
-   model.run_simulation()
-   
-   # Access results
-   results = model.get_results()
-   print(f"Simulation completed: {results['total_population']} total population")
-
-Parallel Simulations
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from chance_c import Model, SimulationConfig
-   import multiprocessing as mp
-   from functools import partial
-   
-   def run_simulation(config):
-       model = Model(config=config)
-       model.run_simulation()
-       return model.get_results()
-   
-   # Create multiple configurations
-   configs = []
-   for i in range(10):
-       config = SimulationConfig(
-           simulation_name=f"sim_{i}",
-           start_year=2020,
-           n_years=5,
-           pop_growth_perc=0.01 + i * 0.001
-       )
-       configs.append(config)
-   
-   # Run in parallel
-   with mp.Pool(processes=4) as pool:
-       results = pool.map(run_simulation, configs)
-   
-   # Analyze results
-   for i, result in enumerate(results):
-       print(f"Simulation {i}: {result['total_population']} population")
+This flexibility enables integration with diverse data sources and formats.
 
 Scenario Analysis
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+CHANCE-C supports comprehensive scenario analysis:
 
-   # Baseline scenario
-   baseline_config = SimulationConfig(
-       simulation_name="baseline",
-       start_year=2020,
-       n_years=10,
-       pop_growth_perc=0.02
-   )
-   
-   # High growth scenario
-   high_growth_config = SimulationConfig(
-       simulation_name="high_growth",
-       start_year=2020,
-       n_years=10,
-       pop_growth_perc=0.04
-   )
-   
-   # Run scenarios
-   baseline_model = Model(baseline_config)
-   baseline_model.run_simulation()
-   
-   high_growth_model = Model(high_growth_config)
-   high_growth_model.run_simulation()
-   
-   # Compare results
-   baseline_pop = baseline_model.get_results()['total_population']
-   high_growth_pop = high_growth_model.get_results()['total_population']
-   
-   print(f"Baseline population: {baseline_pop}")
-   print(f"High growth population: {high_growth_pop}")
+**Baseline Scenarios**
+  - Current conditions and trends
+  - Historical validation
+  - Reference case for comparisons
 
-Accessing Results
+**Policy Scenarios**
+  - Zoning changes and regulations
+  - Infrastructure investments
+  - Incentive programs
+
+**Climate Scenarios**
+  - Sea level rise projections
+  - Increased flood frequency
+  - Extreme weather events
+
+**Development Scenarios**
+  - Population growth variations
+  - Economic development patterns
+  - Land use changes
+
+Modeling Workflow
 ----------------
 
-Network Statistics
-^^^^^^^^^^^^^^^^^
+A typical CHANCE-C modeling workflow follows these steps:
 
-.. code-block:: python
+1. **Data Preparation**
+   - Gather required input data
+   - Create field mappings if needed
+   - Validate data quality and completeness
 
-   model = Model()
-   model.run_simulation()
-   
-   network = model.simulator.network
-   
-   # Basic statistics
-   print(f"Total population: {network.total_population}")
-   print(f"Average household income: {network.avg_hh_income}")
-   print(f"Average household size: {network.avg_hh_size}")
-   print(f"Total housing units: {network.total_housing_units}")
+2. **Model Configuration**
+   - Set simulation parameters
+   - Define scenario conditions
+   - Configure agent behaviors
 
-Agent Data
-^^^^^^^^^^
+3. **Model Calibration**
+   - Adjust parameters to match historical data
+   - Validate model outputs
+   - Conduct sensitivity analysis
 
-.. code-block:: python
+4. **Scenario Simulation**
+   - Run baseline and alternative scenarios
+   - Compare outcomes across scenarios
+   - Analyze policy impacts
 
-   # Access all household agents
-   agents = network.get_institution('all_household_agents').components
-   
-   # Agent statistics
-   agent_incomes = [agent.income for agent in agents]
-   agent_locations = [agent.location for agent in agents]
-   
-   print(f"Number of agents: {len(agents)}")
-   print(f"Average agent income: {sum(agent_incomes) / len(agent_incomes)}")
+5. **Results Analysis**
+   - Visualize spatial and temporal patterns
+   - Quantify scenario differences
+   - Interpret policy implications
 
-Geographic Data
-^^^^^^^^^^^^^^
+Best Practices
+--------------
 
-.. code-block:: python
+Model Design
+~~~~~~~~~~~~
 
-   # Access block group data
-   block_groups = network.nodes
-   
-   # Housing data by block group
-   housing_df = network.housing_block_group_df
-   
-   # Plot population distribution
-   import matplotlib.pyplot as plt
-   import geopandas as gpd
-   
-   gdf = gpd.GeoDataFrame(housing_df, geometry='geometry')
-   gdf.plot(column='population', legend=True)
-   plt.title('Population Distribution')
-   plt.show()
+**Start Simple**
+  Begin with basic scenarios and gradually add complexity. This helps identify key relationships and validate model behavior.
 
-Custom Analysis
-^^^^^^^^^^^^^^
+**Use Default Data First**
+  Familiarize yourself with CHANCE-C using the included example data before working with your own datasets.
 
-.. code-block:: python
+**Document Everything**
+  Keep detailed records of:
+  - Configuration parameters
+  - Data sources and processing steps
+  - Modeling assumptions and decisions
+  - Results and interpretations
 
-   # Custom analysis functions
-   def analyze_flood_risk(model):
-       network = model.simulator.network
-       housing_df = network.housing_block_group_df
-       
-       # Calculate average flood risk by income level
-       high_income_areas = housing_df[housing_df['avg_income'] > housing_df['avg_income'].median()]
-       low_income_areas = housing_df[housing_df['avg_income'] <= housing_df['avg_income'].median()]
-       
-       high_risk = high_income_areas['flood_risk'].mean()
-       low_risk = low_income_areas['flood_risk'].mean()
-       
-       return {
-           'high_income_flood_risk': high_risk,
-           'low_income_flood_risk': low_risk,
-           'risk_difference': high_risk - low_risk
-       }
-   
-   # Run analysis
-   results = analyze_flood_risk(model)
-   print(f"Flood risk difference: {results['risk_difference']:.3f}")
+Data Management
+~~~~~~~~~~~~~~
+
+**Data Quality**
+  - Verify data accuracy and completeness
+  - Check for missing values and outliers
+  - Ensure spatial and temporal consistency
+  - Validate against independent sources
+
+**Field Mapping**
+  - Use descriptive field names in mappings
+  - Document the meaning of each field
+  - Test mappings with small datasets first
+  - Keep mapping files under version control
+
+**Backup and Version Control**
+  - Maintain backups of all data files
+  - Use version control for configuration files
+  - Document changes and their rationale
+  - Archive results for reproducibility
+
+Simulation Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Parameter Selection**
+  - Base parameters on empirical evidence when possible
+  - Document sources and assumptions
+  - Conduct sensitivity analysis for key parameters
+  - Consider parameter uncertainty
+
+**Agent Aggregation**
+  - Balance computational efficiency with model detail
+  - Start with higher aggregation for testing
+  - Reduce aggregation for final analysis
+  - Document aggregation effects
+
+**Temporal Resolution**
+  - Choose appropriate time steps for your research question
+  - Consider seasonal and cyclical patterns
+  - Balance detail with computational requirements
+  - Validate temporal dynamics
+
+Results Analysis
+~~~~~~~~~~~~~~~
+
+**Validation**
+  - Compare model outputs to observed data
+  - Test model behavior under extreme conditions
+  - Verify that results make intuitive sense
+  - Conduct cross-validation with independent datasets
+
+**Uncertainty Analysis**
+  - Run multiple model realizations
+  - Vary key parameters within reasonable ranges
+  - Report confidence intervals where appropriate
+  - Discuss limitations and uncertainties
+
+**Visualization**
+  - Use appropriate visualization techniques
+  - Show spatial and temporal patterns
+  - Highlight key findings and insights
+  - Make visualizations accessible to stakeholders
+
+Common Use Cases
+---------------
+
+Urban Planning
+~~~~~~~~~~~~~~
+
+**Land Use Planning**
+  - Evaluate zoning alternatives
+  - Assess development capacity
+  - Analyze transportation impacts
+  - Study neighborhood change patterns
+
+**Infrastructure Planning**
+  - Assess service demand
+  - Evaluate infrastructure investments
+  - Study accessibility improvements
+  - Plan for population growth
+
+Climate Adaptation
+~~~~~~~~~~~~~~~~~
+
+**Flood Risk Assessment**
+  - Model flood impacts on housing markets
+  - Evaluate adaptation strategies
+  - Study risk perception and behavior
+  - Assess equity implications
+
+**Sea Level Rise Planning**
+  - Project long-term impacts
+  - Evaluate retreat strategies
+  - Study adaptation pathways
+  - Plan for managed relocation
+
+Policy Analysis
+~~~~~~~~~~~~~~
+
+**Housing Policy**
+  - Evaluate affordable housing programs
+  - Study gentrification and displacement
+  - Assess housing market interventions
+  - Analyze equity outcomes
+
+**Environmental Policy**
+  - Study environmental justice impacts
+  - Evaluate green infrastructure
+  - Assess pollution reduction strategies
+  - Analyze ecosystem service values
+
+Research Applications
+~~~~~~~~~~~~~~~~~~~~
+
+**Academic Research**
+  - Test theoretical hypotheses
+  - Conduct comparative studies
+  - Develop new modeling approaches
+  - Publish peer-reviewed research
+
+**Applied Research**
+  - Support decision-making processes
+  - Evaluate program effectiveness
+  - Conduct impact assessments
+  - Inform policy development
+
+Performance Considerations
+---------------------------
+
+Computational Efficiency
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Agent Aggregation**
+  Higher aggregation (fewer agents) reduces computation time but may lose detail.
+
+**Spatial Resolution**
+  Larger spatial units reduce complexity but may miss important local effects.
+
+**Temporal Resolution**
+  Longer time steps reduce computation but may miss important dynamics.
+
+**Model Complexity**
+  Simpler models run faster but may not capture all relevant processes.
+
+Memory Management
+~~~~~~~~~~~~~~~~
+
+**Large Datasets**
+  - Process data in chunks when possible
+  - Use efficient data structures
+  - Monitor memory usage
+  - Consider distributed computing for very large models
+
+**Result Storage**
+  - Save only necessary outputs
+  - Use compressed file formats
+  - Implement incremental saving
+  - Clean up temporary files
 
 Troubleshooting
 --------------
 
 Common Issues
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
-**Memory Issues**
-.. code-block:: python
+**Slow Performance**
+  - Reduce agent aggregation
+  - Simplify model configuration
+  - Check for infinite loops
+  - Monitor system resources
 
-   # For large datasets, increase agent aggregation
-   config = SimulationConfig(
-       agent_housing_aggregation=20,  # More households per agent
-       # ... other parameters
-   )
+**Memory Errors**
+  - Reduce dataset size
+  - Increase system memory
+  - Use data chunking
+  - Optimize data structures
 
-**Data Loading Errors**
-.. code-block:: python
+**Convergence Issues**
+  - Check parameter values
+  - Verify model logic
+  - Reduce time step size
+  - Add stability constraints
 
-   # Check data file formats
-   import pandas as pd
-   import geopandas as gpd
-   
-   try:
-       geo_data = gpd.read_file("geography.shp")
-       pop_data = pd.read_csv("population.csv")
-       print("Data files loaded successfully")
-   except Exception as e:
-       print(f"Data loading error: {e}")
+**Unexpected Results**
+  - Verify input data
+  - Check configuration parameters
+  - Review model assumptions
+  - Conduct sensitivity analysis
 
-**Simulation Errors**
-.. code-block:: python
+Getting Help
+~~~~~~~~~~~
 
-   # Enable debug mode
-   config = SimulationConfig(
-       debug=True,
-       # ... other parameters
-   )
-   
-   # Check for specific errors
-   try:
-       model = Model(config=config)
-       model.run_simulation()
-   except Exception as e:
-       print(f"Simulation error: {e}")
-       print(f"Error details: {model.error_log}")
+**Documentation**
+  - Review tutorials and examples
+  - Check API documentation
+  - Read user guide sections
+  - Consult troubleshooting guides
 
-Performance Optimization
-^^^^^^^^^^^^^^^^^^^^^^^
+**Community Support**
+  - Post questions in GitHub Discussions
+  - Report bugs in GitHub Issues
+  - Join user community forums
+  - Attend workshops and conferences
 
-.. code-block:: python
+**Professional Support**
+  - Consult with model developers
+  - Hire experienced practitioners
+  - Collaborate with research institutions
+  - Engage professional services
 
-   # Optimize for speed
-   config = SimulationConfig(
-       agent_housing_aggregation=15,  # Reduce number of agents
-       n_years=5,                     # Shorter simulation period
-       # ... other parameters
-   )
-   
-   # Use parallel processing for multiple runs
-   from multiprocessing import Pool
-   
-   def run_optimized_simulation(config):
-       model = Model(config=config)
-       model.run_simulation()
-       return model.get_results()
+Advanced Topics
+--------------
 
-Best Practices
--------------
+Model Extension
+~~~~~~~~~~~~~~
 
-Configuration Management
-^^^^^^^^^^^^^^^^^^^^^^^
+CHANCE-C is designed to be extensible. Advanced users can:
 
-.. code-block:: python
+- Create custom agent types
+- Develop new simulation engines
+- Implement specialized behaviors
+- Integrate external models
 
-   # Use configuration files
-   import yaml
-   
-   with open('simulation_config.yml', 'r') as f:
-       config_dict = yaml.safe_load(f)
-   
-   config = SimulationConfig(**config_dict)
-   
-   # Save configurations
-   config.save('my_config.yml')
+For detailed information on extending CHANCE-C, see :doc:`tutorials/custom_simulations`.
 
-Data Validation
-^^^^^^^^^^^^^^
+Integration with Other Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+CHANCE-C can be integrated with:
 
-   # Validate data before simulation
-   def validate_data(geo_file, pop_file, flood_file):
-       import geopandas as gpd
-       import pandas as pd
-       
-       # Check file existence
-       for file in [geo_file, pop_file, flood_file]:
-           if not os.path.exists(file):
-               raise FileNotFoundError(f"File not found: {file}")
-       
-       # Check required columns
-       geo_data = gpd.read_file(geo_file)
-       pop_data = pd.read_csv(pop_file)
-       flood_data = pd.read_csv(flood_file)
-       
-       required_geo = ['GEOID', 'COUNTYFP', 'geometry']
-       required_pop = ['GEOID', 'TOTAL_POPULATION']
-       required_flood = ['GEOID', 'FLOOD_RISK']
-       
-       for col in required_geo:
-           if col not in geo_data.columns:
-               raise ValueError(f"Missing column in geography file: {col}")
-       
-       # ... similar checks for other files
-       
-       return True
+- **GIS Software**: For spatial analysis and visualization
+- **Statistical Software**: For advanced analytics
+- **Optimization Tools**: For parameter calibration
+- **Visualization Tools**: For interactive dashboards
 
-Result Analysis
-^^^^^^^^^^^^^^
+High-Performance Computing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+For large-scale simulations, CHANCE-C can be deployed on:
 
-   # Systematic result analysis
-   def analyze_simulation_results(model):
-       results = {}
-       
-       # Basic statistics
-       network = model.simulator.network
-       results['total_population'] = network.total_population
-       results['avg_income'] = network.avg_hh_income
-       
-       # Geographic analysis
-       housing_df = network.housing_block_group_df
-       results['population_by_income'] = housing_df.groupby('income_quartile')['population'].sum()
-       
-       # Agent analysis
-       agents = network.get_institution('all_household_agents').components
-       results['agent_income_distribution'] = [agent.income for agent in agents]
-       
-       return results
+- **Cluster Computing**: Distributed simulation runs
+- **Cloud Computing**: Scalable computing resources
+- **GPU Computing**: Accelerated computation
+- **Parallel Processing**: Multi-core execution
 
 Next Steps
 ----------
 
-* Explore the :doc:`api/index` for complete API documentation
-* Check out :doc:`tutorials/index` for step-by-step tutorials
-* See :doc:`examples/index` for practical examples
-* Read :doc:`contributing` for development guidelines 
+After reading this user guide:
+
+1. **Try the Tutorials**: Work through :doc:`tutorials/index` for hands-on experience
+2. **Explore Examples**: Check :doc:`examples/index` for specific use cases
+3. **Review API Documentation**: See :doc:`api/index` for detailed technical information
+4. **Join the Community**: Participate in discussions and contribute to development
+
+For specific questions about your use case, consider:
+
+- Reviewing similar published studies
+- Consulting with domain experts
+- Engaging with the CHANCE-C community
+- Seeking professional collaboration 
