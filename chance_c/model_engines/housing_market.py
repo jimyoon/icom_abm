@@ -53,21 +53,7 @@ class HousingMarket(Engine):
         exceeds supply. Households unable to find affordable housing are marked
         as outmigrated.
         """
-        # Guard: Check if target is a network (has required attributes)
-        if not hasattr(self.target, 'nodes') or not hasattr(self.target, 'unassigned_households') or \
-           not hasattr(self.target, 'relocating_households') or not hasattr(self.target, 'hh_utilities_df'):
-            return
-        
-        # Guard: If timestep is not set, use target's current_timestep
-        if self.timestep is None:
-            if self.target.current_timestep is None:
-                logging.warning("No timestep available for housing market engine")
-                return
-            current_year = self.target.current_timestep.year
-        else:
-            current_year = self.timestep.year
-            
-        logging.info("Running the housing market engine, year " + str(current_year))
+        logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
 
         for market_iter in range(self.block_group_sample_size):
 
@@ -124,7 +110,7 @@ class HousingMarket(Engine):
                 no_of_households = len(block_group_demand[block_group])
                 if self.target.get_node(block_group).available_units >= no_of_households:  # if block_group has enough available units to accommodate all matching agents, move all agents to location
                     for household_match in block_group_demand[block_group].keys():
-                        if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == current_year and \
+                        if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == self.timestep.year and \
                                 self.target.get_institution('all_household_agents')._component_map[household_match].name[9:16] != 'initial':  # if agent is new to domain
                             self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add pynsim household agent to associated block group node
                             self.target.get_node(block_group).occupied_units += 1  # adjust occupied units
@@ -142,7 +128,7 @@ class HousingMarket(Engine):
                     self.target.get_node(block_group).demand_exceeds_supply = True  # JY to implement
                     top_matches = dict(sorted(block_group_demand[block_group].items(), key=itemgetter(1), reverse=True)[:self.target.get_node(block_group).available_units])
                     for household_match in top_matches.keys():
-                        if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == current_year and \
+                        if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == self.timestep.year and \
                                 self.target.get_institution('all_household_agents')._component_map[household_match].name[9:16] != 'initial':  # if agent is new to domain
                             self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add pynsim household agent to associated block group node
                             self.target.get_node(block_group).occupied_units += 1  # adjust occupied units

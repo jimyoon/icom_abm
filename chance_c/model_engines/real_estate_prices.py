@@ -37,10 +37,6 @@ class RealEstatePrices(Engine):
         Currently supports OLS hedonic regression analysis, with framework in place
         for additional regression methods.
         """
-        # Guard: Check if target has the required method
-        if not hasattr(self.target, 'update_OLS_hedonic_analysis'):
-            return
-        
         if self.estimation_mode == 'OLS_hedonic':
             self.target.update_OLS_hedonic_analysis()
         else:  # Other forms of hedonic regression can go here

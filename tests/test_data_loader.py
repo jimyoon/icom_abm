@@ -39,7 +39,6 @@ class TestDataLoader:
         assert_dataframe_columns(loaded_data, ['GEOID', 'population', 'income', 'housing_units', 'flood_risk'])
         assert len(loaded_data) == 3
     
-    @pytest.mark.skip(reason="NumPy 2.0+ compatibility issue with geopandas/fiona")
     def test_load_shapefile_data(self, temp_data_dir, sample_block_groups):
         """Test loading shapefile data."""
         # Suppress warnings for this specific test
@@ -48,8 +47,7 @@ class TestDataLoader:
             
             # Create temporary shapefile
             shp_file = os.path.join(temp_data_dir, "test_geo.shp")
-            # Use a copy to avoid NumPy 2.0+ compatibility issues
-            sample_block_groups.copy().to_file(shp_file)
+            sample_block_groups.to_file(shp_file)
             
             # Load data
             loaded_data = gpd.read_file(shp_file)

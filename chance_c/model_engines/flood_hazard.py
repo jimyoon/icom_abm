@@ -36,7 +36,7 @@ class FloodHazard(Engine):
         year 2020.
         """
         logging.info("Running the flood hazard engine, year " + str(self.target.current_timestep.year))
-        if self.target.current_timestep.year == 2020:
+        if self.timestep.year == 2020:
             for block_group in self.target.nodes:
                 block_group.flood_hazard_risk = 100
 
@@ -76,7 +76,7 @@ class FloodGenerator(Engine):
         temporal conditions. Currently assigns a risk value of 100 for the
         year 2020.
         """
-        if self.target.current_timestep.year == 2020:
+        if self.timestep.year == 2020:
             for block_group in self.target.nodes:
                 block_group.flood_hazard_risk = 100
 

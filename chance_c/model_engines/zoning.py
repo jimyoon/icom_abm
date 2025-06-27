@@ -38,11 +38,5 @@ class Zoning(Engine):
         zoning determination specifically for the year 2020, with potential
         for expansion to handle multiple years or dynamic zoning changes.
         """
-        # Try to get the current timestep from the simulator's network, fallback to target
-        current_year = None
-        if hasattr(self, 'simulator') and hasattr(self.simulator, 'network') and hasattr(self.simulator.network, 'current_timestep'):
-            current_year = self.simulator.network.current_timestep.year
-        elif hasattr(self.target, 'current_timestep'):
-            current_year = self.target.current_timestep.year
-        if current_year == 2020:
+        if self.timestep.year == 2020:
             self.target.determine_zoning()
