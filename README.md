@@ -1,3 +1,5 @@
+![CHANCE-C Logo](img/chance-c-logo.png)
+
 # CHANCE-C: Agent-Based Modeling Framework for Coastal Urban Development
 
 [![test](https://github.com/jimyoon/icom_abm/actions/workflows/build.yml/badge.svg)](https://github.com/jimyoon/icom_abm/actions/workflows/build.yml)
@@ -10,56 +12,69 @@ CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is a comprehe
 
 - **Agent-Based Modeling**: Simulates individual household agents with realistic decision-making
 - **Housing Market Dynamics**: Models supply, demand, pricing, and development
-- **Environmental Hazards**: Integrates flood risk and climate change impacts
-- **Policy Analysis**: Supports scenario testing and intervention evaluation
+- **Environmental Hazards**: Integrates flood risk and extreme weather impacts
+- **Intervention Analysis**: Supports scenario testing and intervention evaluation
 - **Geospatial Integration**: Built on robust geospatial data handling
 - **Modular Architecture**: Extensible framework for custom simulations
-- **Comprehensive Testing**: Full test suite with 94+ tests and CI/CD pipeline
+- **Comprehensive Testing**: Full test suite and CI/CD pipeline
 
-## Requirements
+## System Requirements
 
 - Python 3.11+
 - GDAL/OGR libraries
 - PROJ (Projection library)
 - GEOS (Geometry library)
 
+## Setting Up a Virtual Environment
+
+We recommend using a virtual environment to isolate the CHANCE-C dependencies from your system Python installation.
+
+### Using venv
+
+```bash
+# Create a virtual environment
+python -m venv chance_c_env
+
+# Activate the virtual environment
+# On macOS/Linux:
+source chance_c_env/bin/activate
+
+# On Windows:
+chance_c_env\Scripts\activate
+
+# Verify activation (you should see chance_c_env in your prompt)
+which python
+```
+
+### Using conda
+
+```bash
+# Create a conda environment
+conda create -n chance_c_env python=3.11
+
+# Activate the environment
+conda activate chance_c_env
+
+# Verify activation
+conda info --envs
+```
+
+### Deactivating the Environment
+
+When you're done working with CHANCE-C:
+
+```bash
+# For venv:
+deactivate
+
+# For conda:
+conda deactivate
+```
+
 ## Installation
 
-### System Dependencies
-
-**Ubuntu/Debian:**
 ```bash
-sudo apt-get update
-sudo apt-get install -y \
-  libgdal-dev \
-  gdal-bin \
-  libproj-dev \
-  proj-data \
-  proj-bin \
-  libgeos-dev \
-  libspatialindex-dev
-```
-
-**macOS:**
-```bash
-brew install gdal proj geos
-```
-
-**Windows:**
-Install GDAL, PROJ, and GEOS through OSGeo4W or conda-forge.
-
-### Python Package
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/icom_abm.git
-cd icom_abm
-
-# Install in development mode
-pip install -e .
-
-# Or install from PyPI (when available)
-pip install chance-c
+pip install chance_c
 ```
 
 ## Quick Start
@@ -67,7 +82,7 @@ pip install chance-c
 ### Basic Usage
 
 ```python
-from chance_c import Model, SimulationConfig
+from chance_c import Model
 
 # Create a model with default settings
 model = Model()
@@ -87,8 +102,8 @@ from chance_c import Model, SimulationConfig
 # Create custom configuration
 config = SimulationConfig(
     simulation_name="my_simulation",
-    start_year=2020,
-    n_years=5,
+    start_year=2018,
+    n_years=2,
     pop_growth_perc=0.02,
     landscape_name="Baltimore"
 )
@@ -123,7 +138,7 @@ model.run_simulation()
 - **`ABMLandscape`**: Geographic and demographic landscape
 - **`HouseholdAgent`**: Individual household agents
 - **`BlockGroup`**: Census block group nodes
-- **`CountyZoningManager`**: Policy and regulatory agents
+- **`CountyZoningManager`**: Intervention and regulatory agents
 - **`RealEstate`**: Market and development agents
 
 ### Model Engines
@@ -136,7 +151,7 @@ model.run_simulation()
 - **`BuildingDevelopment`**: New construction and development
 - **`HousingPricing`**: Price dynamics and market updates
 - **`FloodHazard`**: Environmental risk assessment
-- **`Zoning`**: Regulatory and policy interventions
+- **`Zoning`**: Regulatory and other interventions
 - **`LandscapeStatistics`**: Data collection and analysis
 
 ### Data Management
@@ -229,10 +244,6 @@ pytest tests/test_model_engines.py
 
 # Run with coverage
 pytest tests/ --cov=chance_c --cov-report=html
-
-# Run linting
-flake8 chance_c/ tests/
-black --check chance_c/ tests/
 ```
 
 ## Output and Analysis
@@ -260,6 +271,7 @@ housing_df = network.housing_block_group_df
 
 ### Visualization
 
+You can create your own using the output data:
 ```python
 import matplotlib.pyplot as plt
 import geopandas as gpd
@@ -273,6 +285,14 @@ gdf.plot(column='population', ax=ax, legend=True)
 plt.title('Population Distribution')
 plt.show()
 ```
+![CHANCE-C Logo](img/demo_population_distribution.png)
+
+Or try one of the many prebuilt visualization functions (see docs for full list):
+```python
+model.plot_population_change()
+```
+![CHANCE-C Logo](img/demo_population_change.png)
+
 
 ## Custom Simulations
 
