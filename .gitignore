@@ -1,3 +1,7 @@
+# ignore built docs
+docs/build/
+docs/_build/
+
 # ignore pytest cache
 .pytest_cache/
 
