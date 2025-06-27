@@ -1,4 +1,6 @@
-![CHANCE-C Logo](img/chance-c-logo.png)
+<div align="center">
+  <img src="img/chance-c-logo-whitebkgrnd.png" width="50%" alt="CHANCE-C Logo">
+</div>
 
 # CHANCE-C: Agent-Based Modeling Framework for Coastal Urban Development
 
@@ -6,7 +8,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-BSD--2--Clause-green.svg)](LICENSE)
 
-CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is a comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments. The framework integrates household decision-making, housing market dynamics, environmental hazards, and policy interventions.
+CHANCE-C is a comprehensive agent-based modeling framework designed to simulate urban development dynamics in flood-prone coastal environments. The framework integrates household decision-making, housing market dynamics, environmental hazards, and other interventions.
 
 ## Features
 
