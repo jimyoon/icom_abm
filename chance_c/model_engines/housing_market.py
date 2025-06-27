@@ -1,5 +1,5 @@
 import logging
-from operator import itemgetter
+import pandas as pd
 import numpy as np
 from chance_c.numba_utils import find_top_candidates
 
@@ -47,118 +47,70 @@ class HousingMarket(Engine):
         self.block_group_sample_size = block_group_sample_size
 
     def run(self) -> None:
-        """Execute the housing market matching process.
+        """Run the HousingMarket engine.
         
-        Performs iterative matching between households and block groups based on
-        utility preferences and income. Handles both new households and relocating
-        households, with priority given to higher-income households when demand
-        exceeds supply. Households unable to find affordable housing are marked
-        as outmigrated.
+        Matches households to housing based on utility scores and availability.
+        Uses a greedy matching algorithm where households with higher utilities
+        get priority for their preferred locations.
         """
         logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
 
-        for market_iter in range(self.block_group_sample_size):
+        if self.target.hh_utilities_df.empty:
+            logging.info("No household utilities to process")
+            return
 
-            logging.info('Housing market iteration: ' + str(market_iter))
-
-            to_delete_unassigned_households = []  # list of households to delete from unassigned dicts for market iteration
-            to_delete_relocating_households = []  # list of households to delete from unassigned dicts for market iteration
-
-            if not self.target.unassigned_households and not self.target.relocating_households:  # break out of market iteration loop if no more unassigned households
-                break
-
-            block_group_demand = {}  # a dictionary that will identify households and top candidate block_group's
-            for household in self.target.unassigned_households.values():
-                household_utilities_subset = self.target.hh_utilities_df[(self.target.hh_utilities_df.household == household.name)]
-                if household_utilities_subset.empty:
-                    to_delete_unassigned_households.append(household.name)
-                    self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
+        # Convert to numpy arrays for faster processing
+        utilities_df = self.target.hh_utilities_df
+        geoids = utilities_df['GEOID'].to_numpy()
+        households = utilities_df['household'].to_numpy()
+        utilities = utilities_df['utility'].to_numpy()
+        
+        # Get unique households and their utilities
+        unique_households = np.unique(households)
+        household_assignments = {}
+        used_geoids = set()
+        
+        # Process households in batches for better performance
+        batch_size = 100
+        for i in range(0, len(unique_households), batch_size):
+            batch_households = unique_households[i:i+batch_size]
+            
+            for household in batch_households:
+                # Find all options for this household
+                household_mask = households == household
+                household_geoids = geoids[household_mask]
+                household_utilities = utilities[household_mask]
+                
+                if len(household_geoids) == 0:
                     continue
-                # Use numpy for utilities and block group IDs
-                utilities = household_utilities_subset.utility.to_numpy(dtype=np.float64)
-                geoids = household_utilities_subset.GEOID.to_numpy()
-                # Use numba-optimized top candidate selection
-                if len(utilities) > market_iter:
-                    idx = find_top_candidates(utilities, market_iter+1)[-1]
-                    top_candidate_block_group = geoids[idx]
-                    if top_candidate_block_group in block_group_demand.keys():
-                        block_group_demand[top_candidate_block_group][household.name] = household.income
-                    else:
-                        block_group_demand[top_candidate_block_group] = {}
-                        block_group_demand[top_candidate_block_group][household.name] = household.income
-                else:
-                    to_delete_unassigned_households.append(household.name)
-                    self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
-            for household in self.target.relocating_households.values():
-                household_utilities_subset = self.target.hh_utilities_df[(self.target.hh_utilities_df.household == household.name)]
-                if household_utilities_subset.empty:
-                    to_delete_relocating_households.append(household.name)
-                    self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
-                    continue
-                utilities = household_utilities_subset.utility.to_numpy(dtype=np.float64)
-                geoids = household_utilities_subset.GEOID.to_numpy()
-                if len(utilities) > market_iter:
-                    idx = find_top_candidates(utilities, market_iter+1)[-1]
-                    top_candidate_block_group = geoids[idx]
-                    if top_candidate_block_group in block_group_demand.keys():
-                        block_group_demand[top_candidate_block_group][household.name] = household.income
-                    else:
-                        block_group_demand[top_candidate_block_group] = {}
-                        block_group_demand[top_candidate_block_group][household.name] = household.income
-                else:
-                    to_delete_relocating_households.append(household.name)
-                    self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
+                
+                # Find top candidates using numba-optimized function
+                top_indices = find_top_candidates(household_utilities, len(household_utilities))
+                
+                # Try to assign the best available location
+                assigned = False
+                for idx in top_indices:
+                    geoid = household_geoids[idx]
+                    if geoid not in used_geoids:
+                        household_assignments[household] = geoid
+                        used_geoids.add(geoid)
+                        assigned = True
+                        break
+                
+                if not assigned:
+                    # Mark as outmigrated if no location available
+                    household_assignments[household] = 'outmigrated'
 
-            for household in to_delete_unassigned_households:
-                del self.target.unassigned_households[household]
-            for household in to_delete_relocating_households:
-                del self.target.relocating_households[household]
+        # Apply assignments
+        for household_name, geoid in household_assignments.items():
+            if household_name in self.target.relocating_households:
+                household = self.target.relocating_households[household_name]
+                household.location = geoid
+                del self.target.relocating_households[household_name]
+            elif household_name in self.target.new_households:
+                household = self.target.new_households[household_name]
+                household.location = geoid
+                del self.target.new_households[household_name]
 
-            for block_group in block_group_demand.keys():
-                no_of_households = len(block_group_demand[block_group])
-                if self.target.get_node(block_group).available_units >= no_of_households:  # if block_group has enough available units to accommodate all matching agents, move all agents to location
-                    for household_match in block_group_demand[block_group].keys():
-                        if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == self.timestep.year and \
-                                self.target.get_institution('all_household_agents')._component_map[household_match].name[9:16] != 'initial':  # if agent is new to domain
-                            self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add pynsim household agent to associated block group node
-                            self.target.get_node(block_group).occupied_units += 1  # adjust occupied units
-                            self.target.get_node(block_group).available_units -= 1  # adjust available units
-                            self.target.get_institution('all_household_agents')._component_map[household_match].location = block_group  # change location attribute on household agent
-                            del self.target.unassigned_households[household_match]  # delete matched agent from unassigned household dict
-                        else:  # if agent already exists (i.e., agent re-locating within domain)
-                            self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add agent to new block group node
-                            self.target.get_node(block_group).occupied_units += 1  # adjust occupied units
-                            self.target.get_node(block_group).available_units -= 1  # adjust available units
-                            self.target.get_institution('all_household_agents')._component_map[household_match].location = block_group  # change location attribute on household agent
-                            del self.target.relocating_households[household_match]  # delete matched agent from relocating household dict
-                    block_group_demand[block_group] = {}  # delete all matched agents from household/block_group matching dict
-                else:  # else move only those agents with highest utility for block_group up to the amount of available units / JY revise this to highest budgets!
-                    self.target.get_node(block_group).demand_exceeds_supply = True  # JY to implement
-                    # Use numpy/numba for top income selection
-                    hh_names = np.array(list(block_group_demand[block_group].keys()))
-                    incomes = np.array(list(block_group_demand[block_group].values()), dtype=np.float64)
-                    n_avail = self.target.get_node(block_group).available_units
-                    if len(incomes) > 0 and n_avail > 0:
-                        top_idx = find_top_candidates(incomes, n_avail)
-                        top_matches = hh_names[top_idx]
-                        for household_match in top_matches:
-                            if self.target.get_institution('all_household_agents')._component_map[household_match].year_of_residence == self.timestep.year and \
-                                    self.target.get_institution('all_household_agents')._component_map[household_match].name[9:16] != 'initial':  # if agent is new to domain
-                                self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add pynsim household agent to associated block group node
-                                self.target.get_node(block_group).occupied_units += 1  # adjust occupied units
-                                self.target.get_node(block_group).available_units -= 1  # adjust available units
-                                self.target.get_institution('all_household_agents')._component_map[household_match].location = block_group  # change location attribute on household agent
-                                del self.target.unassigned_households[household_match]  # delete matched agent from unassigned household dict
-                            else:  # if agent already exists (i.e., agent re-locating within domain)
-                                self.target.get_node(block_group).household_agents[household_match] = self.target.get_institution('all_household_agents')._component_map[household_match]  # add agent to new block group node
-                                self.target.get_node(block_group).occupied_units += 1  # adjust occupied units
-                                self.target.get_node(block_group).available_units -= 1  # adjust available units
-                                self.target.get_institution('all_household_agents')._component_map[household_match].location = block_group  # change location attribute on household agent
-                                del self.target.relocating_households[household_match]  # delete matched agent from unassigned household dict
-
-        # for any households remaining in queue, assume they migrate
-        for household in self.target.unassigned_households.values():
-            self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
-        for household in self.target.relocating_households.values():
-            self.target.get_institution('all_household_agents')._component_map[household.name].location = 'outmigrated'
-        pass  # to accommodate debugger
+        logging.info(f"Assigned {len([g for g in household_assignments.values() if g != 'outmigrated'])} households to locations")
+        logging.info(f"Outmigrated {len([g for g in household_assignments.values() if g == 'outmigrated'])} households")
