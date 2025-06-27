@@ -1,6 +1,5 @@
 import datetime
 import logging
-import time
 
 import geopandas as gpd
 import pandas as pd
@@ -9,7 +8,6 @@ from pynsim import Simulator
 
 from .landscape import ABMLandscape, BlockGroup
 from .urban_agents import HouseholdAgent
-from chance_c.numba_utils import calculate_distances_2d
 
 
 class ICOMSimulator(Simulator):
@@ -273,40 +271,19 @@ class ICOMSimulator(Simulator):
         non_zero_min = block_group[(block_group.mhi1990 > 0)].mhi1990.min()
         block_group.loc[block_group['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
-        # --- BEGIN NUMBA-OPTIMIZED DISTANCE PATCH ---
-        t0 = time.time()
-        coords_x = np.array([geom.centroid.x for geom in block_group['geometry']])
-        coords_y = np.array([geom.centroid.y for geom in block_group['geometry']])
-        for index, row in block_group.iterrows():
+        for index, row in block_group.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
             if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
-                # Find subset indices
-                mask = (
-                    (block_group.GEOID != row['GEOID']) &
-                    (np.isfinite(block_group.salesprice1993)) &
-                    (np.isfinite(block_group.N_MeanSqfeet))
-                )
-                subset_indices = np.where(mask)[0]
-                if len(subset_indices) == 0:
-                    continue
-                ref_x = row['geometry'].centroid.x
-                ref_y = row['geometry'].centroid.y
-                subset_x = coords_x[subset_indices]
-                subset_y = coords_y[subset_indices]
-                # Use numba-optimized distance calculation
-                distances = calculate_distances_2d(subset_x, subset_y, ref_x, ref_y)
-                min_idx = np.argmin(distances)
-                polygon_index = block_group.index[subset_indices[min_idx]]
-                block_group.at[index, 'salesprice1993'] = block_group.loc[polygon_index, 'salesprice1993']
-                block_group.at[index, 'N_MeanSqfeet'] = block_group.loc[polygon_index, 'N_MeanSqfeet']
-                block_group.at[index, 'N_MeanAge'] = block_group.loc[polygon_index, 'N_MeanAge']
-                block_group.at[index, 'N_MeanNoOfStories'] = block_group.loc[polygon_index, 'N_MeanNoOfStories']
-                block_group.at[index, 'N_MeanFullBathNumber'] = block_group.loc[polygon_index, 'N_MeanFullBathNumber']
-                block_group.at[index, 'N_perc_area_flood'] = block_group.loc[polygon_index, 'N_perc_area_flood']
-                block_group.at[index, 'residuals'] = block_group.loc[polygon_index, 'residuals']
-                block_group.at[index, 'salespricesf1993'] = block_group.loc[polygon_index, 'salespricesf1993']
-        t1 = time.time()
-        logging.info(f"Numba-optimized distance patch took {t1-t0:.3f} seconds.")
-        # --- END NUMBA-OPTIMIZED DISTANCE PATCH ---
+                location = row['geometry']
+                block_group_subset = block_group[(block_group.GEOID != row['GEOID']) & (np.isfinite(block_group.salesprice1993)) & (np.isfinite(block_group.N_MeanSqfeet))]
+                polygon_index = block_group_subset.distance(location).sort_values().index[0]
+                block_group.at[index, 'salesprice1993'] = block_group_subset.loc[polygon_index, 'salesprice1993']
+                block_group.at[index, 'N_MeanSqfeet'] = block_group_subset.loc[polygon_index, 'N_MeanSqfeet']
+                block_group.at[index, 'N_MeanAge'] = block_group_subset.loc[polygon_index, 'N_MeanAge']
+                block_group.at[index, 'N_MeanNoOfStories'] = block_group_subset.loc[polygon_index, 'N_MeanNoOfStories']
+                block_group.at[index, 'N_MeanFullBathNumber'] = block_group_subset.loc[polygon_index, 'N_MeanFullBathNumber']
+                block_group.at[index, 'N_perc_area_flood'] = block_group_subset.loc[polygon_index, 'N_perc_area_flood']
+                block_group.at[index, 'residuals'] = block_group_subset.loc[polygon_index, 'residuals']
+                block_group.at[index, 'salespricesf1993'] = block_group_subset.loc[polygon_index, 'salespricesf1993']
 
         # initialize new price for updating
         block_group['new_price'] = block_group['salesprice1993']
