@@ -14,6 +14,14 @@ CHANCE-C (Coastal Hazards And Neighborhood Change - Computational) is an agent-b
 - **Policy Interventions**: Zoning, regulations, and adaptation strategies
 - **Spatial Interactions**: Geographic relationships and neighborhood effects
 
+**Theoretical Foundation**
+
+CHANCE-C is built upon the methodological framework established in:
+
+Yoon, Jim, Heng Wan, Brent Daniel, Vivek Srikrishnan, and David Judi. "Structural model choices regularly overshadow parametric uncertainty in agent-based simulations of household flood risk outcomes." *Computers, Environment and Urban Systems* 103 (2023): 101979. `https://doi.org/10.1016/j.compenvurbsys.2023.101979 <https://doi.org/10.1016/j.compenvurbsys.2023.101979>`_
+
+This foundational publication introduces the core agent-based modeling methodology for household decision-making in flood-prone environments, establishing the theoretical basis for CHANCE-C's approach to simulating complex urban systems under environmental uncertainty.
+
 Core Concepts
 -------------
 

@@ -133,6 +133,15 @@ Support and Community
 - **Discussions**: `GitHub Discussions <https://github.com/jimyoon/icom_abm/discussions>`_
 - **Source Code**: `GitHub Repository <https://github.com/jimyoon/icom_abm>`_
 
+References
+----------
+
+**Fundamental Publication:**
+
+Yoon, Jim, Heng Wan, Brent Daniel, Vivek Srikrishnan, and David Judi. "Structural model choices regularly overshadow parametric uncertainty in agent-based simulations of household flood risk outcomes." *Computers, Environment and Urban Systems* 103 (2023): 101979. `https://doi.org/10.1016/j.compenvurbsys.2023.101979 <https://doi.org/10.1016/j.compenvurbsys.2023.101979>`_
+
+This publication introduces the core methodology and agent-based modeling framework that underpins CHANCE-C, establishing the theoretical foundation for household decision-making in flood-prone environments.
+
 Indices and tables
 ==================
 
