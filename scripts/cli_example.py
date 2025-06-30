@@ -20,12 +20,12 @@ def run_cli_command(command_args):
             text=True,
             check=True
         )
-        print("✅ Command executed successfully!")
+        print("Command executed successfully!")
         print("Output:")
         print(result.stdout)
         return result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"❌ Command failed with exit code {e.returncode}")
+        print(f"Command failed with exit code {e.returncode}")
         print("Error output:")
         print(e.stderr)
         return None
@@ -58,7 +58,7 @@ def main():
     if config_file.exists():
         run_cli_command(['validate-config', str(config_file)])
     else:
-        print("❌ Configuration file not found")
+        print("Configuration file not found")
     
     # Example 5: Run a quick simulation (sensitivity mode)
     print("\n5. Running a quick simulation:")
@@ -71,7 +71,7 @@ def main():
         '--progress'
     ])
     
-    print("\n🎉 CLI example completed!")
+    print("\nCLI example completed!")
     print("Check the 'example_results' directory for simulation outputs.")
 
 

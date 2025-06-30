@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import contextily as ctx
+import seaborn as sns
 from pynsim import Network
 
 from .data_loader import SimulationConfig
@@ -28,7 +29,7 @@ from .model_engines.zoning import Zoning
 from .model_classes.urban_agents import HouseholdAgent
 
 
-# Setup logging
+# Setup default logging
 logging.basicConfig(level=logging.INFO)
 
 
@@ -51,6 +52,7 @@ class Model:
         config (SimulationConfig): Configuration object containing all simulation parameters
         start_time (float): Timestamp when simulation started
         simulator (ICOMSimulator): The main simulation engine
+        logger (logging.Logger): Logger instance for the model
     """
     
     def __init__(
@@ -99,6 +101,7 @@ class Model:
         zoning_mode: str = 'simple_perc',
         zoning_perc: float = 0.05,
         market_mode: str = 'top_candidate',
+        log_level: Union[str, int] = logging.INFO,
     ) -> None:
         """Initialize the Model with configuration parameters.
         
@@ -147,6 +150,8 @@ class Model:
             zoning_mode: Mode for zoning decisions.
             zoning_perc: Percentage for zoning calculations.
             market_mode: Mode for housing market operations.
+            log_level: Logging level for the model. Can be a string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL') 
+                      or logging constant (logging.DEBUG, logging.INFO, etc.).
             
         Returns:
             None
@@ -193,19 +198,103 @@ class Model:
                 hedonic_filename=hedonic_filename,
             )
         
+        # Setup logging for this model instance (after config is created)
+        self._setup_logging(log_level)
+        
+        # Update log level if config has a different setting
+        if hasattr(self.config, 'log_level') and self.config.log_level != 'INFO':
+            self.set_log_level(self.config.log_level)
+        
         self.config.record_time = record_time
         self.config.progress = progress
         self.config.max_iterations = max_iterations
         self.config.name = name
         self.config.sensitivity_run = sensitivity_run
+        self.config.county_agent_id = county_agent_id
+        self.config.zoning_mode = zoning_mode
+        self.config.zoning_perc = zoning_perc
         self.config.block_group_sample_size = block_group_sample_size
         self.config.market_mode = market_mode
         self.network = network
 
-        if self.config.sensitivity_run is False:
-            self.config.county_agent_id = county_agent_id
-            self.config.zoning_mode = zoning_mode
-            self.config.zoning_perc = zoning_perc
+    def _setup_logging(self, log_level: Union[str, int]) -> None:
+        """Setup logging configuration for the model instance.
+        
+        Args:
+            log_level: Logging level as string or logging constant.
+                      Can be 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+                      or logging.DEBUG, logging.INFO, etc.
+        """
+        # Convert string log level to logging constant if needed
+        if isinstance(log_level, str):
+            log_level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            if log_level.upper() not in log_level_map:
+                raise ValueError(f"Invalid log level: {log_level}. Must be one of {list(log_level_map.keys())}")
+            log_level = log_level_map[log_level.upper()]
+        
+        # Create a logger for this model instance
+        self.logger = logging.getLogger(f"chance_c.model.{self.config.simulation_name}")
+        self.logger.setLevel(log_level)
+        
+        # Only add handler if it doesn't already exist
+        if not self.logger.handlers:
+            # Create console handler with formatter
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(log_level)
+            
+            # Create formatter
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            console_handler.setFormatter(formatter)
+            
+            # Add handler to logger
+            self.logger.addHandler(console_handler)
+        
+        # Set the root logger level to match
+        logging.getLogger().setLevel(log_level)
+        
+        self.logger.debug(f"Logging initialized with level: {logging.getLevelName(log_level)}")
+
+    def set_log_level(self, log_level: Union[str, int]) -> None:
+        """Change the logging level for the model instance.
+        
+        Args:
+            log_level: Logging level as string or logging constant.
+                      Can be 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+                      or logging.DEBUG, logging.INFO, etc.
+        """
+        # Convert string log level to logging constant if needed
+        if isinstance(log_level, str):
+            log_level_map = {
+                'DEBUG': logging.DEBUG,
+                'INFO': logging.INFO,
+                'WARNING': logging.WARNING,
+                'ERROR': logging.ERROR,
+                'CRITICAL': logging.CRITICAL
+            }
+            if log_level.upper() not in log_level_map:
+                raise ValueError(f"Invalid log level: {log_level}. Must be one of {list(log_level_map.keys())}")
+            log_level = log_level_map[log_level.upper()]
+        
+        # Update the logger level
+        self.logger.setLevel(log_level)
+        
+        # Update all handlers
+        for handler in self.logger.handlers:
+            handler.setLevel(log_level)
+        
+        # Update the root logger level
+        logging.getLogger().setLevel(log_level)
+        
+        self.logger.info(f"Log level changed to: {logging.getLevelName(log_level)}")
 
     def run_simulation(self) -> None:
         """Run the ICoM ABM simulation with the configured parameters.
@@ -265,16 +354,14 @@ class Model:
             }
         )
         
-        if self.config.sensitivity_run is False:
-            # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
-            self.simulator.network.add_institution(CountyZoningManager(name=f'zoning_manager_{self.config.county_agent_id}'))
-            for block_group in self.simulator.network.nodes:
-                if block_group.county == self.config.county_agent_id:
-                    self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}').add_node(block_group)
+        # Create a county-level institution (agent) that will make zoning decisions (DEACTIVATE for sensitivity experiments)
+        self.simulator.network.add_institution(CountyZoningManager(name=f'zoning_manager_{self.config.county_agent_id}'))
+        for block_group in self.simulator.network.nodes:
+            if block_group.county == self.config.county_agent_id:
+                self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}').add_node(block_group)
 
-        if self.config.sensitivity_run is False:
-            # Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices (DEACTIVATE for sensitivity experiments)
-            self.simulator.network.add_institution(RealEstate(name='real_estate'))
+        # Create a real estate agent that will perform analysis of market (hedonic regression) and inform buyers/sellers on prices (DEACTIVATE for sensitivity experiments)
+        self.simulator.network.add_institution(RealEstate(name='real_estate'))
 
         # Create an institution (categorical) that will contain all household agents
         self.simulator.network.add_institution(AllHouseholdAgents(name='all_household_agents'))
@@ -288,11 +375,10 @@ class Model:
         # Initialize available units on block groups based on initial population data
         self.simulator.initialize_available_building_units(initial_vacancy=self.config.initial_vacancy)
 
-        if self.config.sensitivity_run is False:
-            # Load real estate pricing engine to simulation object (DEACTIVATED for sensitivity experiments)
-            target = self.simulator.network.get_institution('real_estate')
-            estimation_mode = "OLS_hedonic"
-            self.simulator.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
+        # Load real estate pricing engine to simulation object (DEACTIVATED for sensitivity experiments)
+        target = self.simulator.network.get_institution('real_estate')
+        estimation_mode = "OLS_hedonic"
+        self.simulator.add_engine(RealEstatePrices(target, estimation_mode=estimation_mode))
 
         # Load new agent creation engine to simulation object
         target = self.simulator.network
@@ -360,26 +446,23 @@ class Model:
         self.simulator.add_engine(
             HousingPricing(
                 target, 
-                housing_pricing_mode=self.config.housing_pricing_mode, 
                 price_increase_perc=self.config.price_increase_perc
             )
         )
 
-        if self.config.sensitivity_run is False:
-            # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
-            target = self.simulator.network
-            self.simulator.add_engine(FloodHazard(target))
+        # Load flood hazard engine to simulation object (DEACTIVATED for sensitivity run)
+        target = self.simulator.network
+        self.simulator.add_engine(FloodHazard(target))
 
-        if self.config.sensitivity_run is False: 
-            # Load Zoning engine to simulation object (DEACTIVATED for sensitivity run)
-            target = self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}')
-            self.simulator.add_engine(
-                Zoning(
-                    target, 
-                    zoning_mode=self.config.zoning_mode, 
-                    zoning_perc=self.config.zoning_perc
-                    )
-            )
+        # Load Zoning engine to simulation object (DEACTIVATED for sensitivity run)
+        target = self.simulator.network.get_institution(f'zoning_manager_{self.config.county_agent_id}')
+        self.simulator.add_engine(
+            Zoning(
+                target, 
+                zoning_mode=self.config.zoning_mode, 
+                zoning_perc=self.config.zoning_perc
+                )
+        )
 
         # Load landscape statistics engine to simulation object  # JY to complete
         target = self.simulator.network
@@ -391,7 +474,11 @@ class Model:
         # Record end time
         end_time = time.time()
         sim_time = end_time-self.start_time
-        logging.info("Simulation took (seconds):  %s" % sim_time)
+        self.logger.info("Simulation took (seconds):  %s" % sim_time)
+        
+        # Automatically create combined housing dataframe for easy access
+        self.housing_dataframe = self.combine_housing_dataframes()
+        self.logger.info("Combined housing dataframe created and stored as model.housing_dataframe")
 
 
     def write_config(self, config_output_file_path: str) -> None:
@@ -407,7 +494,7 @@ class Model:
             IOError: If the file cannot be written to the specified path.
         """
         self.config.to_yaml(config_output_file_path)
-        logging.info(f"Config written to {config_output_file_path}")
+        self.logger.info(f"Config written to {config_output_file_path}")
 
 
     def view_network_properties(self) -> dict:
@@ -591,12 +678,28 @@ class Model:
         """
         gdf = self.simulator.network.get_history('housing_block_group_df')[-1]  # copy of final block_group df
         gdf['population_change'] = self.simulator.network.get_history('housing_block_group_df')[-1]['population'] - self.simulator.network.get_history('housing_block_group_df')[0]['population']
-        # normalize color
-        vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
-        norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-        # create a normalized colorbar
-        cbar = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-        # with normalization
+        
+        # Get min and max values
+        vmin = gdf.population_change.min()
+        vmax = gdf.population_change.max()
+        vcenter = 0
+        
+        # Check if we can use TwoSlopeNorm (requires vmin < vcenter < vmax)
+        if vmin < vcenter < vmax:
+            # Use divergent normalization centered on 0
+            norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+        else:
+            # If all values are positive or all negative, use regular normalization
+            # and adjust the colormap to be more appropriate
+            norm = None
+            if vmin >= 0:
+                # All positive values - use a sequential colormap
+                cmap = 'OrRd'  # Red sequential for positive changes
+            else:
+                # All negative values - use a sequential colormap
+                cmap = 'Blues'  # Blue sequential for negative changes
+        
+        # Create the plot
         ax = gdf.plot(column='population_change', cmap=cmap, alpha=alpha, norm=norm, legend=legend)
         ctx.add_basemap(ax, source=basemap_source)
 
@@ -641,10 +744,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['population_change'] = df['population'] - df['pop1990']
-        seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
 
     def plot_population_change_percentage_vs_flood_area_with_hue(
             self,
@@ -655,10 +757,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
-        seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
 
     def plot_price_change_vs_flood_area_with_hue(self, aspect: float = 1.61) -> None:
         """Create a scatterplot of price change vs flood area with average income as hue
@@ -666,10 +767,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['price_change'] = df['new_price'] - df['salesprice1993']
-        seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
 
     def plot_flood_zone_metric_over_time(
             self, 
@@ -682,8 +782,6 @@ class Model:
             flood_coefficient: The flood coefficient value (default: -1000000)
             csv_file: Path to CSV file with additional data (default: 'temp_flood.csv')
         """
-        import seaborn as sns
-        
         years = []
         pop_perc_change = []
         fld_coeff_list = []
@@ -716,10 +814,20 @@ class Model:
                      data=df)
 
     def combine_housing_dataframes(self) -> pd.DataFrame:
-        """Combine relevant housing dataframes from each model run year into a single dataframe
+        """Combine relevant housing dataframes from each model run year into a single dataframe.
+        
+        This method is automatically called at the end of simulation and the result is stored
+        as model.housing_dataframe for easy access.
         
         Returns:
-            pd.DataFrame: Combined dataframe with housing data from all timesteps
+            pd.DataFrame: Combined dataframe with housing data from all timesteps, including:
+                - GEOID, GISJOIN: Geographic identifiers
+                - new_price, salesprice1993: Housing prices
+                - population, pop1990: Population data
+                - occupied_units, available_units, demand_exceeds_supply: Housing market data
+                - perc_fld_area: Flood hazard data
+                - mhi1990, average_income: Income data
+                - model_year: Timestep identifier
         """
         first = True
         for t in range(self.simulator.network.current_timestep_idx):

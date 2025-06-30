@@ -160,7 +160,11 @@ class TestAgentLocationEngine:
     
     def test_engine_run_method(self, mock_network, mock_timestep):
         """Test NewAgentLocation run method."""
-        engine = NewAgentLocation(mock_network)
+        # Create engine with proper coefficients
+        engine = NewAgentLocation(
+            mock_network,
+            simple_anova_coefficients=np.array([-121428, 294707, 130553, 128990, 154887, -500000], dtype=np.float64)
+        )
         
         # Mock network properties with required data
         mock_network.unassigned_households = {

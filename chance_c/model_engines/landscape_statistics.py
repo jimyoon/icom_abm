@@ -4,6 +4,11 @@ from math import nan
 from pynsim import Engine
 import numpy as np
 import pandas as pd
+import polars as pl
+from pynsim import Engine
+import logging
+from chance_c.utils.polars_utils import fast_merge_polars, fast_normalize_polars, fast_statistics_polars
+import geopandas as gpd
 
 
 class LandscapeStatistics(Engine):
@@ -48,6 +53,8 @@ class LandscapeStatistics(Engine):
         and the housing dataframe with current values. Handles edge cases such as
         empty block groups and invalid household size values.
         """
+        logging.info("Running the landscape statistics engine, year " + str(self.target.current_timestep.year))
+        
         # reset population sums
         self.target.total_population = 0
 
@@ -55,15 +62,11 @@ class LandscapeStatistics(Engine):
         incomes_landscape = []
         household_sizes_landscape = []
 
-        # self.target.housing_bg_df['population'] = 0
-        # update master block group pandas dataframe
-        rows_list = []  # first load dictionary for each row into a list, then create the dataframe from the dictionary (much faster!)
+        # Use Polars for faster data collection
+        rows_data = []
+        
         for block_group in self.target.nodes:
-            block_group_dict = {}
-            block_group_dict['name'] = block_group.name
-            block_group_dict['no_hh_agents'] = len(block_group.household_agents)
-
-            # calculate various statistics (block level) from household agents
+            # Calculate block group statistics
             block_group.population = 0
             incomes_block_group = []
             household_size_block_group = []
@@ -71,68 +74,91 @@ class LandscapeStatistics(Engine):
 
             for a in block_group.household_agents.values():
                 if hasattr(a, 'household_size') and a.household_size > 0:
-                    self.target.total_population += a.no_households_per_agent * a.household_size
+                    pop_contribution = a.no_households_per_agent * a.household_size
                 else:  # use mean
-                    self.target.total_population += a.no_households_per_agent * self.target.housing_block_group_df["hhsize1990"].mean()
-                block_group.population += a.no_households_per_agent * a.household_size
+                    pop_contribution = a.no_households_per_agent * self.target.housing_block_group_df["hhsize1990"].mean()
+                
+                self.target.total_population += pop_contribution
+                block_group.population += pop_contribution
                 incomes_block_group.append(a.income)
                 incomes_landscape.append(a.income)
                 household_size_block_group.append(a.household_size)
                 household_sizes_landscape.append(a.household_size)
 
-            block_group_dict['population'] = block_group.population
-            # self.target.housing_bg_df.loc[self.target.housing_bg_df['GEOID'] == block_group.name, 'population'] = block_group.population
-            if not incomes_block_group:  # i.e. no households reside in block group
-                block_group_dict['average_income'] = nan
-                # self.target.housing_bg_df.loc[
-                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'average_income'] = nan
-                block_group.mean_hh_income = nan  # update attribute on block group
-            else:
-                block_group_dict['average_income'] = statistics.mean(incomes_block_group)
-                # self.target.housing_bg_df.loc[
-                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'average_income'] = statistics.mean(incomes_bg)
-                block_group.avg_hh_income = statistics.mean(incomes_block_group)  # update attribute on block group
-            if not household_size_block_group:
-                block_group_dict['avg_hh_size'] = nan
-                # self.target.housing_bg_df.loc[
-                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'avg_hh_size'] = nan
-                block_group.avg_hh_size = nan  # update attribute on block group
-            else:
-                block_group_dict['avg_hh_size'] = statistics.mean(household_size_block_group)
-                # self.target.housing_bg_df.loc[
-                #     self.target.housing_bg_df['GEOID'] == block_group.name, 'avg_hh_size'] = statistics.mean(household_size_block_group)
-                block_group.avg_hh_size = statistics.mean(household_size_block_group)  # update attribute on block group
-
-            # pop density calc
-            block_group_dict['pop_density'] = block_group.population / block_group.area
-            # self.target.housing_bg_df.loc[
-            #     self.target.housing_bg_df['GEOID'] == block_group.name, 'pop_density'] = block_group.population / block_group.area
+            # Calculate statistics for this block group
+            avg_income = statistics.mean(incomes_block_group) if incomes_block_group else nan
+            avg_hh_size = statistics.mean(household_size_block_group) if household_size_block_group else nan
+            
+            # Update block group attributes
+            block_group.avg_hh_income = avg_income
+            block_group.avg_hh_size = avg_hh_size
             block_group.pop_density = block_group.population / block_group.area
 
-            #  occupied units calc
-            block_group_dict['occupied_units'] = block_group.occupied_units
-            # self.target.housing_bg_df.loc[
-            #     self.target.housing_bg_df['GEOID'] == block_group.name, 'occupied_units'] = block_group.occupied_units
+            # Prepare row data for Polars DataFrame
+            row_data = {
+                'name': block_group.name,
+                'no_hh_agents': len(block_group.household_agents),
+                'population': block_group.population,
+                'average_income': avg_income,
+                'avg_hh_size': avg_hh_size,
+                'pop_density': block_group.pop_density,
+                'occupied_units': block_group.occupied_units,
+                'available_units': block_group.available_units,
+                'demand_exceeds_supply': block_group.demand_exceeds_supply
+            }
+            rows_data.append(row_data)
 
-            # available units calc
-            block_group_dict['available_units'] = block_group.available_units
-            # self.target.housing_bg_df.loc[
-            #     self.target.housing_bg_df['GEOID'] == block_group.name, 'available_units'] = block_group.available_units
-
-            # supply exceeds demand
-            block_group_dict['demand_exceeds_supply'] = block_group.demand_exceeds_supply
-            # self.target.housing_bg_df.loc[
-            #     self.target.housing_bg_df['GEOID'] == block_group.name, 'demand_exceeds_supply'] = block_group.demand_exceeds_supply
-
-            rows_list.append(block_group_dict)
-
-        housing_current_df = pd.DataFrame(rows_list)
+        # Create Polars DataFrame for current statistics
+        housing_current_df = pl.DataFrame(rows_data)
+        
+        # Calculate landscape-level statistics
         self.target.avg_hh_income = statistics.mean(incomes_landscape)
         self.target.avg_hh_size = statistics.mean(household_sizes_landscape)
 
-        # calculate normalized statistics for block groups
-        housing_current_df['average_income_norm'] = housing_current_df['average_income'] / housing_current_df['average_income'].max()
+        # Calculate normalized statistics using Polars
+        max_income = housing_current_df.select(pl.col('average_income').max()).item()
+        if max_income != 0 and not np.isnan(max_income):
+            housing_current_df = housing_current_df.with_columns(
+                (pl.col('average_income') / max_income).alias('average_income_norm')
+            )
+        else:
+            housing_current_df = housing_current_df.with_columns(
+                pl.lit(0.0).alias('average_income_norm')
+            )
 
-        # merge with housing_bg_df to retain geometry features
-        cols_to_use = self.target.housing_block_group_df.columns.difference(housing_current_df.columns)
-        self.target.housing_block_group_df = pd.merge(self.target.housing_block_group_df[cols_to_use], housing_current_df, how='left',left_on='GEOID', right_on='name')
+        # Preserve geometry column and drop all columns except those with dtype number, bool, datetime, or string
+        df = self.target.housing_block_group_df
+        allowed_kinds = {'i', 'u', 'f', 'b', 'M'}  # int, uint, float, bool, datetime64
+        keep_cols = [col for col in df.columns if df[col].dtype.kind in allowed_kinds or pd.api.types.is_string_dtype(df[col])]
+        
+        # Handle geometry column separately
+        geometry_col = None
+        if 'geometry' in df.columns:
+            geometry_col = df['geometry'].copy()
+            if 'geometry' not in keep_cols:
+                keep_cols.append('geometry')
+        
+        # Convert to Polars, excluding geometry if present
+        numeric_cols = [col for col in keep_cols if col != 'geometry']
+        existing_df = pl.from_pandas(df[numeric_cols])
+        
+        # Fast merge using Polars
+        merged_df = fast_merge_polars(
+            left_df=existing_df,
+            right_df=housing_current_df,
+            left_on='GEOID',
+            right_on='name',
+            how='left'
+        )
+        
+        # Convert back to pandas and restore geometry if it existed
+        result_df = merged_df.to_pandas()
+        if geometry_col is not None:
+            result_df['geometry'] = geometry_col
+            # Convert back to GeoDataFrame if it was originally one
+            if isinstance(self.target.housing_block_group_df, gpd.GeoDataFrame):
+                result_df = gpd.GeoDataFrame(result_df, geometry='geometry', crs=self.target.housing_block_group_df.crs)
+        
+        self.target.housing_block_group_df = result_df
+        
+        logging.info(f"Landscape statistics updated - Total population: {self.target.total_population:,.0f}")

@@ -1,18 +1,13 @@
 import datetime
 import logging
-import time
 
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-import polars as pl
 from pynsim import Simulator
-from typing import List, Dict, Any, Optional, Tuple
-import random
 
 from .landscape import ABMLandscape, BlockGroup
 from .urban_agents import HouseholdAgent
-from chance_c.utils.numba_utils import calculate_distances_2d
 
 
 class ICOMSimulator(Simulator):
@@ -276,40 +271,19 @@ class ICOMSimulator(Simulator):
         non_zero_min = block_group[(block_group.mhi1990 > 0)].mhi1990.min()
         block_group.loc[block_group['mhi1990'] == 0, 'mhi1990'] = non_zero_min
 
-        # --- BEGIN NUMBA-OPTIMIZED DISTANCE PATCH ---
-        t0 = time.time()
-        coords_x = np.array([geom.centroid.x for geom in block_group['geometry']])
-        coords_y = np.array([geom.centroid.y for geom in block_group['geometry']])
-        for index, row in block_group.iterrows():
+        for index, row in block_group.iterrows():  # JY fill in missing sales price and hedonic regression values with nearest neighbor values that have data (this can be pre-processed to save computation time)
             if np.isnan(row['salesprice1993']) or np.isnan(row['N_MeanSqfeet']):
-                # Find subset indices
-                mask = (
-                    (block_group.GEOID != row['GEOID']) &
-                    (np.isfinite(block_group.salesprice1993)) &
-                    (np.isfinite(block_group.N_MeanSqfeet))
-                )
-                subset_indices = np.where(mask)[0]
-                if len(subset_indices) == 0:
-                    continue
-                ref_x = row['geometry'].centroid.x
-                ref_y = row['geometry'].centroid.y
-                subset_x = coords_x[subset_indices]
-                subset_y = coords_y[subset_indices]
-                # Use numba-optimized distance calculation
-                distances = calculate_distances_2d(subset_x, subset_y, ref_x, ref_y)
-                min_idx = np.argmin(distances)
-                polygon_index = block_group.index[subset_indices[min_idx]]
-                block_group.at[index, 'salesprice1993'] = block_group.loc[polygon_index, 'salesprice1993']
-                block_group.at[index, 'N_MeanSqfeet'] = block_group.loc[polygon_index, 'N_MeanSqfeet']
-                block_group.at[index, 'N_MeanAge'] = block_group.loc[polygon_index, 'N_MeanAge']
-                block_group.at[index, 'N_MeanNoOfStories'] = block_group.loc[polygon_index, 'N_MeanNoOfStories']
-                block_group.at[index, 'N_MeanFullBathNumber'] = block_group.loc[polygon_index, 'N_MeanFullBathNumber']
-                block_group.at[index, 'N_perc_area_flood'] = block_group.loc[polygon_index, 'N_perc_area_flood']
-                block_group.at[index, 'residuals'] = block_group.loc[polygon_index, 'residuals']
-                block_group.at[index, 'salespricesf1993'] = block_group.loc[polygon_index, 'salespricesf1993']
-        t1 = time.time()
-        logging.info(f"Numba-optimized distance patch took {t1-t0:.3f} seconds.")
-        # --- END NUMBA-OPTIMIZED DISTANCE PATCH ---
+                location = row['geometry']
+                block_group_subset = block_group[(block_group.GEOID != row['GEOID']) & (np.isfinite(block_group.salesprice1993)) & (np.isfinite(block_group.N_MeanSqfeet))]
+                polygon_index = block_group_subset.distance(location).sort_values().index[0]
+                block_group.at[index, 'salesprice1993'] = block_group_subset.loc[polygon_index, 'salesprice1993']
+                block_group.at[index, 'N_MeanSqfeet'] = block_group_subset.loc[polygon_index, 'N_MeanSqfeet']
+                block_group.at[index, 'N_MeanAge'] = block_group_subset.loc[polygon_index, 'N_MeanAge']
+                block_group.at[index, 'N_MeanNoOfStories'] = block_group_subset.loc[polygon_index, 'N_MeanNoOfStories']
+                block_group.at[index, 'N_MeanFullBathNumber'] = block_group_subset.loc[polygon_index, 'N_MeanFullBathNumber']
+                block_group.at[index, 'N_perc_area_flood'] = block_group_subset.loc[polygon_index, 'N_perc_area_flood']
+                block_group.at[index, 'residuals'] = block_group_subset.loc[polygon_index, 'residuals']
+                block_group.at[index, 'salespricesf1993'] = block_group_subset.loc[polygon_index, 'salespricesf1993']
 
         # initialize new price for updating
         block_group['new_price'] = block_group['salesprice1993']
@@ -351,30 +325,30 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
         
         # Log the final data types for verification
-        logging.debug("Geographic data column types after processing:")
+        logging.info("Geographic data column types after processing:")
         for col in ['GISJOIN', 'GEOID', 'COUNTYFP', 'TRACTCE', 'BLKGRPCE', 'ALAND', 'geometry']:
             if col in block_group.columns:
-                logging.debug(f"  {col}: {block_group[col].dtype}")
+                logging.info(f"  {col}: {block_group[col].dtype}")
         
-        logging.debug("Population data column types after processing:")
+        logging.info("Population data column types after processing:")
         for col in ['GISJOIN', 'AJWME001']:
             if col in pop.columns:
-                logging.debug(f"  {col}: {pop[col].dtype}")
+                logging.info(f"  {col}: {pop[col].dtype}")
         
-        logging.debug("Flood data column types after processing:")
+        logging.info("Flood data column types after processing:")
         for col in ['GISJOIN', 'Shape_Area', 'fld_area', 'perc_fld_area']:
             if col in flood.columns:
-                logging.debug(f"  {col}: {flood[col].dtype}")
+                logging.info(f"  {col}: {flood[col].dtype}")
         
-        logging.debug("Housing data column types after processing:")
+        logging.info("Housing data column types after processing:")
         for col in ['GISJOIN', 'pop1990', 'mhi1990', 'hhsize1990', 'coastdist', 'cbddist', 'hhtrans1993', 'salesprice1993', 'salespricesf1993']:
             if col in housing.columns:
-                logging.debug(f"  {col}: {housing[col].dtype}")
+                logging.info(f"  {col}: {housing[col].dtype}")
         
-        logging.debug("Hedonic data column types after processing:")
+        logging.info("Hedonic data column types after processing:")
         for col in ['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories', 'N_MeanFullBathNumber', 'residuals', 'N_perc_area_flood']:
             if col in hedonic.columns:
-                logging.debug(f"  {col}: {hedonic[col].dtype}")
+                logging.info(f"  {col}: {hedonic[col].dtype}")
 
     def convert_initial_population_to_agents(self, no_households_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")
