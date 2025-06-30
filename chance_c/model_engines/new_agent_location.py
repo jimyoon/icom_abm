@@ -74,7 +74,10 @@ class NewAgentLocation(Engine):
         super(NewAgentLocation, self).__init__(target, **kwargs)
         self.block_group_sample_size = block_group_sample_size
         self.house_choice_mode = house_choice_mode
-        self.simple_anova_coefficients = simple_anova_coefficients or []
+        if simple_anova_coefficients is not None:
+            self.simple_anova_coefficients = np.array(simple_anova_coefficients, dtype=np.float64)
+        else:
+            self.simple_anova_coefficients = np.array([], dtype=np.float64)
         self.budget_reduction_perc = budget_reduction_perc
         self.no_households_per_agent = no_households_per_agent
         self.household_size = household_size
@@ -185,7 +188,8 @@ class NewAgentLocation(Engine):
                     age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
                     stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
                     baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, residuals, self.simple_anova_coefficients)
                     block_group_sample['utility'] = utilities
                     
                 else:
@@ -194,7 +198,8 @@ class NewAgentLocation(Engine):
                     age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
                     stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
                     baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, residuals, self.simple_anova_coefficients)
                     block_group_sample['utility'] = utilities
                 
                 all_samples.append(block_group_sample)

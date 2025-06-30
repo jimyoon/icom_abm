@@ -206,6 +206,97 @@ config = SimulationConfig(
 )
 ```
 
+### Logging
+
+CHANCE-C provides comprehensive logging capabilities to help you monitor and debug your simulations. You can control the verbosity of log output by setting the logging level.
+
+#### Setting Log Level
+
+```python
+from chance_c import Model
+import logging
+
+# Create model with specific log level
+model = Model(
+    simulation_name="my_simulation",
+    n_years=2,
+    log_level=logging.DEBUG  # Most verbose
+)
+
+# Or use string format
+model = Model(
+    simulation_name="my_simulation", 
+    n_years=2,
+    log_level="DEBUG"  # Same as above
+)
+```
+
+#### Available Log Levels
+
+- **DEBUG**: Most verbose, shows all messages including detailed simulation steps
+- **INFO**: General information messages (default)
+- **WARNING**: Warning messages about potential issues
+- **ERROR**: Error messages only
+- **CRITICAL**: Critical error messages only (least verbose)
+
+#### Changing Log Level After Creation
+
+```python
+# Create model with default INFO level
+model = Model(simulation_name="example")
+
+# Change to DEBUG level
+model.set_log_level("DEBUG")
+
+# Change to ERROR level (minimal output)
+model.set_log_level(logging.ERROR)
+```
+
+#### Logging with Configuration
+
+```python
+from chance_c import Model, SimulationConfig
+
+# Set log level in configuration
+config = SimulationConfig(
+    simulation_name="config_example",
+    n_years=2,
+    log_level="WARNING"
+)
+
+model = Model(config=config)
+```
+
+#### CLI Logging
+
+You can also set the log level from the command line:
+
+```bash
+# Run with DEBUG logging
+python -m chance_c.cli run --log-level DEBUG --n-years 1
+
+# Run with WARNING logging
+python -m chance_c.cli run --log-level WARNING --n-years 1
+
+# Run with ERROR logging (minimal output)
+python -m chance_c.cli run --log-level ERROR --n-years 1
+```
+
+#### Log Output Format
+
+Log messages include:
+- Timestamp
+- Logger name (includes simulation name)
+- Log level
+- Message content
+
+Example output:
+```
+2025-06-30 12:44:52 - chance_c.model.my_simulation - INFO - Simulation started
+2025-06-30 12:44:52 - chance_c.model.my_simulation - DEBUG - Creating household agents
+2025-06-30 12:44:53 - chance_c.model.my_simulation - INFO - Simulation completed
+```
+
 ### Field Mapping
 
 For data with different column names, use the field mapping system:

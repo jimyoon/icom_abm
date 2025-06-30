@@ -82,11 +82,12 @@ def cli(verbose: bool, quiet: bool):
 @click.option('--landscape-name', default='Baltimore', help='Name of the geographic landscape')
 @click.option('--geo-filename', help='Filename for geographic boundary data (uses default if not specified)')
 @click.option('--pop-filename', help='Filename for population data (uses default if not specified)')
-
 @click.option('--flood-filename', help='Filename for flood hazard data (uses default if not specified)')
 @click.option('--housing-filename', help='Filename for housing data (uses default if not specified)')
 @click.option('--hedonic-filename', help='Filename for hedonic pricing data (uses default if not specified)')
-def run(config: Optional[str], output_dir: str, **kwargs):
+@click.option('--log-level', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']), 
+              default='INFO', help='Logging level for the simulation')
+def run(config: Optional[str], output_dir: str, log_level: str, **kwargs):
     """
     Run the ICoM ABM simulation with the specified configuration.
     
@@ -190,6 +191,7 @@ def run(config: Optional[str], output_dir: str, **kwargs):
             zoning_mode=zoning_mode,
             zoning_perc=zoning_perc,
             market_mode=market_mode,
+            log_level=log_level,
         )
         
         # Run the simulation

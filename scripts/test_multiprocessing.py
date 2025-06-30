@@ -61,103 +61,101 @@ def test_multiprocessing_simulation():
         market_mode='top_candidate',
     )
     
-    try:
-        # Create and run the model
-        model = Model(config=config, record_time=True, progress=True, max_iterations=1, name='multiprocessing_test', sensitivity_run=True, county_agent_id='005')
-        
-        # Record start time
-        start_time = time.time()
-        
-        # Run the simulation
-        model.run_simulation()
-        
-        # Record end time
-        end_time = time.time()
-        sim_time = end_time - start_time
-        
-        print(f"✅ Multiprocessing test completed successfully!")
-        print(f"⏱️  Simulation time: {sim_time:.3f} seconds")
-        
-        # Check if multiprocessing was used
-        print("\n📊 Simulation Results:")
-        print(f"   - Total simulation time: {sim_time:.3f} seconds")
-        print(f"   - Multiprocessing enabled: Yes")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Multiprocessing test failed: {str(e)}")
-        logging.error(f"Test error: {e}", exc_info=True)
-        return False
+    # Create and run the model
+    model = Model(config=config, record_time=True, progress=True, max_iterations=1, name='multiprocessing_test', sensitivity_run=True, county_agent_id='005')
+    
+    # Record start time
+    start_time = time.time()
+    
+    # Run the simulation
+    model.run_simulation()
+    
+    # Record end time
+    end_time = time.time()
+    sim_time = end_time - start_time
+    
+    print(f"✅ Multiprocessing test completed successfully!")
+    print(f"⏱️  Simulation time: {sim_time:.3f} seconds")
+    
+    # Check if multiprocessing was used
+    print("\n📊 Simulation Results:")
+    print(f"   - Total simulation time: {sim_time:.3f} seconds")
+    print(f"   - Multiprocessing enabled: Yes")
+    
+    # Assert that the simulation completed successfully
+    assert sim_time > 0, "Simulation should take some time"
+    assert model.simulator is not None, "Simulator should be created"
+    assert hasattr(model.simulator, 'network'), "Simulator should have a network"
 
 def test_multiprocessing_utils():
     """Test the multiprocessing utilities directly."""
     
     print("\nTesting multiprocessing utilities...")
     
-    try:
-        import numpy as np
-        import pandas as pd
-        from chance_c.utils.multiprocessing_utils import (
-            parallel_utility_calculation,
-            parallel_household_processing,
-            parallel_market_matching,
-            get_optimal_process_count
-        )
-        
-        # Test process count calculation
-        cpu_count = get_optimal_process_count('utility')
-        print(f"✅ Optimal process count for utility calculations: {cpu_count}")
-        
-        # Test with dummy data
-        n_samples = 1000
-        dummy_df = pd.DataFrame({
-            'average_income_norm': np.random.random(n_samples),
-            'prox_cbd_norm': np.random.random(n_samples),
-            'flood_risk_norm': np.random.random(n_samples),
-            'N_MeanSqfeet': np.random.random(n_samples),
-            'N_MeanAge': np.random.random(n_samples),
-            'N_MeanNoOfStories': np.random.random(n_samples),
-            'N_MeanFullBathNumber': np.random.random(n_samples),
-            'residuals': np.random.random(n_samples)
-        })
-        
-        # Test utility calculation
-        start_time = time.time()
-        utilities = parallel_utility_calculation(
-            df=dummy_df,
-            house_choice_mode='simple_anova_utility',
-            simple_anova_coefficients=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            n_processes=2  # Use 2 processes for testing
-        )
-        end_time = time.time()
-        
-        print(f"✅ Parallel utility calculation: {end_time - start_time:.3f} seconds")
-        print(f"   - Calculated utilities for {len(utilities)} samples")
-        
-        # Test market matching
-        utilities_df = pd.DataFrame({
-            'GEOID': [f'GEOID_{i}' for i in range(100)],
-            'household': [f'HH_{i//10}' for i in range(100)],
-            'utility': np.random.random(100)
-        })
-        
-        start_time = time.time()
-        assignments = parallel_market_matching(
-            utilities_df=utilities_df,
-            n_processes=2  # Use 2 processes for testing
-        )
-        end_time = time.time()
-        
-        print(f"✅ Parallel market matching: {end_time - start_time:.3f} seconds")
-        print(f"   - Assigned {len(assignments)} households")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Multiprocessing utilities test failed: {str(e)}")
-        logging.error(f"Utilities test error: {e}", exc_info=True)
-        return False
+    import numpy as np
+    import pandas as pd
+    from chance_c.utils.multiprocessing_utils import (
+        parallel_utility_calculation,
+        parallel_household_processing,
+        parallel_market_matching,
+        get_optimal_process_count
+    )
+    
+    # Test process count calculation
+    cpu_count = get_optimal_process_count('utility')
+    print(f"✅ Optimal process count for utility calculations: {cpu_count}")
+    assert cpu_count > 0, "Process count should be positive"
+    
+    # Test with dummy data
+    n_samples = 1000
+    dummy_df = pd.DataFrame({
+        'average_income_norm': np.random.random(n_samples),
+        'prox_cbd_norm': np.random.random(n_samples),
+        'flood_risk_norm': np.random.random(n_samples),
+        'N_MeanSqfeet': np.random.random(n_samples),
+        'N_MeanAge': np.random.random(n_samples),
+        'N_MeanNoOfStories': np.random.random(n_samples),
+        'N_MeanFullBathNumber': np.random.random(n_samples),
+        'residuals': np.random.random(n_samples)
+    })
+    
+    # Test utility calculation
+    start_time = time.time()
+    utilities = parallel_utility_calculation(
+        df=dummy_df,
+        house_choice_mode='simple_anova_utility',
+        simple_anova_coefficients=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        n_processes=2  # Use 2 processes for testing
+    )
+    end_time = time.time()
+    
+    print(f"✅ Parallel utility calculation: {end_time - start_time:.3f} seconds")
+    print(f"   - Calculated utilities for {len(utilities)} samples")
+    
+    # Assert utility calculation results
+    assert len(utilities) == n_samples, "Should calculate utilities for all samples"
+    assert isinstance(utilities, np.ndarray), "Utilities should be a numpy array"
+    
+    # Test market matching
+    utilities_df = pd.DataFrame({
+        'GEOID': [f'GEOID_{i}' for i in range(100)],
+        'household': [f'HH_{i//10}' for i in range(100)],
+        'utility': np.random.random(100)
+    })
+    
+    start_time = time.time()
+    assignments = parallel_market_matching(
+        utilities_df=utilities_df,
+        n_processes=2  # Use 2 processes for testing
+    )
+    end_time = time.time()
+    
+    print(f"✅ Parallel market matching: {end_time - start_time:.3f} seconds")
+    print(f"   - Assigned {len(assignments)} households")
+    
+    # Assert market matching results
+    assert isinstance(assignments, dict), "Assignments should be a dictionary"
+    assert len(assignments) > 0, "Should have some assignments"
 
 def main():
     """Main test function."""
@@ -166,10 +164,24 @@ def main():
     print("=" * 50)
     
     # Test multiprocessing utilities
-    utils_success = test_multiprocessing_utils()
+    try:
+        test_multiprocessing_utils()
+        utils_success = True
+        print("✅ Multiprocessing utilities test passed")
+    except Exception as e:
+        utils_success = False
+        print(f"❌ Multiprocessing utilities test failed: {str(e)}")
+        logging.error(f"Utilities test error: {e}", exc_info=True)
     
     # Test full simulation with multiprocessing
-    sim_success = test_multiprocessing_simulation()
+    try:
+        test_multiprocessing_simulation()
+        sim_success = True
+        print("✅ Full simulation test passed")
+    except Exception as e:
+        sim_success = False
+        print(f"❌ Full simulation test failed: {str(e)}")
+        logging.error(f"Simulation test error: {e}", exc_info=True)
     
     print("\n" + "=" * 50)
     print("📋 Test Summary:")

@@ -97,6 +97,7 @@ class ExistingAgentLocation(Engine):
         block_group_sample_size: int = 10, 
         house_choice_mode: str = 'simple_anova_utility', 
         simple_anova_coefficients: list = None, 
+        budget_reduction_perc: float = 0.10,
         use_multiprocessing: bool = True,
         **kwargs
     ) -> None:
@@ -107,13 +108,18 @@ class ExistingAgentLocation(Engine):
             block_group_sample_size: Number of block groups to sample for each agent.
             house_choice_mode: Method for calculating housing utility.
             simple_anova_coefficients: Coefficients for ANOVA-based utility.
+            budget_reduction_perc: Budget reduction percentage.
             use_multiprocessing: Whether to use multiprocessing for parallel processing.
             **kwargs: Additional keyword arguments.
         """
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.block_group_sample_size = block_group_sample_size
         self.house_choice_mode = house_choice_mode
-        self.simple_anova_coefficients = simple_anova_coefficients or []
+        if simple_anova_coefficients is not None:
+            self.simple_anova_coefficients = np.array(simple_anova_coefficients, dtype=np.float64)
+        else:
+            self.simple_anova_coefficients = np.array([], dtype=np.float64)
+        self.budget_reduction_perc = budget_reduction_perc
         self.use_multiprocessing = use_multiprocessing
 
     def run(self) -> None:
@@ -160,7 +166,7 @@ class ExistingAgentLocation(Engine):
                 block_group_sample_size=self.block_group_sample_size,
                 house_choice_mode=self.house_choice_mode,
                 simple_anova_coefficients=self.simple_anova_coefficients,
-                budget_reduction_perc=0.10,  # Default value for existing agents
+                budget_reduction_perc=self.budget_reduction_perc,
                 n_processes=n_processes
             )
         else:
@@ -221,7 +227,9 @@ class ExistingAgentLocation(Engine):
                     age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
                     stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
                     baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
+                    coefficients = np.array(self.simple_anova_coefficients, dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, residuals, coefficients)
                     block_group_sample['utility'] = utilities
                     
                 else:
@@ -230,7 +238,9 @@ class ExistingAgentLocation(Engine):
                     age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
                     stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
                     baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
+                    coefficients = np.array(self.simple_anova_coefficients, dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, residuals, coefficients)
                     block_group_sample['utility'] = utilities
                 
                 all_samples.append(block_group_sample)

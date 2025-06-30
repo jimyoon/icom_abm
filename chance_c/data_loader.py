@@ -105,6 +105,7 @@ class SimulationConfig:
         zoning_mode: Method for zoning.
         zoning_perc: Percentage of zoning.
         market_mode: Method for market choice.
+        log_level: Logging level configuration.
     """
     
     # Simulation setup
@@ -164,6 +165,9 @@ class SimulationConfig:
     flood_file_mapping: dict = None
     housing_file_mapping: dict = None
     hedonic_file_mapping: dict = None
+    
+    # Logging configuration
+    log_level: str = 'INFO'
     
     def __post_init__(self):
         """Set default file paths and field mappings if not provided."""
@@ -334,7 +338,8 @@ class SimulationConfig:
             'block_group_sample_size': self.block_group_sample_size,
             'zoning_mode': self.zoning_mode,
             'zoning_perc': self.zoning_perc,
-            'market_mode': self.market_mode
+            'market_mode': self.market_mode,
+            'log_level': self.log_level
         }
         
         with open(yaml_path, 'w') as file:
