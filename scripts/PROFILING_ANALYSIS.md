@@ -214,4 +214,4 @@ def filter_and_sample(prices, weights, budget, n_sample):
 2. `chance_c/model_engines/new_agent_location.py` - Utility calculations  
 3. `chance_c/model_engines/housing_market.py` - Market matching
 4. `chance_c/model_engines/landscape_statistics.py` - Statistical calculations
-5. Create new `chance_c/numba_utils.py` - Shared numba functions 
+5. Create new `chance_c/utils/numba_utils.py` - Shared numba functions 

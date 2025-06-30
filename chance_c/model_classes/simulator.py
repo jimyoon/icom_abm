@@ -5,11 +5,14 @@ import time
 import geopandas as gpd
 import pandas as pd
 import numpy as np
+import polars as pl
 from pynsim import Simulator
+from typing import List, Dict, Any, Optional, Tuple
+import random
 
 from .landscape import ABMLandscape, BlockGroup
 from .urban_agents import HouseholdAgent
-from chance_c.numba_utils import calculate_distances_2d
+from chance_c.utils.numba_utils import calculate_distances_2d
 
 
 class ICOMSimulator(Simulator):

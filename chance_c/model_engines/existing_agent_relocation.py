@@ -3,10 +3,10 @@ import logging
 import pandas as pd
 import numpy as np
 import polars as pl
-from chance_c.numba_utils import filter_and_sample, calculate_utilities_vectorized, calculate_utilities_with_flood_vectorized, calculate_cobb_douglas_utilities
-from chance_c.polars_utils import fast_filter_and_sample_polars, fast_concat_dataframes, convert_polars_to_pandas
-
 from pynsim import Engine
+from chance_c.utils.numba_utils import filter_and_sample, calculate_utilities_vectorized, calculate_utilities_with_flood_vectorized, calculate_cobb_douglas_utilities
+from chance_c.utils.polars_utils import fast_filter_and_sample_polars, fast_concat_dataframes, convert_polars_to_pandas
+from chance_c.utils.multiprocessing_utils import parallel_household_processing, get_optimal_process_count
 
 
 class ExistingAgentReloSampler(Engine):
@@ -83,6 +83,8 @@ class ExistingAgentLocation(Engine):
             calculation. Defaults to [].
         budget_reduction_perc (float, optional): Budget reduction percentage. 
             Defaults to 0.10.
+        use_multiprocessing (bool, optional): Whether to use multiprocessing for parallel processing.
+            Defaults to True.
         **kwargs: Additional keyword arguments passed to the parent class.
 
     Inter-module Outputs/Modifications:
@@ -95,6 +97,7 @@ class ExistingAgentLocation(Engine):
         block_group_sample_size: int = 10, 
         house_choice_mode: str = 'simple_anova_utility', 
         simple_anova_coefficients: list = None, 
+        use_multiprocessing: bool = True,
         **kwargs
     ) -> None:
         """Initialize the ExistingAgentLocation engine.
@@ -104,22 +107,29 @@ class ExistingAgentLocation(Engine):
             block_group_sample_size: Number of block groups to sample for each agent.
             house_choice_mode: Method for calculating housing utility.
             simple_anova_coefficients: Coefficients for ANOVA-based utility.
+            use_multiprocessing: Whether to use multiprocessing for parallel processing.
             **kwargs: Additional keyword arguments.
         """
         super(ExistingAgentLocation, self).__init__(target, **kwargs)
         self.block_group_sample_size = block_group_sample_size
         self.house_choice_mode = house_choice_mode
         self.simple_anova_coefficients = simple_anova_coefficients or []
+        self.use_multiprocessing = use_multiprocessing
 
     def run(self) -> None:
         """Run the ExistingAgentLocation engine.
         
         Processes all relocating household agents waiting in the location queue.
         For each agent, samples from available homes and calculates utility
-        scores based on the specified house choice mode. Agents that cannot
-        afford any homes are marked as outmigrated.
+        scores based on the specified house choice mode. Uses multiprocessing
+        for parallel processing when enabled.
         """
         logging.info("Running the existing agent location engine, year " + str(self.target.current_timestep.year))
+
+        if not hasattr(self.target, 'relocating_households') or not self.target.relocating_households:
+            logging.info("No relocating households to process")
+            self.target.hh_utilities_df = pd.DataFrame(columns=['GEOID', 'household', 'utility'])
+            return
 
         # Convert to Polars for faster operations
         # Only drop the geometry column before conversion
@@ -133,86 +143,102 @@ class ExistingAgentLocation(Engine):
         max_budget = max([hh.house_budget for hh in self.target.relocating_households.values()])
         block_group_all = block_group_all.filter(pl.col("new_price") <= max_budget)
         
-        # Collect all DataFrames for efficient concatenation
-        all_samples = []
-        to_delete_relocating_households = []
+        # Convert back to pandas for compatibility
+        block_group_df = block_group_all.to_pandas()
         
-        # Batch process households for better performance
-        household_batch = list(self.target.relocating_households.values())
+        # Get list of households to process
+        households = list(self.target.relocating_households.values())
         
-        for household in household_batch:
-            # Use pre-filtered data and apply household-specific budget filter
-            mask = (block_group_all["new_price"] <= household.house_budget)
-            block_group_budget = block_group_all.filter(mask)
+        if self.use_multiprocessing and len(households) > 10:
+            # Use multiprocessing for large numbers of households
+            logging.info(f"Using multiprocessing for {len(households)} relocating households")
+            n_processes = get_optimal_process_count('household')
             
-            # Convert back to pandas for compatibility with existing code
-            block_group_budget_pd = block_group_budget.to_pandas()
+            all_samples = parallel_household_processing(
+                households=households,
+                block_group_df=block_group_df,
+                block_group_sample_size=self.block_group_sample_size,
+                house_choice_mode=self.house_choice_mode,
+                simple_anova_coefficients=self.simple_anova_coefficients,
+                budget_reduction_perc=0.10,  # Default value for existing agents
+                n_processes=n_processes
+            )
+        else:
+            # Use sequential processing for small numbers of households
+            logging.info(f"Using sequential processing for {len(households)} relocating households")
+            all_samples = []
             
-            # --- NUMBA-OPTIMIZED SAMPLING ---
-            if len(block_group_budget_pd) == 0:
-                logging.info(household.name + ' cannot afford any available homes!')
-                household.location = 'outmigrated'
-                continue
-            n_sample = 10
-            prices = block_group_budget_pd['new_price'].to_numpy(dtype=np.float64)
-            weights = block_group_budget_pd['available_units'].to_numpy(dtype=np.float64)
-            indices = filter_and_sample(prices, weights, np.inf, n_sample)  # no price filter here, already filtered
-            if len(indices) == 0:
-                logging.info(household.name + ' cannot afford any available homes!')
-                household.location = 'outmigrated'
-                continue
-            block_group_sample = block_group_budget_pd.iloc[indices].copy()
-            block_group_sample['household'] = household.name
-            block_group_sample['a'] = 0.4  # JY revise - only need this for Cobb-Douglas
-            block_group_sample['b'] = 0.4
-            block_group_sample['c'] = 0.2
-            all_samples.append(block_group_sample)
+            for household in households:
+                # Filter by budget
+                budget_filter = block_group_df['new_price'] <= household.house_budget
+                block_group_budget = block_group_df[budget_filter].copy()
+                
+                if len(block_group_budget) == 0:
+                    logging.info(household.name + ' cannot afford any available homes!')
+                    household.location = 'outmigrated'
+                    continue
+                
+                # Sample block groups
+                n_sample = min(self.block_group_sample_size, len(block_group_budget))
+                prices = block_group_budget['new_price'].to_numpy(dtype=np.float64)
+                weights = block_group_budget['available_units'].to_numpy(dtype=np.float64)
+                indices = filter_and_sample(prices, weights, np.inf, n_sample)
+                
+                if len(indices) == 0:
+                    logging.info(household.name + ' cannot afford any available homes!')
+                    household.location = 'outmigrated'
+                    continue
+                
+                block_group_sample = block_group_budget.iloc[indices].copy()
+                block_group_sample['household'] = household.name
+                block_group_sample['a'] = 0.4
+                block_group_sample['b'] = 0.4
+                block_group_sample['c'] = 0.2
+                
+                # Calculate utilities
+                if self.house_choice_mode == 'cobb_douglas_utility':
+                    income = block_group_sample['average_income_norm'].to_numpy(dtype=np.float64)
+                    prox_cbd = block_group_sample['prox_cbd_norm'].to_numpy(dtype=np.float64)
+                    flood_risk = block_group_sample['flood_risk_norm'].to_numpy(dtype=np.float64)
+                    a = block_group_sample['a'].to_numpy(dtype=np.float64)
+                    b = block_group_sample['b'].to_numpy(dtype=np.float64)
+                    c = block_group_sample['c'].to_numpy(dtype=np.float64)
+                    utilities = calculate_cobb_douglas_utilities(income, prox_cbd, flood_risk, a, b, c)
+                    block_group_sample['utility'] = utilities
+                    
+                elif self.house_choice_mode == 'simple_flood_utility':
+                    sqfeet = block_group_sample['N_MeanSqfeet'].to_numpy(dtype=np.float64)
+                    age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
+                    stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
+                    baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
+                    flood_risk = block_group_sample['N_perc_area_flood'].to_numpy(dtype=np.float64)
+                    residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
+                    utilities = calculate_utilities_with_flood_vectorized(sqfeet, age, stories, baths, flood_risk, residuals)
+                    block_group_sample['utility'] = utilities
+                    
+                elif self.house_choice_mode == 'simple_anova_utility':
+                    sqfeet = block_group_sample['N_MeanSqfeet'].to_numpy(dtype=np.float64)
+                    age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
+                    stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
+                    baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    block_group_sample['utility'] = utilities
+                    
+                else:
+                    # Default to simple ANOVA
+                    sqfeet = block_group_sample['N_MeanSqfeet'].to_numpy(dtype=np.float64)
+                    age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
+                    stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
+                    baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
+                    utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, self.simple_anova_coefficients)
+                    block_group_sample['utility'] = utilities
+                
+                all_samples.append(block_group_sample)
 
         # Efficient single concatenation
         if not all_samples:
             self.target.hh_utilities_df = pd.DataFrame(columns=['GEOID', 'household', 'utility'])
             return
+        
         block_group_sample = pd.concat(all_samples, ignore_index=True)
-
-        if self.house_choice_mode == 'cobb_douglas_utility':  # consider moving to method on household agents
-            # Use numba-optimized vectorized Cobb-Douglas utility calculation
-            income = block_group_sample['average_income_norm'].to_numpy(dtype=np.float64)
-            prox_cbd = block_group_sample['prox_cbd_norm'].to_numpy(dtype=np.float64)
-            flood_risk = block_group_sample['flood_risk_norm'].to_numpy(dtype=np.float64)
-            a = block_group_sample['a'].to_numpy(dtype=np.float64)
-            b = block_group_sample['b'].to_numpy(dtype=np.float64)
-            c = block_group_sample['c'].to_numpy(dtype=np.float64)
-            # Ensure a, b, c are arrays (not scalars)
-            if a.shape == ():
-                a = np.full_like(income, a)
-            if b.shape == ():
-                b = np.full_like(income, b)
-            if c.shape == ():
-                c = np.full_like(income, c)
-            utilities = calculate_cobb_douglas_utilities(income, prox_cbd, flood_risk, a, b, c)
-            block_group_sample['utility'] = utilities
-
-        elif self.house_choice_mode == 'simple_flood_utility':  # JY consider moving to method on household agents
-            # Use numba-optimized vectorized utility calculation
-            sqfeet = block_group_sample['N_MeanSqfeet'].to_numpy(dtype=np.float64)
-            age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
-            stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
-            baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-            flood = block_group_sample['N_perc_area_flood'].to_numpy(dtype=np.float64)
-            residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
-            coefficients = np.array(self.simple_anova_coefficients, dtype=np.float64)
-            utilities = calculate_utilities_with_flood_vectorized(sqfeet, age, stories, baths, flood, residuals, coefficients)
-            block_group_sample['utility'] = utilities
-
-        elif self.house_choice_mode == 'simple_avoidance_utility' or self.house_choice_mode == 'budget_reduction':  # JY consider moving to method on household agents
-            # Use numba-optimized vectorized utility calculation (without flood term)
-            sqfeet = block_group_sample['N_MeanSqfeet'].to_numpy(dtype=np.float64)
-            age = block_group_sample['N_MeanAge'].to_numpy(dtype=np.float64)
-            stories = block_group_sample['N_MeanNoOfStories'].to_numpy(dtype=np.float64)
-            baths = block_group_sample['N_MeanFullBathNumber'].to_numpy(dtype=np.float64)
-            residuals = block_group_sample['residuals'].to_numpy(dtype=np.float64)
-            coefficients = np.array(self.simple_anova_coefficients, dtype=np.float64)
-            utilities = calculate_utilities_vectorized(sqfeet, age, stories, baths, residuals, coefficients)
-            block_group_sample['utility'] = utilities
-
         self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]

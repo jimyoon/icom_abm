@@ -1,35 +1,35 @@
+import logging
 from pynsim import Engine
+import polars as pl
+from chance_c.utils.polars_utils import fast_conditional_update_polars
 
 
 class HousingPricing(Engine):
-    """An engine class that manages housing pricing based on market demand and supply conditions.
+    """An engine class that adjusts housing prices based on demand and supply conditions.
     
-    The HousingPricing class is a pynsim engine that adjusts housing prices in block groups
-    based on demand and supply dynamics. It increases prices when demand exceeds supply and
-    decreases prices when there has been sustained low demand over multiple timesteps.
+    The HousingPricing class is a pynsim engine that iterates through all block group
+    nodes and adjusts housing prices based on demand and supply conditions. It increases
+    prices when demand exceeds supply and decreases prices when there has been sustained
+    low demand over the previous 5 timesteps.
     
     Args:
         target: The simulation network target containing block group nodes.
-        housing_pricing_mode (str, optional): Mode for housing pricing calculation. 
-            Currently only supports 'simple_perc'. Defaults to 'simple_perc'.
-        price_increase_perc (float, optional): Percentage for price adjustments. 
+        price_increase_perc (float, optional): Percentage increase for price adjustments.
             Defaults to 0.05.
         **kwargs: Additional keyword arguments passed to the parent class.
     
     Inter-module Outputs/Modifications:
         block_group.new_price (float): Updated housing price for each block group node.
-        target.housing_block_group_df (pandas.DataFrame): Updated housing dataframe with 
-            new price data.
+        target.housing_block_group_df (pandas.DataFrame): Updated housing dataframe with
+            new prices.
     """
     
-    def __init__(self, target, housing_pricing_mode: str = 'simple_perc', 
-                 price_increase_perc: float = 0.05, **kwargs) -> None:
+    def __init__(self, target, price_increase_perc: float = 0.05, **kwargs) -> None:
         """Initialize the HousingPricing engine.
         
         Args:
             target: The simulation network target containing block group nodes.
-            housing_pricing_mode: Mode for housing pricing calculation.
-            price_increase_perc: Percentage for price adjustments.
+            price_increase_perc: Percentage increase for price adjustments.
             **kwargs: Additional keyword arguments passed to the parent class.
         """
         super(HousingPricing, self).__init__(target, **kwargs)
@@ -43,12 +43,21 @@ class HousingPricing(Engine):
         and decreases prices when there has been sustained low demand over the
         previous 5 timesteps.
         """
+        logging.info("Running the housing pricing engine, year " + str(self.target.current_timestep.year))
+        
+        # Handle price updates using pandas for compatibility
         for block_group in self.target.nodes:
-            if block_group.demand_exceeds_supply:  # Removed '== True' for PEP8 compliance
+            if block_group.demand_exceeds_supply:
                 block_group.new_price = block_group.new_price * (1 + self.price_increase_perc)
-                self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price
+                self.target.housing_block_group_df.loc[
+                    self.target.housing_block_group_df['GEOID'] == block_group.name, 
+                    'new_price'
+                ] = block_group.new_price
 
-            if self.target.current_timestep_idx >= 5:  # JY TEMP for testing
-                if not any(block_group.get_history('demand_exceeds_supply')[-5:]):
+            if self.target.current_timestep_idx >= 5:
+                if hasattr(block_group, 'get_history') and not any(block_group.get_history('demand_exceeds_supply')[-5:]):
                     block_group.new_price = block_group.new_price * (1 - self.price_increase_perc)
-                    self.target.housing_block_group_df.loc[self.target.housing_block_group_df['GEOID'] == block_group.name, 'new_price'] = block_group.new_price
+                    self.target.housing_block_group_df.loc[
+                        self.target.housing_block_group_df['GEOID'] == block_group.name, 
+                        'new_price'
+                    ] = block_group.new_price

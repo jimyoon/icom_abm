@@ -1,3 +1,6 @@
+# ignore test notebooks
+notebooks/test*
+
 # ignore built docs
 docs/build/
 docs/_build/

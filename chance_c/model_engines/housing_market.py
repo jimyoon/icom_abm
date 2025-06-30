@@ -1,116 +1,144 @@
 import logging
 import pandas as pd
 import numpy as np
-from chance_c.numba_utils import find_top_candidates
-
+import polars as pl
 from pynsim import Engine
+
+from chance_c.utils.numba_utils import find_top_candidates
+from chance_c.utils.polars_utils import (
+    fast_market_matching_polars, 
+    fast_market_matching_parallel_polars,
+    fast_market_matching_numba_optimized,
+    fast_market_matching_hybrid
+)
 
 
 class HousingMarket(Engine):
-    """An engine class that matches buyers with housing inventory representing the housing market.
-
-    The HousingMarket engine matches buyers with sellers in the housing market through
-    an iterative process that prioritizes households based on income and utility preferences.
-    It handles both new households entering the market and existing households relocating
-    within the domain.
-
+    """An engine class that matches households to housing based on utility scores.
+    
+    The HousingMarket class is a pynsim engine that matches households to housing
+    based on utility scores and availability. It uses a greedy matching algorithm
+    where households with higher utilities get priority for their preferred locations.
+    
     Args:
         target: The simulation network target containing block group nodes and household data.
-        market_mode (str, optional): Mode for market matching algorithm. 
-            Currently supports 'top_candidate'. Defaults to 'top_candidate'.
-        block_group_sample_size (int, optional): Number of market iterations to perform. 
+        market_mode (str, optional): Mode for market matching algorithm. Defaults to 'hybrid'.
+        block_group_sample_size (int, optional): Number of market iterations to perform.
             Defaults to 10.
+        use_multiprocessing (bool, optional): Whether to use multiprocessing for parallel processing.
+            Defaults to True.
         **kwargs: Additional keyword arguments passed to the parent class.
-
+    
     Inter-module Outputs/Modifications:
-        target.unassigned_households (dict): Dictionary of unassigned household agents.
-        target.relocating_households (dict): Dictionary of relocating household agents.
-        target.get_institution('all_household_agents'): Institution containing all household agents.
-        target.get_node(bg).household_agents (dict): Household agents assigned to block group nodes.
-        target.get_node(bg).occupied_units (int): Updated occupied units in block group.
-        target.get_node(bg).available_units (int): Updated available units in block group.
-        target.get_node(bg).demand_exceeds_supply (bool): Flag indicating demand exceeds supply.
+        target.household_assignments (dict): Dictionary mapping household names to assigned GEOIDs.
     """
 
-    def __init__(self, target, market_mode: str = 'top_candidate', 
-                 block_group_sample_size: int = 10, **kwargs) -> None:
+    def __init__(self, target, market_mode: str = 'hybrid', 
+                 block_group_sample_size: int = 10, use_multiprocessing: bool = True, **kwargs) -> None:
         """Initialize the HousingMarket engine.
         
         Args:
             target: The simulation network target containing block group nodes and household data.
-            market_mode: Mode for market matching algorithm.
+            market_mode: Mode for market matching algorithm ('polars', 'parallel', 'hybrid').
             block_group_sample_size: Number of market iterations to perform.
+            use_multiprocessing: Whether to use multiprocessing for parallel processing.
             **kwargs: Additional keyword arguments passed to the parent class.
         """
         super(HousingMarket, self).__init__(target, **kwargs)
         self.market_mode = market_mode
         self.block_group_sample_size = block_group_sample_size
+        self.use_multiprocessing = use_multiprocessing
 
     def run(self) -> None:
         """Run the HousingMarket engine.
         
         Matches households to housing based on utility scores and availability.
         Uses a greedy matching algorithm where households with higher utilities
-        get priority for their preferred locations.
+        get priority for their preferred locations. Uses optimized algorithms
+        for better performance.
         """
-        logging.info("Running the housing market engine, year " + str(self.target.current_timestep.year))
+        logging.debug("Running the housing market engine, year " + str(self.target.current_timestep.year))
 
         if self.target.hh_utilities_df.empty:
             logging.info("No household utilities to process")
             return
 
-        # Convert to numpy arrays for faster processing
-        utilities_df = self.target.hh_utilities_df
-        geoids = utilities_df['GEOID'].to_numpy()
-        households = utilities_df['household'].to_numpy()
-        utilities = utilities_df['utility'].to_numpy()
+        # Convert to Polars for faster processing
+        utilities_df = pl.from_pandas(self.target.hh_utilities_df)
         
-        # Get unique households and their utilities
-        unique_households = np.unique(households)
-        household_assignments = {}
-        used_geoids = set()
-        
-        # Process households in batches for better performance
-        batch_size = 100
-        for i in range(0, len(unique_households), batch_size):
-            batch_households = unique_households[i:i+batch_size]
-            
-            for household in batch_households:
-                # Find all options for this household
-                household_mask = households == household
-                household_geoids = geoids[household_mask]
-                household_utilities = utilities[household_mask]
-                
-                if len(household_geoids) == 0:
-                    continue
-                
-                # Find top candidates using numba-optimized function
-                top_indices = find_top_candidates(household_utilities, len(household_utilities))
-                
-                # Try to assign the best available location
-                assigned = False
-                for idx in top_indices:
-                    geoid = household_geoids[idx]
-                    if geoid not in used_geoids:
-                        household_assignments[household] = geoid
-                        used_geoids.add(geoid)
-                        assigned = True
-                        break
-                
-                if not assigned:
-                    # Mark as outmigrated if no location available
-                    household_assignments[household] = 'outmigrated'
+        if len(utilities_df) == 0:
+            logging.info("No household utilities to process")
+            return
 
-        # Apply assignments
+        # Choose market matching algorithm based on mode
+        if self.market_mode == 'polars':
+            household_assignments = fast_market_matching_polars(
+                utilities_df=utilities_df,
+                geoid_col='GEOID',
+                household_col='household',
+                utility_col='utility'
+            )
+        elif self.market_mode == 'parallel':
+            household_assignments = fast_market_matching_parallel_polars(
+                utilities_df=utilities_df,
+                geoid_col='GEOID',
+                household_col='household',
+                utility_col='utility'
+            )
+        else:  # hybrid (default)
+            household_assignments = fast_market_matching_hybrid(
+                utilities_df=utilities_df,
+                geoid_col='GEOID',
+                household_col='household',
+                utility_col='utility'
+            )
+
+        # Store assignments
+        self.target.household_assignments = household_assignments
+        
+        # Process assignments to update block groups
         for household_name, geoid in household_assignments.items():
-            if household_name in self.target.relocating_households:
-                household = self.target.relocating_households[household_name]
-                household.location = geoid
+            if geoid == 'outmigrated':
+                logging.debug(f"Household {household_name} outmigrated - no suitable location found")
+                continue
+            
+            # Find the household agent
+            household_agent = None
+            if hasattr(self.target, 'unassigned_households'):
+                for hh in self.target.unassigned_households.values():
+                    if hh.name == household_name:
+                        household_agent = hh
+                        break
+            
+            if hasattr(self.target, 'relocating_households') and household_agent is None:
+                for hh in self.target.relocating_households.values():
+                    if hh.name == household_name:
+                        household_agent = hh
+                        break
+            
+            if household_agent is None:
+                logging.debug(f"Could not find household agent for {household_name}")
+                continue
+            
+            # Assign household to block group
+            target_block_group = self.target.get_node(geoid)
+            if target_block_group is None:
+                logging.warning(f"Could not find block group {geoid}")
+                continue
+            
+            # Update household location
+            household_agent.location = geoid
+            target_block_group.household_agents[household_name] = household_agent
+            
+            # Update block group occupancy
+            target_block_group.occupied_units += 1
+            target_block_group.available_units -= 1
+            
+            # Remove from unassigned/relocating lists
+            if hasattr(self.target, 'unassigned_households') and household_name in self.target.unassigned_households:
+                del self.target.unassigned_households[household_name]
+            
+            if hasattr(self.target, 'relocating_households') and household_name in self.target.relocating_households:
                 del self.target.relocating_households[household_name]
-            elif household_name in self.target.new_households:
-                household = self.target.new_households[household_name]
-                household.location = geoid
-                del self.target.new_households[household_name]
-
-        logging.info(f"Assigned {len([g for g in household_assignments.values() if g != 'outmigrated'])} households to locations")
-        logging.info(f"Outmigrated {len([g for g in household_assignments.values() if g == 'outmigrated'])} households")
+            
+            logging.debug(f"Assigned household {household_name} to block group {geoid}")

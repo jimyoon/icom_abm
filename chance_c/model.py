@@ -360,7 +360,6 @@ class Model:
         self.simulator.add_engine(
             HousingPricing(
                 target, 
-                housing_pricing_mode=self.config.housing_pricing_mode, 
                 price_increase_perc=self.config.price_increase_perc
             )
         )
