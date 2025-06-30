@@ -74,11 +74,11 @@ def test_multiprocessing_simulation():
     end_time = time.time()
     sim_time = end_time - start_time
     
-    print(f"✅ Multiprocessing test completed successfully!")
-    print(f"⏱️  Simulation time: {sim_time:.3f} seconds")
+    print(f"Multiprocessing test completed successfully!")
+    print(f"Simulation time: {sim_time:.3f} seconds")
     
     # Check if multiprocessing was used
-    print("\n📊 Simulation Results:")
+    print("\nSimulation Results:")
     print(f"   - Total simulation time: {sim_time:.3f} seconds")
     print(f"   - Multiprocessing enabled: Yes")
     
@@ -103,7 +103,7 @@ def test_multiprocessing_utils():
     
     # Test process count calculation
     cpu_count = get_optimal_process_count('utility')
-    print(f"✅ Optimal process count for utility calculations: {cpu_count}")
+    print(f"Optimal process count for utility calculations: {cpu_count}")
     assert cpu_count > 0, "Process count should be positive"
     
     # Test with dummy data
@@ -129,7 +129,7 @@ def test_multiprocessing_utils():
     )
     end_time = time.time()
     
-    print(f"✅ Parallel utility calculation: {end_time - start_time:.3f} seconds")
+    print(f"Parallel utility calculation: {end_time - start_time:.3f} seconds")
     print(f"   - Calculated utilities for {len(utilities)} samples")
     
     # Assert utility calculation results
@@ -150,7 +150,7 @@ def test_multiprocessing_utils():
     )
     end_time = time.time()
     
-    print(f"✅ Parallel market matching: {end_time - start_time:.3f} seconds")
+    print(f"Parallel market matching: {end_time - start_time:.3f} seconds")
     print(f"   - Assigned {len(assignments)} households")
     
     # Assert market matching results
@@ -160,39 +160,39 @@ def test_multiprocessing_utils():
 def main():
     """Main test function."""
     
-    print("🚀 CHANCE-C Multiprocessing Test Suite")
+    print("CHANCE-C Multiprocessing Test Suite")
     print("=" * 50)
     
     # Test multiprocessing utilities
     try:
         test_multiprocessing_utils()
         utils_success = True
-        print("✅ Multiprocessing utilities test passed")
+        print("Multiprocessing utilities test passed")
     except Exception as e:
         utils_success = False
-        print(f"❌ Multiprocessing utilities test failed: {str(e)}")
+        print(f"Multiprocessing utilities test failed: {str(e)}")
         logging.error(f"Utilities test error: {e}", exc_info=True)
     
     # Test full simulation with multiprocessing
     try:
         test_multiprocessing_simulation()
         sim_success = True
-        print("✅ Full simulation test passed")
+        print("Full simulation test passed")
     except Exception as e:
         sim_success = False
-        print(f"❌ Full simulation test failed: {str(e)}")
+        print(f"Full simulation test failed: {str(e)}")
         logging.error(f"Simulation test error: {e}", exc_info=True)
     
     print("\n" + "=" * 50)
-    print("📋 Test Summary:")
-    print(f"   - Multiprocessing utilities: {'✅ PASS' if utils_success else '❌ FAIL'}")
-    print(f"   - Full simulation: {'✅ PASS' if sim_success else '❌ FAIL'}")
+    print("Test Summary:")
+    print(f"   - Multiprocessing utilities: {'PASS' if utils_success else 'FAIL'}")
+    print(f"   - Full simulation: {'PASS' if sim_success else 'FAIL'}")
     
     if utils_success and sim_success:
-        print("\n🎉 All tests passed! Multiprocessing implementation is working correctly.")
+        print("\nAll tests passed! Multiprocessing implementation is working correctly.")
         return 0
     else:
-        print("\n⚠️  Some tests failed. Please check the error messages above.")
+        print("\nSome tests failed. Please check the error messages above.")
         return 1
 
 if __name__ == "__main__":

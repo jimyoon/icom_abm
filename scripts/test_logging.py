@@ -67,10 +67,10 @@ def test_logging_levels():
             log_level="INVALID_LEVEL"
         )
     except ValueError as e:
-        print(f"✅ Correctly caught invalid log level: {e}")
+        print(f"Correctly caught invalid log level: {e}")
     
     print("\n" + "=" * 50)
-    print("✅ All logging tests completed!")
+    print("All logging tests completed!")
 
 
 def test_config_logging():
@@ -92,7 +92,7 @@ def test_config_logging():
     model.logger.debug("This DEBUG message should appear from config")
     model.logger.info("This INFO message should also appear")
     
-    print("✅ Config logging test completed!")
+    print("Config logging test completed!")
 
 
 if __name__ == "__main__":

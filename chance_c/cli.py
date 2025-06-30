@@ -201,12 +201,12 @@ def run(config: Optional[str], output_dir: str, log_level: str, **kwargs):
         config_path = output_path / "simulation_config.yaml"
         model.write_config(str(config_path))
         
-        click.echo(f"✅ Simulation completed successfully!")
-        click.echo(f"📁 Results saved to: {output_path.absolute()}")
-        click.echo(f"⚙️  Configuration saved to: {config_path}")
+        click.echo(f"Simulation completed successfully!")
+        click.echo(f"Results saved to: {output_path.absolute()}")
+        click.echo(f"Configuration saved to: {config_path}")
         
     except Exception as e:
-        click.echo(f"❌ Simulation failed: {str(e)}", err=True)
+        click.echo(f"Simulation failed: {str(e)}", err=True)
         logger.error(f"Simulation error: {e}", exc_info=True)
         sys.exit(1)
 
@@ -231,7 +231,7 @@ def validate_config(config_file: str, output: Optional[str]):
         config = SimulationConfig.from_yaml(config_file)
         
         # Display configuration summary
-        click.echo("\n📋 Configuration Summary:")
+        click.echo("\nConfiguration Summary:")
         click.echo("=" * 50)
         click.echo(f"Simulation Name: {config.simulation_name}")
         click.echo(f"Scenario: {config.scenario}")
@@ -256,12 +256,12 @@ def validate_config(config_file: str, output: Optional[str]):
                 for key, value in config.__dict__.items():
                     f.write(f"  {key}: {value}\n")
             
-            click.echo(f"✅ Validation report saved to: {output}")
+            click.echo(f"Validation report saved to: {output}")
         else:
-            click.echo("✅ Configuration is valid!")
+            click.echo("Configuration is valid!")
             
     except Exception as e:
-        click.echo(f"❌ Configuration validation failed: {str(e)}", err=True)
+        click.echo(f"Configuration validation failed: {str(e)}", err=True)
         logger.error(f"Validation error: {e}", exc_info=True)
         sys.exit(1)
 
@@ -286,7 +286,7 @@ def plot_results(results_dir: str, output: Optional[str], plot_format: str, dpi:
         # This would need to be implemented based on how results are stored
         # For now, we'll provide a placeholder
         click.echo(f"Generating plots from results in: {results_dir}")
-        click.echo("📊 Plot generation functionality to be implemented")
+        click.echo("Plot generation functionality to be implemented")
         
         # Example implementation would look like:
         # model = load_model_from_results(results_dir)
@@ -297,7 +297,7 @@ def plot_results(results_dir: str, output: Optional[str], plot_format: str, dpi:
         #     plt.show()
         
     except Exception as e:
-        click.echo(f"❌ Plot generation failed: {str(e)}", err=True)
+        click.echo(f"Plot generation failed: {str(e)}", err=True)
         logger.error(f"Plot error: {e}", exc_info=True)
         sys.exit(1)
 
@@ -337,11 +337,11 @@ def create_config(template: str, output: str):
         # Save configuration
         config.to_yaml(output)
         
-        click.echo(f"✅ Configuration file created: {output}")
-        click.echo("📝 Edit the file to customize parameters for your simulation")
+        click.echo(f"Configuration file created: {output}")
+        click.echo("Edit the file to customize parameters for your simulation")
         
     except Exception as e:
-        click.echo(f"❌ Configuration creation failed: {str(e)}", err=True)
+        click.echo(f"Configuration creation failed: {str(e)}", err=True)
         logger.error(f"Config creation error: {e}", exc_info=True)
         sys.exit(1)
 
@@ -365,7 +365,7 @@ def summarize(results_dir: str, output_format: str, output: Optional[str]):
         
         # This would need to be implemented based on how results are stored
         # For now, we'll provide a placeholder
-        click.echo("📈 Summary generation functionality to be implemented")
+        click.echo("Summary generation functionality to be implemented")
         
         # Example implementation would look like:
         # model = load_model_from_results(results_dir)
@@ -379,7 +379,7 @@ def summarize(results_dir: str, output_format: str, output: Optional[str]):
         #     summary.to_excel(output or 'summary.xlsx', index=False)
         
     except Exception as e:
-        click.echo(f"❌ Summary generation failed: {str(e)}", err=True)
+        click.echo(f"Summary generation failed: {str(e)}", err=True)
         logger.error(f"Summary error: {e}", exc_info=True)
         sys.exit(1)
 
@@ -395,14 +395,14 @@ def info():
     click.echo("CHANCE-C - Agent-Based Model for Housing Market Dynamics")
     click.echo("=" * 60)
     click.echo("")
-    click.echo("📊 Features:")
+    click.echo("Features:")
     click.echo("  • Agent-based modeling of housing market dynamics")
     click.echo("  • Flood risk and extreme weather integration")
     click.echo("  • Spatial analysis with geographic data")
     click.echo("  • Policy simulation and intervention testing")
     click.echo("  • Built-in visualization and analysis tools")
     click.echo("")
-    click.echo("🚀 Quick Start:")
+    click.echo("Quick Start:")
     click.echo("  # Run with default example data (no setup needed!)")
     click.echo("  chance-c run")
     click.echo("")
