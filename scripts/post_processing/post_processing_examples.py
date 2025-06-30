@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import contextily as ctx
+import seaborn as sns
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -83,25 +84,21 @@ df['population_change'] = df['population'] - df['pop1990']
 df.plot(x='salesprice1993', y='population_change', style='o')
 
 #### Scatterplot two columns of housing dataframe (with another column providing hues)
-import seaborn
 df = pd.DataFrame(s.network.housing_bg_df)
 df['population_change'] = df['population'] - df['pop1990']
-seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=1.61)
+sns.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=1.61)
 
 #### Scatterplot two columns of housing dataframe (with another column providing hues)
-import seaborn
 df = pd.DataFrame(s.network.housing_bg_df)
 df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
-seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=1.61)
+sns.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=1.61)
 
 #### Scatterplot two columns of housing dataframe (with another column providing hues)
-import seaborn
 df = pd.DataFrame(s.network.housing_bg_df)
 df['price_change'] = df['new_price'] - df['salesprice1993']
-seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=1.61)
+sns.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=1.61)
 
 #### Plot metric in flood zone threshold over time
-import seaborn as sns
 column_names = ["Model Year", "Population Percentage Change in Flood Zone", "Flood Coefficient"]
 years = []
 pop_perc_change = []
@@ -269,7 +266,6 @@ df_combined.loc[(df_combined.perc_fld_area > df_combined.perc_fld_area.quantile(
 # df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
 df_combined.loc[df_combined.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 df_combined.pop_perc_change = df_combined.pop_perc_change.astype(float)
-import seaborn as sns
 # sns.set_style("darkgrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
@@ -303,7 +299,6 @@ df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.qua
 df_fld.loc[df_fld.pop_perc_change=='#DIV/0!', 'pop_perc_change'] = 1
 df_fld['pop_perc_change'] = df_fld['pop_perc_change'].fillna(1)
 df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
-import seaborn as sns
 palette = sns.color_palette("rocket", 5)
 sns.lineplot(x="model_year", y="pop_perc_change", hue="run_name", palette=palette, data=df_fld, ci=None)
 
@@ -349,7 +344,6 @@ df_combined = df
 df_fld = df_combined[(df_combined.perc_fld_area >= df_combined.perc_fld_area.quantile(.9))]
 df_fld.loc[df_fld.price_perc_change=='#DIV/0!', 'price_perc_change'] = 0
 df_fld.pop_perc_change = df_fld.pop_perc_change.astype(float)
-import seaborn as sns
 sns.lineplot(x="model_year", y="population", hue="GEOID", data=df_combined, ci = None)
 sns.lineplot(x="model_year", y="population", data=df_combined.groupby(['GEOID','model_year']).sum().reset_index(), ci = None)
 sns.pointplot(data = df.groupby(['Name', 'Year']).mean().reset_index(),
@@ -387,7 +381,6 @@ for run_name in runs_list:
         gini_value = gini(gini_array)
         df_gini.loc[len(df_gini.index)] = [run_name, year, gini_value]
 
-import seaborn as sns
 sns.set_style("darkgrid")
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()

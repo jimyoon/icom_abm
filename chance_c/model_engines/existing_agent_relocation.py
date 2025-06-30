@@ -138,12 +138,15 @@ class ExistingAgentLocation(Engine):
             return
 
         # Convert to Polars for faster operations
-        # Only drop the geometry column before conversion
+        # Only drop the geometry column before conversion for processing
         df = self.target.housing_block_group_df
         drop_cols = [col for col in df.columns if str(df[col].dtype) == 'geometry']
         if 'geometry' in df.columns:
             drop_cols.append('geometry')
-        block_group_all = pl.from_pandas(df.drop(columns=drop_cols))
+        
+        # Create a copy for processing without geometry
+        df_for_processing = df.copy()
+        block_group_all = pl.from_pandas(df_for_processing.drop(columns=drop_cols))
         
         # Pre-filter by budget to reduce computation
         max_budget = max([hh.house_budget for hh in self.target.relocating_households.values()])
@@ -250,5 +253,17 @@ class ExistingAgentLocation(Engine):
             self.target.hh_utilities_df = pd.DataFrame(columns=['GEOID', 'household', 'utility'])
             return
         
-        block_group_sample = pd.concat(all_samples, ignore_index=True)
-        self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]
+        # Prefer Polars if possible
+        all_polars = all(isinstance(sample, pl.DataFrame) for sample in all_samples)
+        if all_polars:
+            block_group_sample = pl.concat(all_samples)
+            self.target.hh_utilities_df = block_group_sample.select(['GEOID', 'household', 'utility']).to_pandas()
+        else:
+            pandas_samples = []
+            for sample in all_samples:
+                if isinstance(sample, pl.DataFrame):
+                    pandas_samples.append(sample.to_pandas())
+                else:
+                    pandas_samples.append(sample)
+            block_group_sample = pd.concat(pandas_samples, ignore_index=True)
+            self.target.hh_utilities_df = block_group_sample[['GEOID', 'household', 'utility']]

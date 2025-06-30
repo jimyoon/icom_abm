@@ -8,6 +8,7 @@ import polars as pl
 from pynsim import Engine
 import logging
 from chance_c.utils.polars_utils import fast_merge_polars, fast_normalize_polars, fast_statistics_polars
+import geopandas as gpd
 
 
 class LandscapeStatistics(Engine):
@@ -52,6 +53,8 @@ class LandscapeStatistics(Engine):
         and the housing dataframe with current values. Handles edge cases such as
         empty block groups and invalid household size values.
         """
+        logging.info("Running the landscape statistics engine, year " + str(self.target.current_timestep.year))
+        
         # reset population sums
         self.target.total_population = 0
 
@@ -123,11 +126,21 @@ class LandscapeStatistics(Engine):
                 pl.lit(0.0).alias('average_income_norm')
             )
 
-        # Drop all columns except those with dtype number, bool, datetime, or string
+        # Preserve geometry column and drop all columns except those with dtype number, bool, datetime, or string
         df = self.target.housing_block_group_df
         allowed_kinds = {'i', 'u', 'f', 'b', 'M'}  # int, uint, float, bool, datetime64
         keep_cols = [col for col in df.columns if df[col].dtype.kind in allowed_kinds or pd.api.types.is_string_dtype(df[col])]
-        existing_df = pl.from_pandas(df[keep_cols])
+        
+        # Handle geometry column separately
+        geometry_col = None
+        if 'geometry' in df.columns:
+            geometry_col = df['geometry'].copy()
+            if 'geometry' not in keep_cols:
+                keep_cols.append('geometry')
+        
+        # Convert to Polars, excluding geometry if present
+        numeric_cols = [col for col in keep_cols if col != 'geometry']
+        existing_df = pl.from_pandas(df[numeric_cols])
         
         # Fast merge using Polars
         merged_df = fast_merge_polars(
@@ -138,5 +151,14 @@ class LandscapeStatistics(Engine):
             how='left'
         )
         
-        # Convert back to pandas for compatibility
-        self.target.housing_block_group_df = merged_df.to_pandas()
+        # Convert back to pandas and restore geometry if it existed
+        result_df = merged_df.to_pandas()
+        if geometry_col is not None:
+            result_df['geometry'] = geometry_col
+            # Convert back to GeoDataFrame if it was originally one
+            if isinstance(self.target.housing_block_group_df, gpd.GeoDataFrame):
+                result_df = gpd.GeoDataFrame(result_df, geometry='geometry', crs=self.target.housing_block_group_df.crs)
+        
+        self.target.housing_block_group_df = result_df
+        
+        logging.info(f"Landscape statistics updated - Total population: {self.target.total_population:,.0f}")

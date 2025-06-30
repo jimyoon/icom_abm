@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import contextily as ctx
+import seaborn as sns
 from pynsim import Network
 
 from .data_loader import SimulationConfig
@@ -474,6 +475,10 @@ class Model:
         end_time = time.time()
         sim_time = end_time-self.start_time
         self.logger.info("Simulation took (seconds):  %s" % sim_time)
+        
+        # Automatically create combined housing dataframe for easy access
+        self.housing_dataframe = self.combine_housing_dataframes()
+        self.logger.info("Combined housing dataframe created and stored as model.housing_dataframe")
 
 
     def write_config(self, config_output_file_path: str) -> None:
@@ -673,12 +678,28 @@ class Model:
         """
         gdf = self.simulator.network.get_history('housing_block_group_df')[-1]  # copy of final block_group df
         gdf['population_change'] = self.simulator.network.get_history('housing_block_group_df')[-1]['population'] - self.simulator.network.get_history('housing_block_group_df')[0]['population']
-        # normalize color
-        vmin, vmax, vcenter = gdf.population_change.min(), gdf.population_change.max(), 0
-        norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
-        # create a normalized colorbar
-        cbar = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-        # with normalization
+        
+        # Get min and max values
+        vmin = gdf.population_change.min()
+        vmax = gdf.population_change.max()
+        vcenter = 0
+        
+        # Check if we can use TwoSlopeNorm (requires vmin < vcenter < vmax)
+        if vmin < vcenter < vmax:
+            # Use divergent normalization centered on 0
+            norm = TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax)
+        else:
+            # If all values are positive or all negative, use regular normalization
+            # and adjust the colormap to be more appropriate
+            norm = None
+            if vmin >= 0:
+                # All positive values - use a sequential colormap
+                cmap = 'OrRd'  # Red sequential for positive changes
+            else:
+                # All negative values - use a sequential colormap
+                cmap = 'Blues'  # Blue sequential for negative changes
+        
+        # Create the plot
         ax = gdf.plot(column='population_change', cmap=cmap, alpha=alpha, norm=norm, legend=legend)
         ctx.add_basemap(ax, source=basemap_source)
 
@@ -723,10 +744,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['population_change'] = df['population'] - df['pop1990']
-        seaborn.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='salesprice1993', y='population_change', hue='average_income', aspect=aspect)
 
     def plot_population_change_percentage_vs_flood_area_with_hue(
             self,
@@ -737,10 +757,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['population_change_perc'] = (df['population'] - df['pop1990']) / df['pop1990']
-        seaborn.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='perc_fld_area', y='population_change_perc', hue='average_income', aspect=aspect)
 
     def plot_price_change_vs_flood_area_with_hue(self, aspect: float = 1.61) -> None:
         """Create a scatterplot of price change vs flood area with average income as hue
@@ -748,10 +767,9 @@ class Model:
         Args:
             aspect: The aspect ratio of the plot (default: 1.61)
         """
-        import seaborn
         df = pd.DataFrame(self.simulator.network.housing_block_group_df)
         df['price_change'] = df['new_price'] - df['salesprice1993']
-        seaborn.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
+        sns.relplot(data=df, x='perc_fld_area', y='price_change', hue='average_income', aspect=aspect)
 
     def plot_flood_zone_metric_over_time(
             self, 
@@ -764,8 +782,6 @@ class Model:
             flood_coefficient: The flood coefficient value (default: -1000000)
             csv_file: Path to CSV file with additional data (default: 'temp_flood.csv')
         """
-        import seaborn as sns
-        
         years = []
         pop_perc_change = []
         fld_coeff_list = []
@@ -798,10 +814,20 @@ class Model:
                      data=df)
 
     def combine_housing_dataframes(self) -> pd.DataFrame:
-        """Combine relevant housing dataframes from each model run year into a single dataframe
+        """Combine relevant housing dataframes from each model run year into a single dataframe.
+        
+        This method is automatically called at the end of simulation and the result is stored
+        as model.housing_dataframe for easy access.
         
         Returns:
-            pd.DataFrame: Combined dataframe with housing data from all timesteps
+            pd.DataFrame: Combined dataframe with housing data from all timesteps, including:
+                - GEOID, GISJOIN: Geographic identifiers
+                - new_price, salesprice1993: Housing prices
+                - population, pop1990: Population data
+                - occupied_units, available_units, demand_exceeds_supply: Housing market data
+                - perc_fld_area: Flood hazard data
+                - mhi1990, average_income: Income data
+                - model_year: Timestep identifier
         """
         first = True
         for t in range(self.simulator.network.current_timestep_idx):

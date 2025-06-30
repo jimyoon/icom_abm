@@ -351,30 +351,30 @@ class ICOMSimulator(Simulator):
         logging.info(str(len(self.network.nodes)) + " block group nodes were added to the network")
         
         # Log the final data types for verification
-        logging.info("Geographic data column types after processing:")
+        logging.debug("Geographic data column types after processing:")
         for col in ['GISJOIN', 'GEOID', 'COUNTYFP', 'TRACTCE', 'BLKGRPCE', 'ALAND', 'geometry']:
             if col in block_group.columns:
-                logging.info(f"  {col}: {block_group[col].dtype}")
+                logging.debug(f"  {col}: {block_group[col].dtype}")
         
-        logging.info("Population data column types after processing:")
+        logging.debug("Population data column types after processing:")
         for col in ['GISJOIN', 'AJWME001']:
             if col in pop.columns:
-                logging.info(f"  {col}: {pop[col].dtype}")
+                logging.debug(f"  {col}: {pop[col].dtype}")
         
-        logging.info("Flood data column types after processing:")
+        logging.debug("Flood data column types after processing:")
         for col in ['GISJOIN', 'Shape_Area', 'fld_area', 'perc_fld_area']:
             if col in flood.columns:
-                logging.info(f"  {col}: {flood[col].dtype}")
+                logging.debug(f"  {col}: {flood[col].dtype}")
         
-        logging.info("Housing data column types after processing:")
+        logging.debug("Housing data column types after processing:")
         for col in ['GISJOIN', 'pop1990', 'mhi1990', 'hhsize1990', 'coastdist', 'cbddist', 'hhtrans1993', 'salesprice1993', 'salespricesf1993']:
             if col in housing.columns:
-                logging.info(f"  {col}: {housing[col].dtype}")
+                logging.debug(f"  {col}: {housing[col].dtype}")
         
-        logging.info("Hedonic data column types after processing:")
+        logging.debug("Hedonic data column types after processing:")
         for col in ['GISJOIN', 'N_MeanSqfeet', 'N_MeanAge', 'N_MeanNoOfStories', 'N_MeanFullBathNumber', 'residuals', 'N_perc_area_flood']:
             if col in hedonic.columns:
-                logging.info(f"  {col}: {hedonic[col].dtype}")
+                logging.debug(f"  {col}: {hedonic[col].dtype}")
 
     def convert_initial_population_to_agents(self, no_households_per_agent=10, simple_avoidance_perc=.10):
         logging.info("Converting initial population to agents and adding to the simulation")

@@ -7,6 +7,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message="Column names longer than 10 characters will be truncated when saved to ESRI Shapefile.")
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Normalized/laundered field name:.*")
 warnings.filterwarnings("ignore", category=DeprecationWarning, message="The 'shapely.geos' module is deprecated.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="pyogrio")
 
 import pytest
 import pandas as pd
