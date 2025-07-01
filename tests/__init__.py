@@ -1,0 +1,1 @@
+# Test suite for chance_c package 

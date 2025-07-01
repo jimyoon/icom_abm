@@ -1,0 +1,99 @@
+# Field mapping configuration for input files
+# This file allows users to map their input file column names to the required field names used by the model
+# Users can customize the column names in their data files and map them here
+
+# Geographic file field mappings
+geo_file_mapping:
+  # Required field mappings for geographic data
+  # Map your column names to the required field names used by the model
+  GISJOIN: "GISJOIN"  # Unique identifier for each block group
+  GEOID: "GEOID"      # Unique identifier for each block group
+  COUNTYFP: "COUNTYFP"  # County code
+  TRACTCE: "TRACTCE"    # Tract code
+  BLKGRPCE: "BLKGRPCE"  # Block group code
+  ALAND: "ALAND"        # Land area
+  geometry: "geometry"  # Geometry of the block group
+
+# Population file field mappings
+pop_file_mapping:
+  # Required field mappings for population data
+  # Map your column names to the required field names used by the model
+  GISJOIN: "GISJOIN"    # Unique identifier for each block group
+  # Population field - map your custom column name to AJWME001
+  AJWME001: "AJWME001"  # Population count (map from your custom column name)
+
+# Flood file field mappings
+flood_file_mapping:
+  # Required field mappings for flood data
+  # Map your column names to the required field names used by the model
+  GISJOIN: "GISJOIN"        # Unique identifier for each flood zone
+  Shape_Area: "Shape_Area"  # Area of the flood zone
+  fld_area: "fld_area"      # Area of the flood zone
+  perc_fld_area: "perc_fld_area"  # Percentage of the flood zone
+
+# Housing file field mappings
+housing_file_mapping:
+  # Required field mappings for housing data
+  # Map your column names to the required field names used by the model
+  GISJOIN: "GISJOIN"           # Unique identifier for each block group
+  pop1990: "pop1990"           # Population in 1990
+  mhi1990: "mhi1990"           # Median household income in 1990
+  hhsize1990: "hhsize1990"     # Average household size in 1990
+  coastdist: "coastdist"       # Distance to the coast
+  cbddist: "cbddist"           # Distance to the CBD
+  hhtrans1993: "hhtrans1993"   # Number of households in 1993
+  salesprice1993: "salesprice1993"  # Sales price in 1993
+  salespricesf1993: "salespricesf1993"  # Sales price per square foot in 1993
+
+# Hedonic file field mappings
+hedonic_file_mapping:
+  # Required field mappings for hedonic regression data
+  # Map your column names to the required field names used by the model
+  GISJOIN: "GISJOIN"                    # Unique identifier for each block group
+  N_MeanSqfeet: "N_MeanSqfeet"          # Normalized mean square feet
+  N_MeanAge: "N_MeanAge"                # Normalized mean age
+  N_MeanNoOfStories: "N_MeanNoOfStories"  # Normalized mean number of stories
+  N_MeanFullBathNumber: "N_MeanFullBathNumber"  # Normalized mean number of full bathrooms
+  N_perc_area_flood: "N_perc_area_flood"  # Normalized percentage of the block group in the flood zone
+  residuals: "residuals"                # Residuals from hedonic regression
+
+# Example custom mappings (commented out)
+# Users can uncomment and modify these examples to match their data files
+# geo_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # If your file uses BLOCK_GROUP_ID instead of GISJOIN
+#   GEOID: "CENSUS_ID"             # If your file uses CENSUS_ID instead of GEOID
+#   COUNTYFP: "COUNTY_CODE"        # If your file uses COUNTY_CODE instead of COUNTYFP
+#   TRACTCE: "TRACT_CODE"          # If your file uses TRACT_CODE instead of TRACTCE
+#   BLKGRPCE: "BLOCK_GROUP_CODE"   # If your file uses BLOCK_GROUP_CODE instead of BLKGRPCE
+#   ALAND: "LAND_AREA"             # If your file uses LAND_AREA instead of ALAND
+#   geometry: "geom"               # If your file uses geom instead of geometry
+
+# pop_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # If your file uses BLOCK_GROUP_ID instead of GISJOIN
+#   AJWME001: "POPULATION_2018"    # If your file uses POPULATION_2018 instead of AJWME001
+
+# flood_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # If your file uses BLOCK_GROUP_ID instead of GISJOIN
+#   Shape_Area: "FLOOD_AREA"       # If your file uses FLOOD_AREA instead of Shape_Area
+#   fld_area: "FLOODED_AREA"       # If your file uses FLOODED_AREA instead of fld_area
+#   perc_fld_area: "FLOOD_PERCENT" # If your file uses FLOOD_PERCENT instead of perc_fld_area
+
+# housing_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # If your file uses BLOCK_GROUP_ID instead of GISJOIN
+#   pop1990: "POP_1990"            # If your file uses POP_1990 instead of pop1990
+#   mhi1990: "MEDIAN_INCOME_1990"  # If your file uses MEDIAN_INCOME_1990 instead of mhi1990
+#   hhsize1990: "HH_SIZE_1990"     # If your file uses HH_SIZE_1990 instead of hhsize1990
+#   coastdist: "DIST_TO_COAST"     # If your file uses DIST_TO_COAST instead of coastdist
+#   cbddist: "DIST_TO_CBD"         # If your file uses DIST_TO_CBD instead of cbddist
+#   hhtrans1993: "HH_COUNT_1993"   # If your file uses HH_COUNT_1993 instead of hhtrans1993
+#   salesprice1993: "SALES_PRICE_1993"  # If your file uses SALES_PRICE_1993 instead of salesprice1993
+#   salespricesf1993: "SALES_PRICE_SF_1993"  # If your file uses SALES_PRICE_SF_1993 instead of salespricesf1993
+
+# hedonic_file_mapping:
+#   GISJOIN: "BLOCK_GROUP_ID"      # If your file uses BLOCK_GROUP_ID instead of GISJOIN
+#   N_MeanSqfeet: "NORM_SQFT"      # If your file uses NORM_SQFT instead of N_MeanSqfeet
+#   N_MeanAge: "NORM_AGE"          # If your file uses NORM_AGE instead of N_MeanAge
+#   N_MeanNoOfStories: "NORM_STORIES"  # If your file uses NORM_STORIES instead of N_MeanNoOfStories
+#   N_MeanFullBathNumber: "NORM_BATHS"  # If your file uses NORM_BATHS instead of N_MeanFullBathNumber
+#   N_perc_area_flood: "NORM_FLOOD"  # If your file uses NORM_FLOOD instead of N_perc_area_flood
+#   residuals: "HEDONIC_RESIDUALS"  # If your file uses HEDONIC_RESIDUALS instead of residuals 
