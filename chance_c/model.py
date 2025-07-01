@@ -26,6 +26,7 @@ from .model_engines.real_estate_prices import RealEstatePrices
 from .model_engines.flood_hazard import FloodHazard
 from .model_engines.zoning import Zoning
 from .model_classes.urban_agents import HouseholdAgent
+from .utils import set_random_seed
 
 
 # Setup logging
@@ -99,6 +100,7 @@ class Model:
         zoning_mode: str = 'simple_perc',
         zoning_perc: float = 0.05,
         market_mode: str = 'top_candidate',
+        random_seed: Union[int, None] = None,
     ) -> None:
         """Initialize the Model with configuration parameters.
         
@@ -147,17 +149,34 @@ class Model:
             zoning_mode: Mode for zoning decisions.
             zoning_perc: Percentage for zoning calculations.
             market_mode: Mode for housing market operations.
+            random_seed: Random seed for reproducible simulations. If None, no seed is set.
             
         Returns:
             None
         """
+        # Set random seed if provided
+        if random_seed is not None:
+            set_random_seed(random_seed)
+        
         if config is not None and config_file_path is not None:
             print("Warning: Both config and config_file_path provided. Using config object and ignoring config_file_path.")
             self.config = config
+            # Override config random seed if provided directly
+            if random_seed is not None:
+                self.config.random_seed = random_seed
+                set_random_seed(random_seed)
         elif config is not None:
             self.config = config
+            # Override config random seed if provided directly
+            if random_seed is not None:
+                self.config.random_seed = random_seed
+                set_random_seed(random_seed)
         elif config_file_path is not None:
             self.config = SimulationConfig.from_yaml(config_file_path)
+            # Override config random seed if provided directly
+            if random_seed is not None:
+                self.config.random_seed = random_seed
+                set_random_seed(random_seed)
         else:
             self.config = SimulationConfig(
                 simulation_name=simulation_name,
@@ -191,6 +210,7 @@ class Model:
                 flood_filename=flood_filename,
                 housing_filename=housing_filename,
                 hedonic_filename=hedonic_filename,
+                random_seed=random_seed,
             )
         
         self.config.record_time = record_time
@@ -229,6 +249,10 @@ class Model:
         Raises:
             RuntimeError: If simulation fails to start or complete successfully
         """
+        # Set random seed at the start of simulation if configured
+        if self.config.random_seed is not None:
+            set_random_seed(self.config.random_seed)
+        
         self.start_time = time.time()
 
         # Create pynsim simulation object and set timesteps, landscape on simulation

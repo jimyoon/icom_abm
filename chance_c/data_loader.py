@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 import os
 import importlib.resources as pkg_resources
 
@@ -105,6 +105,7 @@ class SimulationConfig:
         zoning_mode: Method for zoning.
         zoning_perc: Percentage of zoning.
         market_mode: Method for market choice.
+        random_seed: Random seed for reproducible simulations.
     """
     
     # Simulation setup
@@ -164,6 +165,9 @@ class SimulationConfig:
     flood_file_mapping: dict = None
     housing_file_mapping: dict = None
     hedonic_file_mapping: dict = None
+    
+    # Randomization control
+    random_seed: Union[int, None] = None
     
     def __post_init__(self):
         """Set default file paths and field mappings if not provided."""
@@ -334,7 +338,8 @@ class SimulationConfig:
             'block_group_sample_size': self.block_group_sample_size,
             'zoning_mode': self.zoning_mode,
             'zoning_perc': self.zoning_perc,
-            'market_mode': self.market_mode
+            'market_mode': self.market_mode,
+            'random_seed': self.random_seed
         }
         
         with open(yaml_path, 'w') as file:
