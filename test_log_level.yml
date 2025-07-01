@@ -1,0 +1,4 @@
+simulation_name: "yaml_log_test"
+start_year: 2018
+n_years: 1
+log_level: "DEBUG" 

@@ -126,7 +126,7 @@ class ExistingAgentLocation(Engine):
                 try:
                     block_group_sample = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units (JY revisit this weighting)
                 except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
+                    logging.debug(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
                     household.location = 'outmigrated'
                     continue
                 block_group_sample['household'] = household.name
@@ -137,7 +137,7 @@ class ExistingAgentLocation(Engine):
                 try:
                     block_group_append = block_group_budget.sample(n=10, replace=True, weights='available_units')  # Sample from available units
                 except ValueError:
-                    logging.info(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
+                    logging.debug(household.name + ' cannot afford any available homes!')  # JY: need to pull out of relocating_households
                     household.location = 'outmigrated'
                     continue
                 block_group_append['household'] = household.name

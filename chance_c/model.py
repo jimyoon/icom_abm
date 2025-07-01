@@ -29,8 +29,7 @@ from .model_classes.urban_agents import HouseholdAgent
 from .utils import set_random_seed
 
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# Setup logging - will be configured per instance
 
 
 class Model:
@@ -101,6 +100,7 @@ class Model:
         zoning_perc: float = 0.05,
         market_mode: str = 'top_candidate',
         random_seed: Union[int, None] = None,
+        log_level: str = 'INFO',
     ) -> None:
         """Initialize the Model with configuration parameters.
         
@@ -150,10 +150,14 @@ class Model:
             zoning_perc: Percentage for zoning calculations.
             market_mode: Mode for housing market operations.
             random_seed: Random seed for reproducible simulations. If None, no seed is set.
+            log_level: Logging level ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'). Default is 'INFO'.
             
         Returns:
             None
         """
+        # Store log level for later use
+        self.log_level = log_level
+        
         # Set random seed if provided
         if random_seed is not None:
             set_random_seed(random_seed)
@@ -211,6 +215,7 @@ class Model:
                 housing_filename=housing_filename,
                 hedonic_filename=hedonic_filename,
                 random_seed=random_seed,
+                log_level=log_level,
             )
         
         self.config.record_time = record_time
@@ -226,6 +231,44 @@ class Model:
             self.config.county_agent_id = county_agent_id
             self.config.zoning_mode = zoning_mode
             self.config.zoning_perc = zoning_perc
+        
+        # Override config log_level if provided directly
+        if log_level != 'INFO':
+            self.config.log_level = log_level
+        
+        # Configure logging after config is set up
+        self._configure_logging(self.config.log_level)
+
+    def _configure_logging(self, log_level: str) -> None:
+        """Configure logging level for the simulation.
+        
+        Args:
+            log_level: Logging level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+            
+        Returns:
+            None
+        """
+        # Convert string to logging level
+        level_map = {
+            'DEBUG': logging.DEBUG,
+            'INFO': logging.INFO,
+            'WARNING': logging.WARNING,
+            'ERROR': logging.ERROR,
+            'CRITICAL': logging.CRITICAL
+        }
+        
+        if log_level.upper() not in level_map:
+            logging.warning(f"Invalid log level '{log_level}'. Using INFO level.")
+            log_level = 'INFO'
+        
+        # Configure logging
+        logging.basicConfig(
+            level=level_map[log_level.upper()],
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            force=True  # Override any existing configuration
+        )
+        
+        logging.info(f"Logging level set to {log_level.upper()}")
 
     def run_simulation(self) -> None:
         """Run the ICoM ABM simulation with the configured parameters.

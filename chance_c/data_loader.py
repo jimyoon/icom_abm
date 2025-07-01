@@ -106,6 +106,7 @@ class SimulationConfig:
         zoning_perc: Percentage of zoning.
         market_mode: Method for market choice.
         random_seed: Random seed for reproducible simulations.
+        log_level: Logging level for the simulation.
     """
     
     # Simulation setup
@@ -168,6 +169,9 @@ class SimulationConfig:
     
     # Randomization control
     random_seed: Union[int, None] = None
+    
+    # Logging control
+    log_level: str = 'INFO'
     
     def __post_init__(self):
         """Set default file paths and field mappings if not provided."""
@@ -339,7 +343,8 @@ class SimulationConfig:
             'zoning_mode': self.zoning_mode,
             'zoning_perc': self.zoning_perc,
             'market_mode': self.market_mode,
-            'random_seed': self.random_seed
+            'random_seed': self.random_seed,
+            'log_level': self.log_level
         }
         
         with open(yaml_path, 'w') as file:
